@@ -1,0 +1,1473 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{fvextra}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+}
+
+\title{Instruction Set}
+\author{David Farrell}
+\date{March 2025}
+
+\def\nothing{\Verb|0000| - do nothing}
+
+\def\begini{\Verb|0001| - begin instruction (and increment \Verb|pk|)}
+
+\def\specialtodata#1{\Verb|#1002| - output \Verb|sr#1| to data bus}
+\def\specialtoaddr#1{\Verb|#1102| - output \Verb|sr#1| to addr bus}
+\def\specialptodata#1{\Verb|#1202| - output *\Verb|sr#1| to data bus}
+\def\specialptodatao#1{\Verb|#1302| - output *(\Verb|sr#1|+\Verb|offs|) to data bus}
+\def\datatospecial#1{\Verb|#1402| - write to \Verb|sr#1| from data bus}
+
+\def\pktodata{\Verb|0002| - output \Verb|pk| to data bus}
+\def\pktoaddr{\Verb|0102| - output \Verb|pk| to addr bus}
+\def\pkptrout{\Verb|0202| - output *\Verb|pk| to data bus}
+\def\pkoptrout{\Verb|0302| - output *(\Verb|pk|+\Verb|offs|) to data bus}
+\def\datatopk{\Verb|0402| - write to \Verb|pk| from data bus}
+
+\def\sptodata{\Verb|1002| - output \Verb|sp| to data bus}
+\def\sptoaddr{\Verb|1102| - output \Verb|sp| to addr bus}
+\def\spptodata{\Verb|1202| - output *\Verb|sp| to data bus}
+\def\spptodatao{\Verb|1302| - output *(\Verb|sp|+\Verb|offs|) to data bus}
+\def\datatosp{\Verb|1402| - write to \Verb|sp| from data bus}
+
+\def\tmpatodata{\Verb|2002| - output \Verb|tmpA| to data bus}
+\def\tmpatoaddr{\Verb|2102| - output \Verb|tmpA| to addr bus}
+\def\tmpaptodata{\Verb|2202| - output *\Verb|tmpA| to data bus}
+\def\tmpaptodatao{\Verb|2302| - output *(\Verb|tmpA|+\Verb|offs|) to data bus}
+\def\datatotmpa{\Verb|2402| - write to \Verb|tmpA| from data bus}
+
+\def\tmpbtodata{\Verb|3002| - output \Verb|tmpB| to data bus}
+\def\tmpbtoaddr{\Verb|3102| - output \Verb|tmpB| to addr bus}
+\def\tmpbptodata{\Verb|3202| - output *\Verb|tmpB| to data bus}
+\def\tmpbptodatao{\Verb|3302| - output *(\Verb|tmpB|+\Verb|offs|) to data bus}
+\def\datatotmpb{\Verb|3402| - write to \Verb|tmpB| from data bus}
+
+\def\offstodata{\Verb|4002| - output \Verb|offs| to data bus}
+\def\offstoaddr{\Verb|4102| - output \Verb|offs| to addr bus}
+\def\offsptodata{\Verb|4202| - output *\Verb|offs| to data bus}
+\def\offsptodatao{\Verb|4302| - output *(\Verb|offs|+\Verb|offs|) to data bus}
+\def\datatooffs{\Verb|4402| - write to \Verb|offs| from data bus}
+
+\def\incrementpk{\Verb|0502| - increment \Verb|pk|}
+\def\incrementsp{\Verb|1502| - increment \Verb|sp|}
+\def\tmpatopk{\Verb|2502| - output \Verb|tmpA| to \Verb|pk| via secret bus}
+\def\tmpbtopk{\Verb|3502| - output \Verb|tmpB| to \Verb|pk| via secret bus}
+
+\def\decrementsp{\Verb|1602| - decrement \Verb|sp|}
+
+\def\tmpatopkifz{\Verb|0602| - write to \Verb|pk| from \Verb|tmpA| if data bus is zero; increment otherwise}
+\def\tmpatopkifnz{\Verb|0702| - write to \Verb|pk| from \Verb|tmpA| if data bus is nonzero; increment otherwise}
+
+\def\tmpatopkifn{\Verb|0802| - write to \Verb|pk| from \Verb|tmpA| if data bus is negative; increment otherwise}
+\def\tmpatopkifnn{\Verb|0902| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-negative; increment otherwise}
+
+\def\tmpatopkifp{\Verb|0a02| - write to \Verb|pk| from \Verb|tmpA| if data bus is positive; increment otherwise}
+\def\tmpatopkifnp{\Verb|0b02| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-positive; increment otherwise}
+
+\def\regtodata#1{\Verb|#1003| - output \Verb|r#1| to data bus}
+\def\regtoaddr#1{\Verb|#1103| - output \Verb|r#1| to addr bus}
+\def\regptodata#1{\Verb|#1203| - output *\Verb|r#1| to data bus}
+\def\regptodatao#1{\Verb|#1303| - output *(\Verb|r#1|+\Verb|offs|) to data bus}
+\def\datatoreg#1{\Verb|#1403| - write to \Verb|r#1| from data bus}
+
+\def\writeRAM{\Verb|0004| - write data bus to *(addr bus)}
+\def\writeRAMb#1{\Verb|#1004| - write data bus to *(addr bus)}
+\def\writeRAMo{\Verb|0104| - write data bus to *(addr bus+\Verb|offs|)}
+\def\readRAM{\Verb|0005| - output *(addr bus) RAM to data bus}
+\def\readRAMo{\Verb|0105| - output *(addr bus+\Verb|offs|) RAM to data bus}
+
+\def\RAMout#1{\Verb|#1006| - read #1 bytes from RAM and put on the data bus}
+
+\def\ALUop#1#2#3{\Verb|#1#21#3| - output ALU operation #3 on (\Verb|r#1|, \Verb|r#2|) to data bus}
+
+\def\echodata{\Verb|0020| - echo data bus to itself for 2 cycles}
+\def\echodataaddr{\Verb|0021| - echo data bus to addr bus for 3 cycles}
+\def\echoaddrdata{\Verb|0022| - echo addr bus to data bus for 2 cycles}
+\def\echoaddraddr{\Verb|0023| - echo addr bus to itself for 2 cycles}
+\def\echoaddraddrlong{\Verb|0024| - echo addr bus to itself for 3 cycles}
+\def\echodatalong{\Verb|0025| - echo data bus to itself for 3 cycles}
+\def\echoaddrdatalong{\Verb|0026| - echo addr bus to data bus for 3 cycles}
+
+\def\readbitport  {\Verb|00a0| - read 1bit port \Verb|addr| (normal addressing) to the data line}
+\def\writebitport {\Verb|00a1| - write data line to 1bit port \Verb|addr| (normal addressing)}
+\def\readbitportb {\Verb|00a2| - read 1bit port \Verb|addr| (bitwise addressing) to the data line}
+\def\writebitportb{\Verb|00a3| - write data line to 1bit port \Verb|addr| (bitwise addressing)}
+\def\readwideport {\Verb|00a4| - read 16bit port \Verb|addr| to the data line}
+\def\writewideport{\Verb|00a4| - write data line to 16bit port \Verb|addr|}
+
+\def\enterrunmode{\Verb|ff00| - set running bit low}
+\def\enterrunmode{\Verb|ff01| - set running bit high}
+
+\def\biosromtodata{\Verb|00b0| - read BIOS rom to data bus}
+
+\def\done{\Verb|fffe| - end instruction}
+\def\reset{\Verb|ffff| - reset everything}
+
+\begin{document}
+
+\maketitle
+
+\section{Micro-instructions}
+
+Special registers:
+\begin{itemize}
+    \item \Verb|sr0| - program kounter \Verb|pk|,
+    \item \Verb|sr1| - stack pointer \Verb|sp|,
+    \item \Verb|sr2| - temp A \Verb{tmpA},
+    \item \Verb|sr3| - temp B \Verb{tmpB},
+    \item \Verb|sr4| - offset register \Verb{offs}.
+\end{itemize}
+
+\par
+Micro-instructions:
+
+\begin{itemize}
+    \item \nothing
+
+    \item\begini
+
+    \item\specialtodata N
+    \item\specialtoaddr N
+    \item\specialptodata N
+    \item\specialptodatao N
+    \item\datatospecial N
+    
+    \item\tmpatopk
+    \item\tmpbtopk
+    
+    \item\incrementpk
+    \item\incrementsp
+    \item\decrementsp
+    
+    \item\tmpatopkifz
+    \item\tmpatopkifnz
+    \item\tmpatopkifn
+    \item\tmpatopkifnn
+    \item\tmpatopkifp
+    \item\tmpatopkifnp
+    
+    \item\regtodata N
+    \item\regtoaddr N
+    \item\regptodata N
+    \item\regptodatao N
+    \item\datatoreg N
+    
+    \item\writeRAM
+    \item\writeRAMo
+
+    \item\readRAM
+    \item\readRAMo
+
+    \item\RAMout N. N = 1,2,4.
+
+    \item\ALUop N M K
+
+    \item\echodata
+    \item\echodataaddr
+    \item\echoaddrdata
+    \item\echoaddraddr
+    \item\echoaddraddrlong
+    \item\echodatalong
+    \item\echoaddrdatalong
+
+    \item \done
+    \item \reset
+\end{itemize}
+
+\newpage
+
+\section{Actual instructions}
+
+\subsection{Control}
+\begin{itemize}
+    \item \Verb|0000| - \Verb|chill|. Do nothing. Go to next instruction. [implemented]
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|0001| - \Verb|goto|. Write constant to program kounter. (GOTO)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatopk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N002| - \Verb|gotoz|. goto if register \Verb|N| is zero.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtodata N
+            \item \tmpatopkifz
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N003| - \Verb|gotonz|. goto if register \Verb|N| is nonzero.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtodata N
+            \item \tmpatopkifnz
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N102| - \Verb|goton|. goto if register \Verb|N| is negative.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtodata N
+            \item \tmpatopkifn
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N103| - \Verb|gotonn|. goto if register \Verb|N| is non-negative.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtodata N
+            \item \tmpatopkifnn
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    
+    \item \Verb|N202| - \Verb|gotop|. goto if register \Verb|N| is positive.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtodata N
+            \item \tmpatopkifp
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N203| - \Verb|gotonp|. goto if register \Verb|N| is non-positive.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtodata N
+            \item \tmpatopkifnp
+            \item \done
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Arithmetic And Logic}
+
+\begin{itemize}
+    \item \Verb|NM1k| - Apply ALU operation k to registers \Verb|N| and \Verb|M| and save to register \Verb|M|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \ALUop N M k 
+            \item \datatoreg N
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \iffalse
+    \item \Verb|002k| - Apply ALU operation k to registers N and M and save to register K, where \Verb|*(pk+1) = []NMK|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \incrementpk
+            \item \pkptrout
+            \item \datatotmpA
+            \item \ALUop 0 0 k 
+            \item \datatotmpB
+            \item \tmpBtodata
+            \item \datatoreg 0
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    \fi
+\end{itemize}
+
+
+\subsection{Stack}
+\begin{itemize}
+    \item \Verb|0004| - \Verb|call|. push \Verb|pk| onto the stack and goto
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \incrementpk
+            \item \decrementsp
+            \item \sptoaddr
+            \item \pktodata
+            \item \writeRAM
+            \item \tmpatodata
+            \item \datatopk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|0005| - \Verb|return|. pop top of stack into \Verb|pk|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \spptodata
+            \item \datatopk
+            \item \incrementsp
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|0006| - \Verb|push|. Just decrement \Verb|sp|
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \decrementsp
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0106| - \Verb|push|. push constant onto the stack
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \decrementsp
+            \item \pkptrout
+            \item \echodatalong
+            \item \sptoaddr
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|0206| - \Verb|push|. push *(constant) onto the stack
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \decrementsp
+            \item \pkptrout
+            \item \echodataaddr
+            \item \readRAM
+            \item \echodatalong
+            \item \sptoaddr
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N306| - \Verb|push|. push \Verb|rN| onto the stack
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \decrementsp
+            \item \sptoaddr
+            \item \regtodata N
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N406| - \Verb|push|. push \Verb|*rN| onto the stack
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \decrementsp
+            \item \regptodata N
+            \item \echodatalong
+            \item \sptoaddr
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    
+    \item \Verb|N506| - \Verb|push|. push \Verb|*rN+offs| onto the stack
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \decrementsp
+            \item \regptodatao N
+            \item \echodatalong
+            \item \sptoaddr
+            \item \writeRAMo
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    
+    \item \Verb|N606| - \Verb|push|. push \Verb|srN| onto the stack
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \decrementsp
+            \item \sptoaddr
+            \item \specialtodata N
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N706| - \Verb|push|. push \Verb|*srN| onto the stack
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \decrementsp
+            \item \specialptodata N
+            \item \echodatalong
+            \item \sptoaddr
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    
+    \item \Verb|N806| - \Verb|push|. push \Verb|*srN+offs| onto the stack
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \decrementsp
+            \item \specialptodatao N
+            \item \echodatalong
+            \item \sptoaddr
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|0007| - \Verb|pop|. Just increment \Verb|sp|
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \incrementsp
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|0207| - \Verb|pop|. pop top of stack into *(constant)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item\pkptrout
+	        \item\datatotmpa
+	        \item\spptodata
+	        \item\echodatalong
+	        \item\tmpatoaddr
+	        \item\writeRAM
+	        \item\incrementpk
+            \item\incrementsp
+	        \item\done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N307| - \Verb|pop|. pop top of stack into \Verb|rN|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \spptodata
+            \item \datatoreg N
+            \item \incrementsp
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N407| - \Verb|pop|. pop top of stack into *\Verb|rN|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \spptodata
+            \item \datatoreg N
+            \item \incrementsp
+            \item \done
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Copying And Pasting}
+\begin{itemize}
+    \item \Verb|0030| - Set *(\Verb|constant|) to \Verb|constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \tmpatoaddr
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0130| - Set *(\Verb|constant|) to *(\Verb|constant|).
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodataaddr
+            \item \readRAM
+            \item \echodatalong
+            \item \tmpatoaddr
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N031| - Set *(\Verb|constant|) to \Verb|rN|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \echodataaddr
+            \item \regtodata N
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N131| - Set *(\Verb|constant|) to *\Verb|rN|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regptodata N
+            \item \echodatalong
+            \item \tmpatoaddr
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N231| - Set *(\Verb|constant|) to \Verb|*(rN+offs)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regptodata N
+            \item \echodatalong
+            \item \tmpatoaddr
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N331| - Set *(\Verb|constant|) to \Verb|srN|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \echodataaddr
+            \item \regtodata N
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N431| - Set *(\Verb|constant|) to *\Verb|srN|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regptodata N
+            \item \echodatalong
+            \item \tmpatoaddr
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N531| - Set *(\Verb|constant|) to \Verb|*(srN+offs)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regptodata N
+            \item \echodatalong
+            \item \tmpatoaddr
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N033| - Set \Verb|rN| to \Verb|constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatoreg N
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N034| - Set \Verb|rN| to *(\Verb|constant|).
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \tmpaptodata
+            \item \datatoreg N
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM35| - Set \Verb|rN| to \Verb|rM| (i.e., copy from \Verb|rM| to \Verb|rN|).
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtodata N
+            \item \datatoreg M
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM36| - Set \Verb|rN| to *\Verb|rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regptodata M
+            \item \datatoreg N
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM37| - Set \Verb|rN| to *\Verb|rM+offs|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \regptodatao M
+            \item \datatoreg N
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM38| - Set \Verb|rN| to \Verb|srM| (i.e., copy from \Verb|srM| to \Verb|rN|).
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \specialtodata N
+            \item \datatoreg M
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM39| - Set \Verb|rN| to *\Verb|srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \specialptodata M
+            \item \datatoreg N
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM3a| - Set \Verb|rN| to *\Verb|srM+offs|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \specialptodatao M
+            \item \datatoreg N
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N03b| - Set *\Verb|rN| to \Verb|constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtoaddr N
+            \item \tmpatodata
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N03c| - Set *\Verb|rN| to *(\Verb|constant|).
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtoaddr N
+            \item \tmpaptodata
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM3d| - Set *\Verb|rN| to \Verb|rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr N
+            \item \regtodata M
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM3e| - Set *\Verb|rN| to *\Verb|rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr M
+            \item \regtodata N
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM3f| - Set *\Verb|rN| to *\Verb|rM+offs|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \regptodatao M
+            \item \echodatalong
+            \item \regtoaddr N
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM40| - Set *\Verb|rN| to \Verb|srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \specialtodata M
+            \item \echodatalong
+            \item \regtoaddr N
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM41| - Set *\Verb|rN| to *\Verb|srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \specialptodata M
+            \item \echodatalong
+            \item \regtoaddr N
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM42| - Set *\Verb|rN| to *\Verb|srM+offs|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \regptodatao M
+            \item \echodatalong
+            \item \regtoaddr N
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N043| - Set \Verb|*(rN+offs)| to \Verb|constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtoaddr N
+            \item \tmpatodata
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N143| - Set \Verb|*(rN+offs)| to *(\Verb|constant|).
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatotmpa
+            \item \regtoaddr N
+            \item \tmpaptodata
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM44| - Set \Verb|*(rN+offs)| to \Verb|rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr N
+            \item \regtodata M
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM45| - Set \Verb|*(rN+offs)| to *\Verb|rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr M
+            \item \regtodata N
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM46| - Set \Verb|*(rN+offs)| to \Verb|*(rM+offs2)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \regptodatao M
+            \item \echodatalong
+            \item \regtoaddr N
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM47| - Set \Verb|*(rN+offs)| to \Verb|srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \specialtodata M
+            \item \echodatalong
+            \item \regtoaddr N
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM48| - Set \Verb|*(rN+offs)| to *\Verb|srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \specialptodata M
+            \item \echodatalong
+            \item \regtoaddr N
+            \item \writeRAM
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM49| - Set \Verb|*(rN+offs1)| to \Verb|*(rM+offs2)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \regptodatao M
+            \item \echodatalong
+            \item \regtoaddr N
+            \item \writeRAM
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|N04a| - Set \Verb|srN| to \Verb|constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N14a| - Set \Verb|srN| to \Verb|*constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM4b| - Set \Verb|srN| to \Verb|rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM4c| - Set \Verb|srN| to \Verb|*rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM4d| - Set \Verb|srN| to \Verb|*(rM+offs)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM4e| - Set \Verb|srN| to \Verb|srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM4f| - Set \Verb|srN| to \Verb|*srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM50| - Set \Verb|srN| to \Verb|*(srM+offs)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    
+    \item \Verb|N051| - Set \Verb|*srN| to \Verb|constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N151| - Set \Verb|*srN| to \Verb|*constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM52| - Set \Verb|*srN| to \Verb|rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM53| - Set \Verb|*srN| to \Verb|*rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM54| - Set \Verb|*srN| to \Verb|*(rM+offs)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM55| - Set \Verb|*srN| to \Verb|srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM56| - Set \Verb|*srN| to \Verb|*srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM57| - Set \Verb|*srN| to \Verb|*(srM+offs)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    
+    \item \Verb|N058| - Set \Verb|*(srN+offs)| to \Verb|constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|N059| - Set \Verb|*(srN+offs)| to \Verb|*constant|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM5a| - Set \Verb|*(srN+offs)| to \Verb|rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM5b| - Set \Verb|*(srN+offs)| to \Verb|*rM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM5c| - Set \Verb|*(srN+offs1)| to \Verb|*(rM+offs2)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|NM5d| - Set \Verb|*(srN+offs)| to \Verb|srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM5e| - Set \Verb|*(srN+offs)| to \Verb|*srM|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|NM5f| - Set \Verb|*(srN+offs1)| to \Verb|*(srM+offs2)|.
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \datatooffs
+            \item \incrementpk
+            \item \pkptrout
+            \item \echodatalong
+            \item \specialtoaddr N
+            \item \writeRAMo
+            \item \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\section{I/O}
+\begin{itemize}
+    \item \Verb|0xN0a0| - Read 1bit port \Verb|constant| into \Verb|rN| (normal addressing)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \echodataaddr
+            \item \readbitport
+            \item \datatoreg N
+            \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0xN0a1| - Write \Verb|rN| to 1bit port \Verb|constant| (normal addressing)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \echodataaddr
+            \item \regtodata N
+            \item \writebitport
+            \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0xN0a2| - Read 1bit ports \Verb|constant| into \Verb|rN| (bitwise addressing)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \echodataaddr
+            \item \readbitportb
+            \item \datatoreg N
+            \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0xN0a3| - Write \Verb|rN| to 1bit ports \Verb|constant| (bitwise addressing)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \echodataaddr
+            \item \regtodata N
+            \item \writebitportb
+            \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|0xN0a4| - Read 16bit port \Verb|constant| into \Verb|rN|
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \echodataaddr
+            \item \readwideport
+            \item \datatoreg N
+            \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0xN0a5| - Write \Verb|rN| to 16bit port \Verb|constant|
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \pkptrout
+            \item \echodataaddr
+            \item \regtodata N
+            \item \writewideport
+            \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|0xNMa6| - Read 1bit port \Verb|rM| into \Verb|rN| (normal addressing)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr M
+            \item \readbitport
+            \item \datatoreg N
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0xNMa7| - Write \Verb|rN| to 1bit port \Verb|rM| (normal addressing)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr M
+            \item \regtodata N
+            \item \writebitport
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0xNMa8| - Read 1bit ports \Verb|rM| into \Verb|rN| (bitwise addressing)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr M
+            \item \readbitportb
+            \item \datatoreg N
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0xN1a9| - Write \Verb|rN| to 1bit ports \Verb|rM| (bitwise addressing)
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr M
+            \item \regtodata N
+            \item \writebitportb
+            \item \done
+        \end{itemize}
+    \end{itemize}
+
+    \item \Verb|0xN0aa| - Read 16bit port \Verb|rM| into \Verb|rN|
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr M
+            \item \readwideport
+            \item \datatoreg N
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \item \Verb|0xN0ab| - Write \Verb|rN| to 16bit port \Verb|tM|
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \regtoaddr M
+            \item \regtodata N
+            \item \writewideport
+            \incrementpk
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    
+    \iffalse
+    \item \Verb|| - 
+    \begin{itemize}
+        \item Micro-instruction sequence:
+        \begin{itemize}
+            \item \done
+        \end{itemize}
+    \end{itemize}
+    \fi
+\end{itemize}
+
+\end{document}
