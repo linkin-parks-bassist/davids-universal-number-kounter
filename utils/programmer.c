@@ -1,1044 +1,876 @@
+#include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <stdint.h>
 
 #define N_REGISTERS 16
 #define N_SPECIAL_REGS 5
 
 #define N_ALU_OPS 8
 
-#define do_nothing WRITEOUT(0x00); WRITEOUT(0x00);
+#define begini 0x0001
 
-#define begini WRITEOUT(0x00); WRITEOUT(0x01);
+#define specialtodata(X) 0x0002 + 0x1000 * X
+#define specialtoaddr(X) 0x0102 + 0x1000 * X
+#define specialptodata(X) 0x0202 + 0x1000 * X
+#define specialptodatao(X) 0x0302 + 0x1000 * X
+#define datatospecial(X) 0x0402 + 0x1000 * X
 
-#define specialtodata(X)   WRITEOUT(0x10 * X);        WRITEOUT(0x02);
-#define specialtoaddr(X)   WRITEOUT(0x10 * X + 0x01); WRITEOUT(0x02);
-#define specialptodata(X)  WRITEOUT(0x10 * X + 0x02); WRITEOUT(0x02);
-#define specialptodatao(X) WRITEOUT(0x10 * X + 0x03); WRITEOUT(0x02);
-#define datatospecial(X)   WRITEOUT(0x10 * X + 0x04); WRITEOUT(0x02);
+#define pktodata 0x0002
+#define pktoaddr 0x0102
+#define pkptrout 0x0202
+#define pkoptrout 0x0302
+#define datatopk 0x0402
 
-#define pktodata  WRITEOUT(0x00); WRITEOUT(0x02);
-#define pktoaddr  WRITEOUT(0x01); WRITEOUT(0x02);
-#define pkptrout  WRITEOUT(0x02); WRITEOUT(0x02);
-#define pkoptrout WRITEOUT(0x03); WRITEOUT(0x02);
-#define datatopk  WRITEOUT(0x04); WRITEOUT(0x02);
+#define sptodata 0x1002
+#define sptoaddr 0x1102
+#define spptodata 0x1202
+#define spptodatao 0x1302
+#define datatosp 0x1402
 
-#define sptodata   WRITEOUT(0x10); WRITEOUT(0x02);
-#define sptoaddr   WRITEOUT(0x11); WRITEOUT(0x02);
-#define spptodata  WRITEOUT(0x12); WRITEOUT(0x02);
-#define spptodatao WRITEOUT(0x13); WRITEOUT(0x02);
-#define datatosp   WRITEOUT(0x14); WRITEOUT(0x02);
+#define tmpatodata 0x2002
+#define tmpatoaddr 0x2102
+#define tmpaptodata 0x2202
+#define tmpaptodatao 0x2302
+#define datatotmpa 0x2402
 
-#define tmpatodata   WRITEOUT(0x20); WRITEOUT(0x02);
-#define tmpatoaddr   WRITEOUT(0x21); WRITEOUT(0x02);
-#define tmpaptodata  WRITEOUT(0x22); WRITEOUT(0x02);
-#define tmpaptodatao WRITEOUT(0x23); WRITEOUT(0x02);
-#define datatotmpa   WRITEOUT(0x24); WRITEOUT(0x02);
+#define tmpbtodata 0x3002
+#define tmpbtoaddr 0x3102
+#define tmpbptodata 0x3202
+#define tmpbptodatao 0x3302
+#define datatotmpb 0x3402
 
-#define tmpbtodata   WRITEOUT(0x30); WRITEOUT(0x02);
-#define tmpbtoaddr   WRITEOUT(0x31); WRITEOUT(0x02);
-#define tmpbptodata  WRITEOUT(0x32); WRITEOUT(0x02);
-#define tmpbptodatao WRITEOUT(0x33); WRITEOUT(0x02);
-#define datatotmpb   WRITEOUT(0x34); WRITEOUT(0x02);
+#define offstodata 0x4002
+#define offstoaddr 0x4102
+#define offsptodata 0x4202
+#define offsptodatao 0x4302
+#define datatooffs 0x4402
 
-#define offstodata   WRITEOUT(0x40); WRITEOUT(0x02);
-#define offstoaddr   WRITEOUT(0x41); WRITEOUT(0x02);
-#define offsptodata  WRITEOUT(0x42); WRITEOUT(0x02);
-#define offsptodatao WRITEOUT(0x43); WRITEOUT(0x02);
-#define datatooffs   WRITEOUT(0x44); WRITEOUT(0x02);
+#define incrementpk 0x0502
+#define incrementsp 0x1502
+#define tmpatopk 0x2502
+#define tmpbtopk 0x3502
 
-#define setoffs(X)   WRITEOUT(0x40 + 0x01 * X); WRITEOUT(0x02);
+#define decrementsp 0x1602
 
-#define incrementpk WRITEOUT(0x05); WRITEOUT(0x02);
-#define incrementsp WRITEOUT(0x15); WRITEOUT(0x02);
-#define tmpatopk    WRITEOUT(0x25); WRITEOUT(0x02);
-#define tmpbtopk    WRITEOUT(0x35); WRITEOUT(0x02);
+#define tmpatopkifz 0x0602
+#define tmpatopkifnz 0x0702
 
-#define decrementsp WRITEOUT(0x16); WRITEOUT(0x02);
+#define tmpatopkifn 0x0802
+#define tmpatopkifnn 0x0902
 
-#define tmpatopkifz  WRITEOUT(0x06); WRITEOUT(0x02);
-#define tmpatopkifnz WRITEOUT(0x07); WRITEOUT(0x02);
+#define tmpatopkifp 0x0a02
+#define tmpatopkifnp 0x0b02
 
-#define tmpatopkifn  WRITEOUT(0x08); WRITEOUT(0x02);
-#define tmpatopkifnn WRITEOUT(0x09); WRITEOUT(0x02);
+#define regtodata(X) 0x0003 + 0x1000 * X
+#define regtoaddr(X) 0x0103 + 0x1000 * X
+#define regptodata(X) 0x0203 + 0x1000 * X
+#define regptodatao(X) 0x0303 + 0x1000 * X
+#define datatoreg(X) 0x0403 + 0x1000 * X
 
-#define tmpatopkifp  WRITEOUT(0x0a); WRITEOUT(0x02);
-#define tmpatopkifnp WRITEOUT(0x0b); WRITEOUT(0x02);
+#define writeRAM 0x0004
+#define writeRAMo 0x0104
+#define readRAM 0x0005
+#define readRAMo 0x0105
 
-#define regtodata(X)   WRITEOUT(0x10 * X); WRITEOUT(0x03);
-#define regtoaddr(X)   WRITEOUT(0x10 * X + 0x01); WRITEOUT(0x03);
-#define regptodata(X)  WRITEOUT(0x10 * X + 0x02); WRITEOUT(0x03);
-#define regptodatao(X) WRITEOUT(0x10 * X + 0x03); WRITEOUT(0x03);
-#define datatoreg(X)   WRITEOUT(0x10 * X + 0x04); WRITEOUT(0x03);
+#define ALUop(X, Y, Z) 0x0010 + 0x1000 * X + 0x0100 * Y + 0x0001 * Z
 
-#define writeRAM       WRITEOUT(0x00); WRITEOUT(0x04);
-#define writeRAMo      WRITEOUT(0x01); WRITEOUT(0x04);
-#define writeBytes(X)  WRITEOUT(0x10 * X + 0x00); WRITEOUT(0x04);
-#define writeByteso(X) WRITEOUT(0x10 * X + 0x01); WRITEOUT(0x04);
+#define echodata 0x0020
+#define echodataaddr 0x0021
+#define echoaddrdata 0x0022
+#define echoaddraddr 0x0023
+#define echoaddraddrlong 0x0024
+#define echodatalong 0x0025
+#define echoaddrdatalong 0x0026
 
-#define readRAM        WRITEOUT(0x00); WRITEOUT(0x05);
-#define readRAMo       WRITEOUT(0x01); WRITEOUT(0x05);
-#define readBytes(X)   WRITEOUT(0x10 * X + 0x00); WRITEOUT(0x05);
-#define readByteso(X)  WRITEOUT(0x10 * X + 0x01); WRITEOUT(0x05);
+#define readfrom_onebitport 0x00a0
+#define writeto_onebitport 0x00a1
+#define readfrom_sixtbitport 0x00a2
+#define writeto_sixtbitport 0x00a3
 
-#define ALUop(X, Y, Z) WRITEOUT(0x10 * X + 0x01 * Y); WRITEOUT(0x10 + 0x01 * Z);
+#define done 0xfffe
+#define reset 0xffff
 
-#define echodata         WRITEOUT(0x00); WRITEOUT(0x20);
-#define echodataaddr     WRITEOUT(0x00); WRITEOUT(0x21);
-#define echoaddrdata     WRITEOUT(0x00); WRITEOUT(0x22);
-#define echoaddraddr     WRITEOUT(0x00); WRITEOUT(0x23);
-#define echoaddraddrlong WRITEOUT(0x00); WRITEOUT(0x24);
-#define echodatalong     WRITEOUT(0x00); WRITEOUT(0x25);
-#define echoaddrdatalong WRITEOUT(0x00); WRITEOUT(0x26);
+#define BINSIZE 2 * 64 * 1024
+#define NWORDS 64 * 1024
 
-#define readbitport    WRITEOUT(0x00); WRITEOUT(0xa0);
-#define writebitport   WRITEOUT(0x00); WRITEOUT(0xa1);
-#define readbitportb   WRITEOUT(0x00); WRITEOUT(0xa2);
-#define writebitportb  WRITEOUT(0x00); WRITEOUT(0xa3);
-#define readwideport   WRITEOUT(0x00); WRITEOUT(0xa4);
-#define writewideport  WRITEOUT(0x00); WRITEOUT(0xa5);
-
-#define biosromtodata  WRITEOUT(0x00); WRITEOUT(0xb0);
-#define setrunbitlow   WRITEOUT(0xff); WRITEOUT(0x00);
-#define setrunbithigh  WRITEOUT(0xff); WRITEOUT(0x01);
-
-#define fetch_instruction WRITEOUT(0xff); WRITEOUT(0x0f);
-#define done  			  WRITEOUT(0xff); WRITEOUT(0xfe);
-#define reset 			  WRITEOUT(0xff); WRITEOUT(0xff);
-
-#define BINSIZE 2*64*1024
-#define NWORDS  2*64*1024
-
-#define WRITEOUT(X) mr_data[current_position] = X; current_position += 1;
-#define CODE_SEQUENCE_FOR(X, Y) dr_data[2 * (Y + X * 0x10)] = (current_position >> 9); dr_data[2 * (Y + X * 0x10) + 1] = (current_position << 8) >> 9;
+#define WRITEOUT(X)                                                            \
+	mr_data[current_position] = X;                                               \
+	current_position += 1;
+#define CODE_SEQUENCE_FOR(X) dr_data[X] = (uint16_t)current_position;
 
 // Main function to handle input arguments
-int main(int argc, char *argv[]) {
-    // Write processed data to output file
-    FILE *mainROM = fopen("mainROM", "wb");
-    if (!mainROM) {
-        perror("Error opening output file");
-        exit(EXIT_FAILURE);
-    }
-    
-    FILE *decoderROM = fopen("decocerROM", "wb");
-    if (!decoderROM) {
-        perror("Error opening output file");
-        exit(EXIT_FAILURE);
-    }
+int
+main(int argc, char* argv[])
+{
+	// Write processed data to output file
+	FILE* mainROM = fopen("../roms/main_rom", "wb");
+	if (!mainROM) {
+		perror("Error opening output file");
+		exit(EXIT_FAILURE);
+	}
 
-	uint8_t *mr_data = malloc(BINSIZE);
-	for (int i = 0; i<NWORDS; i++){
+	FILE* decoderROM = fopen("../roms/decoder_rom", "wb");
+	if (!decoderROM) {
+		perror("Error opening output file");
+		exit(EXIT_FAILURE);
+	}
+
+	uint16_t* mr_data = malloc(BINSIZE);
+	for (int i = 0; i < NWORDS; i++) {
 		mr_data[i] = 0;
 	}
-	uint8_t *dr_data = malloc(BINSIZE);
-	for (int i = 0; i<NWORDS; i++){
+	uint16_t* dr_data = malloc(BINSIZE);
+	for (int i = 0; i < NWORDS; i++) {
 		dr_data[i] = 0;
 	}
-	
-	uint16_t current_position = 0;
+
+	int current_position = 0;
 	int N;
 	int M;
 	int k;
-	uint8_t *word_ptr = &mr_data[current_position];
-	
-	//BIOS-LOAD
-	WRITEOUT(0x00); WRITEOUT(0x11); //subtract register 0 from itself and put it on data bus
-	datatoreg(0)                    //save data bus to register 0, ensuring it contains 0
-	setrunbitlow                    //sure the run bit is 0
-	
-	//BIOS-LOAD LOOP
-	printf("BIOS load loop start: 0x%x\n", current_position/2);
-	
-	regtoaddr(0)   					//use register 0 to index both the BIOS rom and the main memory
-	biosromtodata  					//read the current byte of the BIOS rom to data
-	writeRAM	   					//write it to memory
-	WRITEOUT(0x00); WRITEOUT(0x13); //incrememebt register 0 and output it to data
-	datatoreg(0)					//save it to the register
-	done
+	uint16_t* word_ptr = (uint16_t*)(&mr_data[current_position]);
 
-	
-	//BEGIN INSTRUCTION LOOP
-	printf("run loop start: 0x%x\n", current_position/2);
-	fetch_instruction
-	incrementpk
-	do_nothing
-	begini
-	
-	//chill
-	CODE_SEQUENCE_FOR(0x00,0x00); 
-	
-	WRITEOUT(0x00); WRITEOUT(0x00);
-	done
-	
-	CODE_SEQUENCE_FOR(0x01,0x00); //goto
-	
-	pktoaddr
-	readBytes(4)
-	datatopk
-	done
-	
-	//the various conditional gotos
+	WRITEOUT(pkptrout);
+	WRITEOUT(begini);
+
+	CODE_SEQUENCE_FOR(0x0000); // chill
+
+	WRITEOUT(0x0000);
+	WRITEOUT(done);
+
+	CODE_SEQUENCE_FOR(0x0001); // goto
+
+	WRITEOUT(pkptrout);
+	WRITEOUT(0x0402);
+	WRITEOUT(0xfffe);
+
+	// the various conditional gotos
 	for (N = 0; N < N_REGISTERS; N++) {
 		for (int j = 0; j < 3; j++) {
 			for (int i = 0; i < 2; i++) {
-				CODE_SEQUENCE_FOR(0x10 * N + 0x01 * j, 0x02 + 0x01 * i);
-		
-				pktoaddr readBytes(4)
-				datatotmpa
-				regtodata(N)
-				WRITEOUT(0x06 + 0x01 * (i + 2 * j)); WRITEOUT(0x02);
-				done
+				CODE_SEQUENCE_FOR(0x1000 * N + 0x0100 * j + 0x0002 + 0x0001 * i);
+
+				WRITEOUT(pkptrout);
+				WRITEOUT(datatotmpa);
+				WRITEOUT(regtodata(N));
+				WRITEOUT(0x0602 + 0x0100 * (i + 2 * j));
+				WRITEOUT(done);
 			}
 		}
 	}
-	
-	//ALU stuff
-	for (N = 0; N<N_REGISTERS; N++) {
-		for (M = 0; M<N_REGISTERS; M++) {
-			for (k = 0; k<N_ALU_OPS; k++) {
-				CODE_SEQUENCE_FOR(0x10 * N + 0x01 * M, 0x01 * k + 0x10);
-				
-				ALUop(N, M, k)
-				datatoreg(N)
-				done
+
+	// ALU stuff
+	for (N = 0; N < N_REGISTERS; N++) {
+		for (M = 0; M < N_REGISTERS; M++) {
+			for (k = 0; k < N_ALU_OPS; k++) {
+				CODE_SEQUENCE_FOR(0x0010 + 0x1000 * N + 0x0100 * M + 0x0001 * k);
+
+				WRITEOUT(ALUop(N, M, k));
+				WRITEOUT(datatoreg(N));
+				WRITEOUT(done);
 			}
 		}
 	}
-	
+
 	//** FUNCTION STUFF **//
-	
-	//call
-	CODE_SEQUENCE_FOR(0x04,0x00);
-	
-	pktoaddr readBytes(4)
-	datatotmpa
-	incrementpk
-	do_nothing
-	incrementpk
-	do_nothing
-	incrementpk 
-	do_nothing
-	incrementpk
-    decrementsp
-    do_nothing
-    decrementsp
-    do_nothing
-    decrementsp
-    do_nothing
-    decrementsp
-    sptoaddr
-    pktodata
-    writeBytes(0xf)
-    decrementsp
-    tmpatodata
-    datatopk
-    done
-    
-	//return
-	CODE_SEQUENCE_FOR(0x05,0x00);
-	
-    incrementsp
-    do_nothing
-    incrementsp
-    do_nothing
-    incrementsp
-    do_nothing
-    incrementsp
-    do_nothing
-	sptoaddr
-	readBytes(4)
-	datatopk
-	done
-	
+
+	// call
+	CODE_SEQUENCE_FOR(0x0004);
+
+	WRITEOUT(pkptrout);
+	WRITEOUT(datatotmpa);
+	WRITEOUT(incrementpk);
+	WRITEOUT(decrementsp);
+	WRITEOUT(sptoaddr);
+	WRITEOUT(pktodata);
+	WRITEOUT(writeRAM);
+	WRITEOUT(tmpatodata);
+	WRITEOUT(datatopk);
+	WRITEOUT(done);
+
+	// return
+	CODE_SEQUENCE_FOR(0x0005);
+
+	WRITEOUT(spptodata);
+	WRITEOUT(datatopk);
+	WRITEOUT(incrementsp);
+	WRITEOUT(done);
+
 	////////////////
 	//************//
 	//***PUSHES***//
 	//************//
 	////////////////
-	
-	//blank push
-	CODE_SEQUENCE_FOR(0x06,0x00);
-	
-	decrementsp
-	done
-	
-	//push constant onto the stack
-	CODE_SEQUENCE_FOR(0x06,0x01);
-	
-	decrementsp
-	pkptrout
-	echodatalong
-	sptoaddr
-	writeRAM
-	incrementpk
-	done
-	
-	//push *constant onto the stack
-	CODE_SEQUENCE_FOR(0x06,0x02);
-	
-	decrementsp
-	pkptrout
-	echodataaddr
-	readRAM
-	echodatalong
-	sptoaddr
-	writeRAM
-	incrementpk
-	done
-	
-	for (N = 0; N<N_REGISTERS; N++) {
-		//push register onto the stack
-		CODE_SEQUENCE_FOR(0x06,0x10 * N + 0x03);
-		
-		decrementsp
-		sptoaddr
-		regtodata(N)
-		writeRAM
-		done
-		
-		//push *register onto the stack
-		CODE_SEQUENCE_FOR(0x06,0x10 * N + 0x04);
-		
-		decrementsp
-		regptodata(N)
-		echodatalong
-		sptoaddr
-		writeRAM
-		done
-		
-		//push *(rN+offs)
-		CODE_SEQUENCE_FOR(0x06,0x10 * N + 0x05);
-		
-		pkptrout
-		datatooffs
-		incrementpk
-		decrementsp
-		regptodatao(N)
-		echodatalong
-		sptoaddr
-		writeRAM
-		done
+
+	// blank push
+	CODE_SEQUENCE_FOR(0x0006);
+
+	WRITEOUT(decrementsp);
+	WRITEOUT(done);
+
+	// push constant onto the stack
+	CODE_SEQUENCE_FOR(0x0106);
+
+	WRITEOUT(decrementsp);
+	WRITEOUT(pkptrout);
+	WRITEOUT(echodatalong);
+	WRITEOUT(sptoaddr);
+	WRITEOUT(writeRAM);
+	WRITEOUT(incrementpk);
+	WRITEOUT(done);
+
+	// push *constant onto the stack
+	CODE_SEQUENCE_FOR(0x0206);
+
+	WRITEOUT(decrementsp);
+	WRITEOUT(pkptrout);
+	WRITEOUT(echodataaddr);
+	WRITEOUT(readRAM);
+	WRITEOUT(echodatalong);
+	WRITEOUT(sptoaddr);
+	WRITEOUT(writeRAM);
+	WRITEOUT(incrementpk);
+	WRITEOUT(done);
+
+	for (N = 0; N < N_REGISTERS; N++) {
+		// push register onto the stack
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0306);
+
+		WRITEOUT(decrementsp);
+		WRITEOUT(sptoaddr);
+		WRITEOUT(regtodata(N));
+		WRITEOUT(writeRAM);
+		WRITEOUT(done);
+
+		// push *register onto the stack
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0406);
+
+		WRITEOUT(decrementsp);
+		WRITEOUT(regptodata(N));
+		WRITEOUT(echodatalong);
+		WRITEOUT(sptoaddr);
+		WRITEOUT(writeRAM);
+		WRITEOUT(done);
+
+		// push *(rN+offs)
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0506);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatooffs);
+		WRITEOUT(incrementpk);
+		WRITEOUT(decrementsp);
+		WRITEOUT(regptodatao(N));
+		WRITEOUT(echodatalong);
+		WRITEOUT(sptoaddr);
+		WRITEOUT(writeRAM);
+		WRITEOUT(done);
 	}
-	
+
 	for (N = 0; N < N_SPECIAL_REGS; N++) {
-		//push srN onto the stack
-		CODE_SEQUENCE_FOR(0x06,0x10 * N + 0x03);
-		
-		decrementsp
-		sptoaddr
-		regtodata(N)
-		writeRAM
-		done
-		
-		//push *srN onto the stack
-		CODE_SEQUENCE_FOR(0x06,0x10 * N + 0x04);
-		
-		decrementsp
-		specialptodata(N)
-		echodatalong
-		sptoaddr
-		writeRAM
-		done
-		
-		//push *(srN+offs)
-		CODE_SEQUENCE_FOR(0x06,0x10 * N + 0x05);
-		
-		pkptrout
-		datatooffs
-		incrementpk
-		decrementsp
-		specialptodatao(N)
-		echodatalong
-		sptoaddr
-		writeRAM
-		done
+		// push srN onto the stack
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0306);
+
+		WRITEOUT(decrementsp);
+		WRITEOUT(sptoaddr);
+		WRITEOUT(regtodata(N));
+		WRITEOUT(writeRAM);
+		WRITEOUT(done);
+
+		// push *srN onto the stack
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0406);
+
+		WRITEOUT(decrementsp);
+		WRITEOUT(specialptodata(N));
+		WRITEOUT(echodatalong);
+		WRITEOUT(sptoaddr);
+		WRITEOUT(writeRAM);
+		WRITEOUT(done);
+
+		// push *(srN+offs)
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0506);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatooffs);
+		WRITEOUT(incrementpk);
+		WRITEOUT(decrementsp);
+		WRITEOUT(specialptodatao(N));
+		WRITEOUT(echodatalong);
+		WRITEOUT(sptoaddr);
+		WRITEOUT(writeRAM);
+		WRITEOUT(done);
 	}
-	
-	printf("hi\n");
-	
+
 	//////////////
 	//**********//
 	//***POPS***//
 	//**********//
 	//////////////
-	
-	//pop to nowhere
-	CODE_SEQUENCE_FOR(0x07,0x00);
-	
-	incrementsp
-	done
-	
-	//pop to *constant
-	CODE_SEQUENCE_FOR(0x07,0x02);
-	
-	pkptrout
-	datatotmpa
-	spptodata
-	echodatalong
-	tmpatoaddr
-	writeRAM
-	incrementpk
-	incrementsp
-	done
-	
-	for (N = 0; N<N_REGISTERS; N++) {
-		//pop top of stack into rN
-		CODE_SEQUENCE_FOR(0x07,0x10 * N + 0x03);
-		
-		spptodata
-		datatoreg(N)
-		incrementsp
-		done
-		
-		//pop top of stack into *rN
-		CODE_SEQUENCE_FOR(0x07,0x10 * N + 0x04);
-		
-		spptodata
-		echodatalong
-		regtoaddr(N)
-		writeRAM
-		incrementsp
-		done
-		
-		//pop top of stack into *(rN+offs)
-		CODE_SEQUENCE_FOR(0x07,0x10 * N + 0x05);
-		
-		pkptrout
-		datatooffs
-		incrementpk
-		spptodata
-		echodatalong
-		regtoaddr(N)
-		writeRAMo
-		incrementsp
-		done
+
+	// pop to nowhere
+	CODE_SEQUENCE_FOR(0x0007);
+
+	WRITEOUT(incrementsp);
+	WRITEOUT(done);
+
+	// pop to *constant
+	CODE_SEQUENCE_FOR(0x0207);
+
+	WRITEOUT(pkptrout);
+	WRITEOUT(datatotmpa);
+	WRITEOUT(spptodata);
+	WRITEOUT(echodatalong);
+	WRITEOUT(tmpatoaddr);
+	WRITEOUT(writeRAM);
+	WRITEOUT(incrementpk);
+	WRITEOUT(incrementsp);
+	WRITEOUT(done);
+
+	for (N = 0; N < N_REGISTERS; N++) {
+		// pop top of stack into rN
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0307);
+
+		WRITEOUT(spptodata);
+		WRITEOUT(datatoreg(N));
+		WRITEOUT(incrementsp);
+		WRITEOUT(done);
+
+		// pop top of stack into *rN
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0407);
+
+		WRITEOUT(spptodata);
+		WRITEOUT(echodatalong);
+		WRITEOUT(regtoaddr(N));
+		WRITEOUT(writeRAM);
+		WRITEOUT(incrementsp);
+		WRITEOUT(done);
+
+		// pop top of stack into *(rN+offs)
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0507);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatooffs);
+		WRITEOUT(incrementpk);
+		WRITEOUT(spptodata);
+		WRITEOUT(echodatalong);
+		WRITEOUT(regtoaddr(N));
+		WRITEOUT(writeRAMo);
+		WRITEOUT(incrementsp);
+		WRITEOUT(done);
 	}
-	
-	for (N = 0; N<N_REGISTERS; N++) {
-		//pop top of stack into srN
-		CODE_SEQUENCE_FOR(0x07,0x10 * N + 0x06);
-		
-		spptodata
-		datatospecial(N)
-		incrementsp
-		done
-		
-		//pop top of stack into *srN
-		CODE_SEQUENCE_FOR(0x07,0x10 * N + 0x07);
-		
-		spptodata
-		echodatalong
-		specialtoaddr(N)
-		writeRAM
-		incrementsp
-		done
-		
-		//pop top of stack into *(srN+offs)
-		CODE_SEQUENCE_FOR(0x07,0x10 * N + 0x08);
-		
-		pkptrout
-		datatooffs
-		incrementpk
-		spptodata
-		echodatalong
-		specialtoaddr(N)
-		writeRAMo
-		incrementsp
-		done
+
+	for (N = 0; N < N_REGISTERS; N++) {
+		// pop top of stack into srN
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0607);
+
+		WRITEOUT(spptodata);
+		WRITEOUT(datatospecial(N));
+		WRITEOUT(incrementsp);
+		WRITEOUT(done);
+
+		// pop top of stack into *srN
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0707);
+
+		WRITEOUT(spptodata);
+		WRITEOUT(echodatalong);
+		WRITEOUT(specialtoaddr(N));
+		WRITEOUT(writeRAM);
+		WRITEOUT(incrementsp);
+		WRITEOUT(done);
+
+		// pop top of stack into *(srN+offs)
+		CODE_SEQUENCE_FOR(0x1000 * N + 0x0807);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatooffs);
+		WRITEOUT(incrementpk);
+		WRITEOUT(spptodata);
+		WRITEOUT(echodatalong);
+		WRITEOUT(specialtoaddr(N));
+		WRITEOUT(writeRAMo);
+		WRITEOUT(incrementsp);
+		WRITEOUT(done);
 	}
-	
+
 	/////////////////
 	//*************//
 	//***SETTING***//
 	//*************//
 	/////////////////
-	
-	//~ 0x0030, CONSTANT | POINTER, FOLLOWING(1),   CONSTANT,                      FOLLOWING(2)),
-	//set *constant to constant
-	CODE_SEQUENCE_FOR(0x30,0x00);
-	
-	pkptrout
-	datatotmpa
-	incrementpk
-	pkptrout
-	echodatalong
-	tmpatoaddr
-	writeRAM
-	incrementpk
-	done
-	
-	//~ 0x0130, CONSTANT | POINTER, FOLLOWING(1),   CONSTANT | POINTER,            FOLLOWING(2)),
-	//set *constant to *constant
-	CODE_SEQUENCE_FOR(0x30,0x01);
-	
-	pkptrout
-	datatotmpa
-	incrementpk
-	pkptrout
-	echodataaddr
-	readRAM
-	echodatalong
-	tmpatoaddr
-	writeRAM
-	done
-	
-	for (N = 0; N<N_REGISTERS; N++) {
-		//set *constant to rN
-		//~ 0x0031, CONSTANT | POINTER, FOLLOWING(1),   REGISTER,                      FIRST_NIBBLE)
-		CODE_SEQUENCE_FOR(0x31,0x10 * N);
 
-		pkptrout
-		echodataaddr
-		regtodata(N)
-		writeRAM
-		incrementpk
-		done
-		
-		
-		//set *constant to *rN
-		//~ 0x0131, CONSTANT | POINTER, FOLLOWING(1),   REGISTER | POINTER,            FIRST_NIBBLE)
-		CODE_SEQUENCE_FOR(0x31,0x10 * N + 0x01);
-		
-		pkptrout
-        datatotmpa
-        regptodata(N)
-        echodatalong
-        tmpatoaddr
-        writeRAM
-        done
-		
-		//set *constant to *(rN+offs)
-		//~ 0x0231, CONSTANT | POINTER, FOLLOWING(1),   REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | FOLLOWING(2))
-		CODE_SEQUENCE_FOR(0x31,0x10 * N + 0x02);
-		//implement
+	//~ 0x0030, CONSTANT | POINTER, FOLLOWING(1),   CONSTANT, FOLLOWING(2)), set
+	// *constant to constant
+	CODE_SEQUENCE_FOR(0x0030);
+
+	WRITEOUT(pkptrout);
+	WRITEOUT(datatotmpa);
+	WRITEOUT(incrementpk);
+	WRITEOUT(pkptrout);
+	WRITEOUT(echodatalong)
+	WRITEOUT(tmpatoaddr);
+	WRITEOUT(writeRAM);
+	WRITEOUT(incrementpk);
+	WRITEOUT(done);
+
+	//~ 0x0130, CONSTANT | POINTER, FOLLOWING(1),   CONSTANT | POINTER,
+	//FOLLOWING(2)), set *constant to *constant
+	CODE_SEQUENCE_FOR(0x0130);
+
+	WRITEOUT(pkptrout);
+	WRITEOUT(datatotmpa);
+	WRITEOUT(incrementpk);
+	WRITEOUT(pkptrout);
+	WRITEOUT(echodataaddr);
+	WRITEOUT(readRAM);
+	WRITEOUT(echodatalong);
+	WRITEOUT(tmpatoaddr);
+	WRITEOUT(writeRAM);
+	WRITEOUT(done);
+
+	for (N = 0; N < N_REGISTERS; N++) {
+		// set *constant to rN
+		//~ 0x0031, CONSTANT | POINTER, FOLLOWING(1),   REGISTER, FIRST_NIBBLE)
+		CODE_SEQUENCE_FOR(0x0031 + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(echodataaddr);
+		WRITEOUT(regtodata(N));
+		WRITEOUT(writeRAM);
+		WRITEOUT(incrementpk);
+		WRITEOUT(done);
+
+		// set *constant to *rN
+		//~ 0x0131, CONSTANT | POINTER, FOLLOWING(1),   REGISTER | POINTER,
+		//FIRST_NIBBLE)
+		CODE_SEQUENCE_FOR(0x0131 + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatotmpa);
+		WRITEOUT(regptodata(N));
+		WRITEOUT(echodatalong);
+		WRITEOUT(tmpatoaddr);
+		WRITEOUT(writeRAM);
+		WRITEOUT(done);
+
+		// set *constant to *(rN+offs)
+		//~ 0x0231, CONSTANT | POINTER, FOLLOWING(1),   REGISTER | POINTER |
+		//W_OFFSET, FIRST_NIBBLE | FOLLOWING(2))
+		CODE_SEQUENCE_FOR(0x0231 + 0x1000 * N);
+		// implement
 	}
-	
-	printf("hi\n");
+
 	for (N = 0; N < N_SPECIAL_REGS; N++) {
-		//set *constant to srN
-		//~ 0x0331, CONSTANT | POINTER, FOLLOWING(1), S_REGISTER,                      FIRST_NIBBLE)
-		CODE_SEQUENCE_FOR(0x31,0x10 * N + 0x03);
-		
-		pkptrout
-		echodataaddr
-		specialtodata(N)
-		writeRAM
-		incrementpk
-		done
-		
-		//set *constant to srN
-		//~ 0x0431, CONSTANT | POINTER, FOLLOWING(1), S_REGISTER | POINTER,            FIRST_NIBBLE)
-		CODE_SEQUENCE_FOR(0x31,0x10 * N + 0x04);
-		
-		pkptrout
-        datatotmpa
-        specialptodata(N)
-        echodatalong
-        tmpatoaddr
-        writeRAM
-        done
-		
-		
-		//set *constant to *(srN+offs)
-		//~ 0x0531, CONSTANT | POINTER, FOLLOWING(1), S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | FOLLOWING(2))
-		CODE_SEQUENCE_FOR(0x31,0x10 * N + 0x05);
-		//implement
+		// set *constant to srN
+		//~ 0x0331, CONSTANT | POINTER, FOLLOWING(1), S_REGISTER, FIRST_NIBBLE)
+		CODE_SEQUENCE_FOR(0x0331 + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(echodataaddr);
+		WRITEOUT(specialtodata(N));
+		WRITEOUT(writeRAM);
+		WRITEOUT(incrementpk);
+		WRITEOUT(done);
+
+		// set *constant to srN
+		//~ 0x0431, CONSTANT | POINTER, FOLLOWING(1), S_REGISTER | POINTER,
+		//FIRST_NIBBLE)
+		CODE_SEQUENCE_FOR(0x0431 + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatotmpa);
+		WRITEOUT(specialptodata(N));
+		WRITEOUT(echodatalong);
+		WRITEOUT(tmpatoaddr);
+		WRITEOUT(writeRAM);
+		WRITEOUT(done);
+
+		// set *constant to *(srN+offs)
+		//~ 0x0531, CONSTANT | POINTER, FOLLOWING(1), S_REGISTER | POINTER |
+		//W_OFFSET, FIRST_NIBBLE | FOLLOWING(2))
+		CODE_SEQUENCE_FOR(0x0531 + 0x1000 * N);
+		// implement
 	}
-	
-	for (N = 0; N<N_REGISTERS; N++) {
-		//set rN to constant
+
+	for (N = 0; N < N_REGISTERS; N++) {
+		// set rN to constant
 		//~ 0x0033, REGISTER, FIRST_NIBBLE, CONSTANT,           FOLLOWING(1)),
-		CODE_SEQUENCE_FOR(0x33,0x10 * N);
-		
-		pkptrout
-		datatoreg(N)
-		incrementpk
-		done
-		
-		//set rN to *constant
+		CODE_SEQUENCE_FOR(0x0033 + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatoreg(N));
+		WRITEOUT(incrementpk);
+		WRITEOUT(done);
+
+		// set rN to *constant
 		//~ 0x0034, REGISTER, FIRST_NIBBLE, CONSTANT | POINTER, FOLLOWING(1)),
-		CODE_SEQUENCE_FOR(0x34,0x10 * N);
-		
-		pkptrout
-		echodataaddr
-		readRAM
-		datatoreg(N)
-		incrementpk
-		done
-		
-		//set *rN to constant
-		//~ 0x003b, REGISTER | POINTER, FIRST_NIBBLE, CONSTANT,           FOLLOWING(1)),
-		CODE_SEQUENCE_FOR(0x3b,0x10 * N);
-		
-		pkptrout
-		datatotmpa
-		regtoaddr(N)
-		tmpatodata
-		writeRAM
-		incrementpk
-		done
-		
-		//set *rN to *constant
-		//~ 0x003c, REGISTER | POINTER, FIRST_NIBBLE, CONSTANT | POINTER, FOLLOWING(1)),
-		CODE_SEQUENCE_FOR(0x3c,0x10 * N);
-		
-		pkptrout
-		datatotmpa
-		regtoaddr(N)
-		tmpaptodata
-		writeRAM
-		incrementpk
-		done
-		
-		//set *(rN+offs) to constant
-		//~ 0x0043, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), CONSTANT,           FOLLOWING(2)),
-		CODE_SEQUENCE_FOR(0x43,0x10 * N);
-		//implement
-		
-		//set *(rN+offs) to *constant
-		//~ 0x0143, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), CONSTANT | POINTER, FOLLOWING(2)),
-		CODE_SEQUENCE_FOR(0x43,0x01);
-		//implement
-		
+		CODE_SEQUENCE_FOR(0x0034 + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(echodataaddr);
+		WRITEOUT(readRAM);
+		WRITEOUT(datatoreg(N));
+		WRITEOUT(incrementpk);
+		WRITEOUT(done);
+
+		// set *rN to constant
+		//~ 0x003b, REGISTER | POINTER, FIRST_NIBBLE, CONSTANT, FOLLOWING(1)),
+		CODE_SEQUENCE_FOR(0x003b + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatotmpa);
+		WRITEOUT(regtoaddr(N));
+		WRITEOUT(tmpatodata);
+		WRITEOUT(writeRAM);
+		WRITEOUT(incrementpk);
+		WRITEOUT(done);
+
+		// set *rN to *constant
+		//~ 0x003c, REGISTER | POINTER, FIRST_NIBBLE, CONSTANT | POINTER,
+		//FOLLOWING(1)),
+		CODE_SEQUENCE_FOR(0x003c + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatotmpa);
+		WRITEOUT(regtoaddr(N));
+		WRITEOUT(tmpaptodata);
+		WRITEOUT(writeRAM);
+		WRITEOUT(incrementpk);
+		WRITEOUT(done);
+
+		// set *(rN+offs) to constant
+		//~ 0x0043, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+		//OFFSET_FOLLOWING(1), CONSTANT,           FOLLOWING(2)),
+		CODE_SEQUENCE_FOR(0x0043 + 0x1000 * N);
+		// implement
+
+		// set *(rN+offs) to *constant
+		//~ 0x0143, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+		//OFFSET_FOLLOWING(1), CONSTANT | POINTER, FOLLOWING(2)),
+		CODE_SEQUENCE_FOR(0x0143);
+		// implement
+
 		for (M = 0; M < N_REGISTERS; M++) {
-			//set rN to rM
-			//~ 0x0035, REGISTER, FIRST_NIBBLE, REGISTER,                      SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x35,0x10 * N + 0x01 * M);
-			
-			WRITEOUT(0x10 * M); WRITEOUT(0x03);
-			datatoreg(N)
-			done
-			
-			//set rN to *rM
-			//~ 0x0036, REGISTER, FIRST_NIBBLE, REGISTER | POINTER,            SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x36,0x10 * N + 0x01 * M);
-			
-			regptodata(M)
-			datatoreg(N)
-			done
-			
-			//set rN to *(rM+offs)
-			//~ 0x0037, REGISTER, FIRST_NIBBLE, REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
-			CODE_SEQUENCE_FOR(0x37,0x10 * N + 0x01 * M);
-			
-			pkptrout
-			datatooffs
-			incrementpk
-			regptodatao(M)
-			datatoreg(N)
-			done
-			
-			//set *rN to rM
-			//~ 0x003d, REGISTER | POINTER, FIRST_NIBBLE, REGISTER,           SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x3d,0x10 * N + 0x01 * M);
-			
-			regtodata(M)
-			echodatalong
-			regtoaddr(N)
-			writeRAM
-			done
-			
-			//set *rN to *rM
-			//~ 0x003e, REGISTER | POINTER, FIRST_NIBBLE, REGISTER | POINTER, SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x3e,0x10 * N + 0x01 * M);
-			
-			regptodata(M)
-			echodatalong
-			regtoaddr(N)
-			writeRAM
-			done
-			
-			//set *rN to *(rM+offs)
-			//~ 0x003f, REGISTER | POINTER, FIRST_NIBBLE, REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
-			CODE_SEQUENCE_FOR(0x3f,0x10 * N + 0x01 * M);
-			
-			pkptrout
-			datatooffs
-			regptodatao(M)
-			echodatalong
-			regtoaddr(N)
-			writeRAM
-			incrementpk
-			done
-			
-			//set *(rN+offs) to rM
-			//~ 0x0044, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), REGISTER,                      SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x44,0x10 * N + 0x01 * M);
-			
-			
-			//set *(rN+offs) to *rM
-			//~ 0x0045, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), REGISTER | POINTER,            SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x45,0x10 * N + 0x01 * M);
-			
-			
-			//set *(rN+offs) to *(rM+offs)
-			//~ 0x0046, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(2)),
-			CODE_SEQUENCE_FOR(0x46,0x10 * N + 0x01 * M);
-			
+			// set rN to rM
+			//~ 0x0035, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0035 + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(0x1000 * M + 0x0003);
+			WRITEOUT(datatoreg(N));
+			WRITEOUT(done);
+
+			// set rN to *rM
+			//~ 0x0036, REGISTER, FIRST_NIBBLE, REGISTER | POINTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0036 + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(regptodata(M));
+			WRITEOUT(datatoreg(N));
+			WRITEOUT(done);
+
+			// set rN to *(rM+offs)
+			//~ 0x0037, REGISTER, FIRST_NIBBLE, REGISTER | POINTER | W_OFFSET,
+			//SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
+			CODE_SEQUENCE_FOR(0x0037 + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(pkptrout);
+			WRITEOUT(datatooffs);
+			WRITEOUT(incrementpk);
+			WRITEOUT(regptodatao(M));
+			WRITEOUT(datatoreg(N));
+			WRITEOUT(done);
+
+			// set *rN to rM
+			//~ 0x003d, REGISTER | POINTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x003d + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(regtodata(M));
+			WRITEOUT(echodatalong);
+			WRITEOUT(regtoaddr(N));
+			WRITEOUT(writeRAM);
+			WRITEOUT(done);
+
+			// set *rN to *rM
+			//~ 0x003e, REGISTER | POINTER, FIRST_NIBBLE, REGISTER | POINTER,
+			//SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x003e + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(regptodata(M));
+			WRITEOUT(echodatalong);
+			WRITEOUT(regtoaddr(N));
+			WRITEOUT(writeRAM);
+			WRITEOUT(done);
+
+			// set *rN to *(rM+offs)
+			//~ 0x003f, REGISTER | POINTER, FIRST_NIBBLE, REGISTER | POINTER |
+			//W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
+			CODE_SEQUENCE_FOR(0x003f + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(pkptrout);
+			WRITEOUT(datatooffs);
+			WRITEOUT(regptodatao(M));
+			WRITEOUT(echodatalong);
+			WRITEOUT(regtoaddr(N));
+			WRITEOUT(writeRAM);
+			WRITEOUT(incrementpk);
+			WRITEOUT(done);
+
+			// set *(rN+offs) to rM
+			//~ 0x0044, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), REGISTER,                      SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0044 + 0x1000 * N + 0x0100 * M);
+
+			// set *(rN+offs) to *rM
+			//~ 0x0045, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), REGISTER | POINTER,            SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0045 + 0x1000 * N + 0x0100 * M);
+
+			// set *(rN+offs) to *(rM+offs)
+			//~ 0x0046, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE |
+			//OFFSET_FOLLOWING(2)),
+			CODE_SEQUENCE_FOR(0x0046 + 0x1000 * N + 0x0100 * M);
 		}
-		
+
 		for (M = 0; M < N_SPECIAL_REGS; M++) {
-			//set rN to srM
-			//~ 0x0038, REGISTER, FIRST_NIBBLE, S_REGISTER,                      SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x38,0x10 * N + 0x01 * M);
-			
-			specialtodata(M)
-			datatoreg(N)
-			done
-			
-			//set rN to *srM
-			//~ 0x0039, REGISTER, FIRST_NIBBLE, S_REGISTER | POINTER,            SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x39,0x10 * N + 0x01 * M);
-			
-			specialptodata(M)
-			datatoreg(N)
-			done
-			
-			//set rN to *(srM+offs)
-			//~ 0x003a, REGISTER, FIRST_NIBBLE, S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
-			CODE_SEQUENCE_FOR(0x3a,0x10 * N + 0x01 * M);
-			
-			pkptrout
-            datatooffs
-            specialptodatao(M)
-            datatoreg(N)
-            incrementpk
-            done
-			
-			//set *rN to srM
-			//~ 0x0040, REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER,           SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x40,0x10 * N + 0x01 * M);
-			
-			specialtodata(M)
-			echodatalong
-			regtoaddr(N)
-			writeRAM
-			done
-			
-			//set *rN to *srM
-			//~ 0x0041, REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER | POINTER, SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x41,0x10 * N + 0x01 * M);
-			
-			specialptodata(M)
-			echodatalong
-			regtoaddr(N)
-			writeRAM
-			done
-			
-			//set *rN to *(srM+offs)
-			//~ 0x0042, REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
-			CODE_SEQUENCE_FOR(0x42,0x10 * N + 0x01 * M);
-			
-			pkptrout
-			datatooffs
-			specialptodatao(M)
-			echodatalong
-			regtoaddr(N)
-			writeRAM
-			incrementpk
-			done
-			
-			//set *(rN+offs) to srM
-			//~ 0x0047, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), S_REGISTER,                      SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x47,0x10 * N + 0x01 * M);
-			
-			//set *(rN+offs) to *srM
-			//~ 0x0048, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), S_REGISTER | POINTER,            SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x48,0x10 * N + 0x01 * M);
-			
-			//set *(rN+offs) to *(srM+offs)
-			//~ 0x0049, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(2)),
-			CODE_SEQUENCE_FOR(0x49,0x10 * N + 0x01 * M);
+			// set rN to srM
+			//~ 0x0038, REGISTER, FIRST_NIBBLE, S_REGISTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0038 + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(specialtodata(M));
+			WRITEOUT(datatoreg(N));
+			WRITEOUT(done);
+
+			// set rN to *srM
+			//~ 0x0039, REGISTER, FIRST_NIBBLE, S_REGISTER | POINTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0039 + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(specialptodata(M));
+			WRITEOUT(datatoreg(N));
+			WRITEOUT(done);
+
+			// set rN to *(srM+offs)
+			//~ 0x003a, REGISTER, FIRST_NIBBLE, S_REGISTER | POINTER | W_OFFSET,
+			//SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
+			CODE_SEQUENCE_FOR(0x003a + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(pkptrout);
+			WRITEOUT(datatooffs);
+			WRITEOUT(specialptodatao(M));
+			WRITEOUT(datatoreg(N));
+			WRITEOUT(incrementpk);
+			WRITEOUT(done);
+
+			// set *rN to srM
+			//~ 0x0040, REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0040 + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(specialtodata(M));
+			WRITEOUT(echodatalong);
+			WRITEOUT(regtoaddr(N));
+			WRITEOUT(writeRAM);
+			WRITEOUT(done);
+
+			// set *rN to *srM
+			//~ 0x0041, REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER | POINTER,
+			//SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0041 + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(specialptodata(M));
+			WRITEOUT(echodatalong);
+			WRITEOUT(regtoaddr(N));
+			WRITEOUT(writeRAM);
+			WRITEOUT(done);
+
+			// set *rN to *(srM+offs)
+			//~ 0x0042, REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER | POINTER |
+			//W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
+			CODE_SEQUENCE_FOR(0x0042 + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(pkptrout);
+			WRITEOUT(datatooffs);
+			WRITEOUT(specialptodatao(M));
+			WRITEOUT(echodatalong);
+			WRITEOUT(regtoaddr(N));
+			WRITEOUT(writeRAM);
+			WRITEOUT(incrementpk);
+			WRITEOUT(done);
+
+			// set *(rN+offs) to srM
+			//~ 0x0047, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), S_REGISTER,                      SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0047 + 0x1000 * N + 0x0100 * M);
+
+			// set *(rN+offs) to *srM
+			//~ 0x0048, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), S_REGISTER | POINTER,            SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0048 + 0x1000 * N + 0x0100 * M);
+
+			// set *(rN+offs) to *(srM+offs)
+			//~ 0x0049, REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE |
+			//OFFSET_FOLLOWING(2)),
+			CODE_SEQUENCE_FOR(0x0049 + 0x1000 * N + 0x0100 * M);
 		}
 	}
-	
-	
+
 	for (N = 0; N < N_SPECIAL_REGS; N++) {
-		//set srN to constant
+		// set srN to constant
 		//~ 0x004a, S_REGISTER, FIRST_NIBBLE, CONSTANT,           FOLLOWING(1)),
-		CODE_SEQUENCE_FOR(0x4a,0x10 * N);
-		
-		
-		
-		//set srN to *constant
+		CODE_SEQUENCE_FOR(0x004a + 0x1000 * N);
+
+		// set srN to *constant
 		//~ 0x014a, S_REGISTER, FIRST_NIBBLE, CONSTANT | POINTER, FOLLOWING(1)),
-		CODE_SEQUENCE_FOR(0x4a,0x10 * N + 0x01);
-		
-		
-		//set *srN to constant
-		//~ 0x0051, S_REGISTER | POINTER, FIRST_NIBBLE, CONSTANT,           FOLLOWING(1)),
-		CODE_SEQUENCE_FOR(0x51,0x10 * N);
-		
-		
-		
-		//set *srN to *constant
-		//~ 0x0151, S_REGISTER | POINTER, FIRST_NIBBLE, CONSTANT | POINTER, FOLLOWING(1)),
-		CODE_SEQUENCE_FOR(0x51,0x10 * N + 0x01);
-		
-		
-		
-		
-		//set *(srN+offs) to constant
-		//~ 0x0058, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), CONSTANT,           FOLLOWING(2)),
-		CODE_SEQUENCE_FOR(0x58,0x10 * N);
-		
-		pkptrout
-		datatooffs
-		incrementpk
-        pkptrout
-		echodatalong
-		specialtoaddr(N)
-		writeRAMo
-		incrementpk
-        done
-        
-		
-		
-		//set *(srN+offs) to *constant
-		//~ 0x0059, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), CONSTANT | POINTER, FOLLOWING(2)),
-		CODE_SEQUENCE_FOR(0x59,0x10 * N);
-		
-		pkptrout
-        datatooffs
-        incrementpk
-        pkptrout
-        datatotmpa
-        tmpaptodata
-        echodatalong
-        specialtoaddr(N)
-        writeRAMo
-        incrementpk
-        done
-		
+		CODE_SEQUENCE_FOR(0x014a + 0x1000 * N);
+
+		// set *srN to constant
+		//~ 0x0051, S_REGISTER | POINTER, FIRST_NIBBLE, CONSTANT, FOLLOWING(1)),
+		CODE_SEQUENCE_FOR(0x0051 + 0x1000 * N);
+
+		// set *srN to *constant
+		//~ 0x0151, S_REGISTER | POINTER, FIRST_NIBBLE, CONSTANT | POINTER,
+		//FOLLOWING(1)),
+		CODE_SEQUENCE_FOR(0x0151 + 0x1000 * N);
+
+		// set *(srN+offs) to constant
+		//~ 0x0058, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+		//OFFSET_FOLLOWING(1), CONSTANT,           FOLLOWING(2)),
+		CODE_SEQUENCE_FOR(0x0058 + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatooffs);
+		WRITEOUT(incrementpk);
+		WRITEOUT(pkptrout);
+		WRITEOUT(echodatalong);
+		WRITEOUT(specialtoaddr(N));
+		WRITEOUT(writeRAMo);
+		WRITEOUT(incrementpk);
+		WRITEOUT(done);
+
+		// set *(srN+offs) to *constant
+		//~ 0x0059, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+		//OFFSET_FOLLOWING(1), CONSTANT | POINTER, FOLLOWING(2)),
+		CODE_SEQUENCE_FOR(0x0059 + 0x1000 * N);
+
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatooffs);
+		WRITEOUT(incrementpk);
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatotmpa);
+		WRITEOUT(tmpaptodata);
+		WRITEOUT(echodatalong);
+		WRITEOUT(specialtoaddr(N));
+		WRITEOUT(writeRAMo);
+		WRITEOUT(incrementpk);
+		WRITEOUT(done);
+
 		for (M = 0; M < N_REGISTERS; M++) {
-			//set srN to rM
-			//~ 0x004b, S_REGISTER, FIRST_NIBBLE, REGISTER,                      SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x4b,0x10 * N + 0x01 * M);
-			
-			
-			
-			//set srN to *rM
-			//~ 0x004c, S_REGISTER, FIRST_NIBBLE, REGISTER | POINTER,            SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x4c,0x10 * N + 0x01 * M);
-			
-			
-			
-			//set srN to *(rM+offs)
-			//~ 0x004d, S_REGISTER, FIRST_NIBBLE, REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
-			CODE_SEQUENCE_FOR(0x4d,0x10 * N + 0x01 * M);
-			
-			
-			
-			//set *srN to rM
-			//~ 0x0052, S_REGISTER | POINTER, FIRST_NIBBLE, REGISTER,           SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x52,0x10 * N + 0x01 * M);
-			
-			
-			//set *srN to *rM
-			//~ 0x0053, S_REGISTER | POINTER, FIRST_NIBBLE, REGISTER | POINTER, SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x53,0x10 * N + 0x01 * M);
-			
-			
-			//set *srN to *(rM+offs)
-			//~ 0x0054, S_REGISTER | POINTER, FIRST_NIBBLE, REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
-			CODE_SEQUENCE_FOR(0x54,0x10 * N + 0x01 * M);
-			
-			
-			//set *(srN+offs) to rM
-			//~ 0x005a, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), REGISTER,                      SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x5a,0x10 * N + 0x01 * M);
-			
-			
-			pkptrout
-            datatooffs
-            specialtoaddr(N)
-            regtodata(M)
-            writeRAMo
-            incrementpk
-            done
-			
-			
-			//set *(srN+offs) to *rM
-			//~ 0x005b, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), REGISTER | POINTER,            SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x5b,0x10 * N + 0x01 * M);
-			
-			
-			//set *(srN+offs) to *(rM+offs)
-			//~ 0x005c, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(2)),
-			CODE_SEQUENCE_FOR(0x5c,0x10 * N + 0x01 * M);
-			
+			// set srN to rM
+			//~ 0x004b, S_REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x004b + 0x1000 * N + 0x0100 * M);
+
+			// set srN to *rM
+			//~ 0x004c, S_REGISTER, FIRST_NIBBLE, REGISTER | POINTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x004c + 0x1000 * N + 0x0100 * M);
+
+			// set srN to *(rM+offs)
+			//~ 0x004d, S_REGISTER, FIRST_NIBBLE, REGISTER | POINTER | W_OFFSET,
+			//SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
+			CODE_SEQUENCE_FOR(0x004d + 0x1000 * N + 0x0100 * M);
+
+			// set *srN to rM
+			//~ 0x0052, S_REGISTER | POINTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0052 + 0x1000 * N + 0x0100 * M);
+
+			// set *srN to *rM
+			//~ 0x0053, S_REGISTER | POINTER, FIRST_NIBBLE, REGISTER | POINTER,
+			//SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0053 + 0x1000 * N + 0x0100 * M);
+
+			// set *srN to *(rM+offs)
+			//~ 0x0054, S_REGISTER | POINTER, FIRST_NIBBLE, REGISTER | POINTER |
+			//W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
+			CODE_SEQUENCE_FOR(0x0054 + 0x1000 * N + 0x0100 * M);
+
+			// set *(srN+offs) to rM
+			//~ 0x005a, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), REGISTER,                      SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x005a + 0x1000 * N + 0x0100 * M);
+
+			WRITEOUT(pkptrout);
+			WRITEOUT(datatooffs);
+			WRITEOUT(specialtoaddr(N));
+			WRITEOUT(regtodata(M));
+			WRITEOUT(writeRAMo);
+			WRITEOUT(incrementpk);
+			WRITEOUT(done);
+
+			// set *(srN+offs) to *rM
+			//~ 0x005b, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), REGISTER | POINTER,            SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x005b + 0x1000 * N + 0x0100 * M);
+
+			// set *(srN+offs) to *(rM+offs)
+			//~ 0x005c, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE |
+			//OFFSET_FOLLOWING(2)),
+			CODE_SEQUENCE_FOR(0x005c + 0x1000 * N + 0x0100 * M);
 		}
-		
+
 		for (M = 0; M < N_SPECIAL_REGS; M++) {
-			//set srN to srM
-			//~ 0x004e, S_REGISTER, FIRST_NIBBLE, S_REGISTER,                      SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x4e,0x10 * N + 0x01 * M);
-			
-			
-			//set *srN to *srM
-			//~ 0x004f, S_REGISTER, FIRST_NIBBLE, S_REGISTER | POINTER,            SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x4f,0x10 * N + 0x01 * M);
-			
-			
-			//set *srN to *(srM+offs)
-			//~ 0x0050, S_REGISTER, FIRST_NIBBLE, S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
-			CODE_SEQUENCE_FOR(0x50,0x10 * N + 0x01 * M);
-			
-			//set *srN to srM
-			//~ 0x0055, S_REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER,           SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x55,0x10 * N + 0x01 * M);
-			
-			
-			//set *srN to *srM
-			//~ 0x0056, S_REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER | POINTER, SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x56,0x10 * N + 0x01 * M);
-			
-			
-			//set *srN to *(srM+offs)
-			//~ 0x0057, S_REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
-			CODE_SEQUENCE_FOR(0x57,0x10 * N + 0x01 * M);
-			
-			
-			//set *(srN+offs) to srM
-			//~ 0x005d, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), S_REGISTER,                      SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x5d,0x10 * N + 0x01 * M);
-			
-			//set *(srN+offs) to *srM
-			//~ 0x005e, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), S_REGISTER | POINTER,            SECOND_NIBBLE),
-			CODE_SEQUENCE_FOR(0x5e,0x10 * N + 0x01 * M);
-			
-			
-			//set *(srN+offs) to *(srM+offs)
-			//~ 0x005f, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(2)),
-			CODE_SEQUENCE_FOR(0x5f,0x10 * N + 0x01 * M);
+			// set srN to srM
+			//~ 0x004e, S_REGISTER, FIRST_NIBBLE, S_REGISTER, SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x004e + 0x1000 * N + 0x0100 * M);
+
+			// set *srN to *srM
+			//~ 0x004f, S_REGISTER, FIRST_NIBBLE, S_REGISTER | POINTER,
+			//SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x004f + 0x1000 * N + 0x0100 * M);
+
+			// set *srN to *(srM+offs)
+			//~ 0x0050, S_REGISTER, FIRST_NIBBLE, S_REGISTER | POINTER | W_OFFSET,
+			//SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
+			CODE_SEQUENCE_FOR(0x0050 + 0x1000 * N + 0x0100 * M);
+
+			// set *srN to srM
+			//~ 0x0055, S_REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER,
+			//SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0055 + 0x1000 * N + 0x0100 * M);
+
+			// set *srN to *srM
+			//~ 0x0056, S_REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER | POINTER,
+			//SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x0056 + 0x1000 * N + 0x0100 * M);
+
+			// set *srN to *(srM+offs)
+			//~ 0x0057, S_REGISTER | POINTER, FIRST_NIBBLE, S_REGISTER | POINTER |
+			//W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(1)),
+			CODE_SEQUENCE_FOR(0x0057 + 0x1000 * N + 0x0100 * M);
+
+			// set *(srN+offs) to srM
+			//~ 0x005d, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), S_REGISTER,                      SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x005d + 0x1000 * N + 0x0100 * M);
+
+			// set *(srN+offs) to *srM
+			//~ 0x005e, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), S_REGISTER | POINTER,            SECOND_NIBBLE),
+			CODE_SEQUENCE_FOR(0x005e + 0x1000 * N + 0x0100 * M);
+
+			// set *(srN+offs) to *(srM+offs)
+			//~ 0x005f, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE |
+			//OFFSET_FOLLOWING(1), S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE |
+			//OFFSET_FOLLOWING(2)),
+			CODE_SEQUENCE_FOR(0x005f + 0x1000 * N + 0x0100 * M);
 		}
 	}
-	
-	// hardwear :)
-	for (N = 0; N<N_REGISTERS; N++) {
-		// write bitport constant to rN
-		CODE_SEQUENCE_FOR(0xa0,0x10 * N);
-		
-		pkptrout
-		echodataaddr
-		readbitport
-		datatoreg(N)
-		incrementpk
-		done
-		
-		// write rN to bitport constant
-		CODE_SEQUENCE_FOR(0xa1,0x10 * N);
-		
-		pkptrout
-		echodataaddr
-		regtodata(N)
-		writebitport
-		incrementpk
-		done
-		
-		// write bitport constant to rN (bitwise addressing)
-		CODE_SEQUENCE_FOR(0xa2,0x10 * N);
-		
-		pkptrout
-		echodataaddr
-		readbitportb
-		datatoreg(N)
-		incrementpk
-		done
-		
-		// write rN to bitport constant (bitwise addressing)
-		CODE_SEQUENCE_FOR(0xa3,0x10 * N);
-		
-		pkptrout
-		echodataaddr
-		regtodata(N)
-		writebitportb
-		incrementpk
-		done
-		
-		// read wideport constant to rN
-		CODE_SEQUENCE_FOR(0xa4,0x10 * N);
-		
-		pkptrout
-		echodataaddr
-		readwideport
-		datatoreg(N)
-		incrementpk
-		done
-		
-		// write rN to wideport constant
-		CODE_SEQUENCE_FOR(0xa5,0x10 * N);
-		
-		pkptrout
-		echodataaddr
-		regtodata(N)
-		writewideport
-		incrementpk
-		done
-		
-		for (M = 0; M<N_REGISTERS; M++) {
-			// write bitport rM to constant rN
-			CODE_SEQUENCE_FOR(0xa6,0x10 * N);
-		
-			regtoaddr(M)
-			readbitport
-			datatoreg(N)
-			done
-			
-			// write rN to bitport rM
-			CODE_SEQUENCE_FOR(0xa7,0x10 * N);
-			
-			regtoaddr(M)
-			regtodata(N)
-			writebitport
-			done
-			
-			// write bitport rM to rN (bitwise addressing)
-			CODE_SEQUENCE_FOR(0xa8,0x10 * N);
-			
-			regtoaddr(M)
-			readbitportb
-			datatoreg(N)
-			done
-			
-			// write rN to bitport rM (bitwise addressing)
-			CODE_SEQUENCE_FOR(0xa9,0x10 * N);
-			
-			regtoaddr(M)
-			regtodata(N)
-			writebitportb
-			done
-			
-			// read rM constant to rN
-			CODE_SEQUENCE_FOR(0xaa,0x10 * N);
-			
-			regtoaddr(M)
-			readwideport
-			datatoreg(N)
-			done
-			
-			// write rN to wideport rM
-			CODE_SEQUENCE_FOR(0xab,0x10 * N);
-			
-			regtoaddr(M)
-			regtodata(N)
-			writewideport
-			done
-		}
-	}
-	
-	
-	
-	fwrite(mr_data, 1, NWORDS, mainROM);
-    fclose(mainROM);
-	fwrite(dr_data, 1, NWORDS, decoderROM);
-    fclose(decoderROM);
-    
-    free(mr_data);
-    free(dr_data);
-    
-    return EXIT_SUCCESS;
+
+	fwrite(mr_data, 2, NWORDS, mainROM);
+	fclose(mainROM);
+	fwrite(dr_data, 2, NWORDS, decoderROM);
+	fclose(decoderROM);
+
+	free(mr_data);
+	free(dr_data);
+
+	return EXIT_SUCCESS;
 }

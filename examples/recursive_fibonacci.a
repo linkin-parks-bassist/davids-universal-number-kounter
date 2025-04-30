@@ -1,0 +1,43 @@
+push 3
+call fibs
+
+set *0x1000 *sr1
+
+loop:
+	goto loop
+
+fibs:
+	set r2 *(sr1+1)
+	
+	decrement r2
+	decrement r2
+	
+	goto_if_nonpositive r2 base_case
+	
+	push r2
+	
+	increment r2
+	push r2
+	
+	call fibs
+	
+	pop r0
+	pop r1
+	
+	push r0
+	push r1
+	
+	call fibs
+	
+	pop r0
+	pop r1
+	
+	add r0 r1
+	
+	set *(sr1+1) r0
+	
+	return
+	
+	base_case:
+		set *(sr1+1) 1
+		return
