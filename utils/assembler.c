@@ -15,10 +15,10 @@
 
 #define N_ARG_TYPES 4
 
-#define CONSTANT 1
-#define REGISTER 2
-#define S_REGISTER 3
-#define INVALID -1
+#define CONSTANT 	1
+#define REGISTER 	2
+#define S_REGISTER 	3
+#define INVALID 	0xffff
 
 #define POINTER 4
 #define W_OFFSET 8
@@ -823,12 +823,12 @@ parameter parse_parameter(const char* input)
 #define PLAIN_GOTO 0x0001
 #define FUNCTION_CALL 0x0004
 
-#define GOTO_C_ZERO 0x0002
-#define GOTO_C_NONZERO 0x0003
-#define GOTO_C_NEGATIVE 0x0102
-#define GOTO_C_NONNEGATIVE 0x0103
-#define GOTO_C_POSITIVE 0x0202
-#define GOTO_C_NONPOSITIVE 0x0203
+#define GOTO_C_ZERO 		0x0002
+#define GOTO_C_NONZERO 		0x0003
+#define GOTO_C_NEGATIVE 	0x0102
+#define GOTO_C_NONNEGATIVE 	0x0103
+#define GOTO_C_POSITIVE 	0x0202
+#define GOTO_C_NONPOSITIVE 	0x0203
 
 uint16_t
 encode_goto(line_data_str line)
@@ -883,7 +883,8 @@ encode_goto(line_data_str line)
 				exit(EXIT_FAILURE);
 			}
 		}
-
+		
+		printf("Encoding goto of type 0x%x with parameter value %d at 0x%x\n", code, param.value, code + 0x1000 * param.value);
 		code += 0x1000 * param.value;
 	}
 

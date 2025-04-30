@@ -12563,6 +12563,11 @@ fffe 202 4402 4102 d003 104 502 fffe
       <a name="value" val="0x0"/>
       <a name="width" val="16"/>
     </comp>
+    <comp lib="0" loc="(410,120)" name="Probe">
+      <a name="appearance" val="classic"/>
+      <a name="facing" val="west"/>
+      <a name="radix" val="16"/>
+    </comp>
     <comp lib="0" loc="(410,1320)" name="Splitter">
       <a name="bit0" val="none"/>
       <a name="bit1" val="none"/>
@@ -12582,6 +12587,11 @@ fffe 202 4402 4102 d003 104 502 fffe
       <a name="bit9" val="none"/>
       <a name="fanout" val="1"/>
       <a name="incoming" val="16"/>
+    </comp>
+    <comp lib="0" loc="(410,80)" name="Probe">
+      <a name="appearance" val="classic"/>
+      <a name="facing" val="west"/>
+      <a name="radix" val="16"/>
     </comp>
     <comp lib="0" loc="(510,680)" name="Constant">
       <a name="width" val="16"/>
@@ -12953,19 +12963,22 @@ fffe 202 4402 4102 d003 104 502 fffe
     <wire from="(380,770)" to="(380,870)"/>
     <wire from="(380,770)" to="(410,770)"/>
     <wire from="(380,80)" to="(380,360)"/>
+    <wire from="(380,80)" to="(410,80)"/>
     <wire from="(380,870)" to="(380,940)"/>
     <wire from="(380,870)" to="(410,870)"/>
     <wire from="(380,940)" to="(380,990)"/>
     <wire from="(380,940)" to="(410,940)"/>
     <wire from="(380,990)" to="(380,1040)"/>
     <wire from="(380,990)" to="(410,990)"/>
-    <wire from="(390,100)" to="(390,380)"/>
+    <wire from="(390,100)" to="(390,120)"/>
     <wire from="(390,1010)" to="(390,1060)"/>
     <wire from="(390,1010)" to="(410,1010)"/>
     <wire from="(390,1060)" to="(390,1100)"/>
     <wire from="(390,1060)" to="(400,1060)"/>
     <wire from="(390,1100)" to="(390,1320)"/>
     <wire from="(390,1100)" to="(420,1100)"/>
+    <wire from="(390,120)" to="(390,380)"/>
+    <wire from="(390,120)" to="(410,120)"/>
     <wire from="(390,1320)" to="(410,1320)"/>
     <wire from="(390,380)" to="(390,470)"/>
     <wire from="(390,380)" to="(400,380)"/>

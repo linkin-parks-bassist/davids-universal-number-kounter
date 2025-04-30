@@ -1,0 +1,42 @@
+alias x r0
+alias y r1
+
+push -12
+push -5
+
+call remainder
+
+pop r0
+pop
+
+set *0xffff r0
+
+loop:
+	goto loop
+
+remainder:
+	set y *(sp+1)
+	set x *(sp+2)
+	
+	goto_if_nonnegative y y_is_nonnegative
+	
+	negate y
+	
+	y_is_nonnegative:
+	
+	goto_if_negative x fix_negative
+	
+	remainder_loop:
+		subtract x y
+		goto_if_negative x remainder_done
+		goto remainder_loop
+	
+	fix_negative:
+		add x y
+		goto_if_negative x fix_negative
+		goto remainder_loop
+	
+	remainder_done:
+		add x y
+		set result x
+		return
