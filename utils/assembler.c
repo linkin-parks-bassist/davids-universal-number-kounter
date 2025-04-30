@@ -55,7 +55,7 @@ typedef struct
 	char* replacer;
 } alias;
 
-int num_aliases = 2;
+int num_aliases = 4;
 alias aliases[MAX_N_ALIASES];
 
 #define _R___R__                                                               \
@@ -983,6 +983,18 @@ void process_file(const char* input_path, const char* output_path)
 
 	aliases[1].replacer = malloc(strlen("sr1") + 1);
 	strcpy(aliases[1].replacer, "sr1");
+
+	aliases[2].replacee = malloc(strlen("argument") + 1);
+	strcpy(aliases[2].replacee, "argument");
+
+	aliases[2].replacer = malloc(strlen("*(sr1+1)") + 1);
+	strcpy(aliases[2].replacer, "*(sr1+1)");
+
+	aliases[3].replacee = malloc(strlen("result") + 1);
+	strcpy(aliases[3].replacee, "result");
+
+	aliases[3].replacer = malloc(strlen("*(sr1+1)") + 1);
+	strcpy(aliases[3].replacer, "*(sr1+1)");
 
 	for (int i = num_aliases; i < MAX_N_ALIASES; i++) {
 		aliases[i].replacee = NULL;

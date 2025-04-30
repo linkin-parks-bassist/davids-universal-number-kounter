@@ -187,7 +187,7 @@
       <a name="size" val="70"/>
       <a name="width" val="16"/>
     </comp>
-    <comp lib="1" loc="(370,140)" name="OR Gate">
+    <comp lib="1" loc="(380,140)" name="OR Gate">
       <a name="size" val="30"/>
     </comp>
     <comp lib="1" loc="(390,270)" name="OR Gate">
@@ -305,9 +305,10 @@
     <wire from="(320,140)" to="(330,140)"/>
     <wire from="(320,590)" to="(430,590)"/>
     <wire from="(330,130)" to="(330,140)"/>
-    <wire from="(330,130)" to="(340,130)"/>
+    <wire from="(330,130)" to="(350,130)"/>
     <wire from="(330,670)" to="(350,670)"/>
     <wire from="(340,150)" to="(340,430)"/>
+    <wire from="(340,150)" to="(350,150)"/>
     <wire from="(340,430)" to="(360,430)"/>
     <wire from="(340,490)" to="(410,490)"/>
     <wire from="(350,280)" to="(350,670)"/>
@@ -317,7 +318,7 @@
     <wire from="(360,340)" to="(370,340)"/>
     <wire from="(360,360)" to="(360,430)"/>
     <wire from="(360,360)" to="(370,360)"/>
-    <wire from="(370,140)" to="(470,140)"/>
+    <wire from="(380,140)" to="(470,140)"/>
     <wire from="(390,270)" to="(400,270)"/>
     <wire from="(400,210)" to="(400,270)"/>
     <wire from="(400,270)" to="(490,270)"/>

@@ -1,43 +1,56 @@
-push 3
+alias output *0x1000
+alias fibs_n *sr1
+alias N 3
+
+% push the value of n for which we'll calculate fibs(n)
+push N
+
+% call the function
 call fibs
 
-set *0x1000 *sr1
+% write the result to the output memory cell
+set output fibs_n
 
+% having finished, enter an infinite loop
 loop:
 	goto loop
 
+alias kounter r2
+
+alias prev_fibs      r0
+alias prev_prev_fibs r1
+
 fibs:
-	set r2 *(sr1+1)
+	set kounter argument
 	
-	decrement r2
-	decrement r2
+	decrement kounter
+	decrement kounter
 	
-	goto_if_nonpositive r2 base_case
+	goto_if_nonpositive kounter base_case
 	
-	push r2
+	push kounter
 	
-	increment r2
-	push r2
+	increment kounter
 	
+	push kounter
 	call fibs
+	pop prev_fibs
 	
-	pop r0
-	pop r1
+	pop kounter
 	
-	push r0
-	push r1
+	push prev_fibs
 	
+	push kounter
 	call fibs
+	pop prev_prev_fibs
 	
-	pop r0
-	pop r1
+	pop prev_fibs
 	
-	add r0 r1
+	add prev_fibs prev_prev_fibs
 	
-	set *(sr1+1) r0
-	
+	set result prev_fibs
 	return
 	
 	base_case:
-		set *(sr1+1) 1
+		set result 1
 		return
