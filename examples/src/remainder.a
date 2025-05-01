@@ -1,19 +1,6 @@
 alias x r0
 alias y r1
 
-push -12
-push -5
-
-call remainder
-
-pop r0
-pop
-
-set *0xffff r0
-
-loop:
-	goto loop
-
 remainder:
 	set y *(sp+1)
 	set x *(sp+2)
