@@ -93,15 +93,12 @@
 \def\echodatalong{\Verb|0025| - echo data bus to itself for 3 cycles}
 \def\echoaddrdatalong{\Verb|0026| - echo addr bus to data bus for 3 cycles}
 
-\def\readbitport  {\Verb|00a0| - read 1bit port \Verb|addr| (normal addressing) to the data line}
-\def\writebitport {\Verb|00a1| - write data line to 1bit port \Verb|addr| (normal addressing)}
-\def\readbitportb {\Verb|00a2| - read 1bit port \Verb|addr| (bitwise addressing) to the data line}
-\def\writebitportb{\Verb|00a3| - write data line to 1bit port \Verb|addr| (bitwise addressing)}
-\def\readwideport {\Verb|00a4| - read 16bit port \Verb|addr| to the data line}
-\def\writewideport{\Verb|00a4| - write data line to 16bit port \Verb|addr|}
-
-\def\enterrunmode{\Verb|ff00| - set running bit low}
-\def\enterrunmode{\Verb|ff01| - set running bit high}
+\def\pinmodein#1 {\Verb|#10a0| - set I/O pin \Verb|N| to input mode}
+\def\pinmodeout#1{\Verb|#10a1| - set I/O pin \Verb|N| to output mode}
+\def\setpinlow#1    {\Verb|#10a2| - set I/O pin \Verb|N| to low}
+\def\setpinhigh#1   {\Verb|#10a3| - set I/O pin \Verb|N| to high}
+\def\pintodata#1 {\Verb|#10a4| - output I/O pin \Verb|N| to data bus}
+\def\datatopin#1 {\Verb|#10a5| - write data bus to I/O pin \Verb|N|}
 
 \def\biosromtodata{\Verb|00b0| - read BIOS rom to data bus}
 
@@ -174,6 +171,16 @@ Micro-instructions:
     \item\echoaddraddrlong
     \item\echodatalong
     \item\echoaddrdatalong
+
+    \item\pinmodein  N
+    \item\pinmodeout N
+    
+    \item\setpinhigh N
+    \item\setpinlow  N
+    
+    \item\pintodata N M
+    \item\datatopin  N M
+
 
     \item \done
     \item \reset
@@ -1314,160 +1321,57 @@ Micro-instructions:
 
 \section{I/O}
 \begin{itemize}
-    \item \Verb|0xN0a0| - Read 1bit port \Verb|constant| into \Verb|rN| (normal addressing)
-    \begin{itemize}
+   \item \Verb|00a0| - Set I/O pin \Verb|N| to input mode.
+   \begin{itemize}
         \item Micro-instruction sequence:
         \begin{itemize}
-            \item \pkptrout
-            \item \echodataaddr
-            \item \readbitport
-            \item \datatoreg N
-            \incrementpk
-            \item \done
+            \item \pinmodein N
         \end{itemize}
     \end{itemize}
     
-    \item \Verb|0xN0a1| - Write \Verb|rN| to 1bit port \Verb|constant| (normal addressing)
-    \begin{itemize}
+    
+   \item \Verb|00a1| - Set I/O pin \Verb|N| to output mode.
+   \begin{itemize}
         \item Micro-instruction sequence:
         \begin{itemize}
-            \item \pkptrout
-            \item \echodataaddr
-            \item \regtodata N
-            \item \writebitport
-            \incrementpk
-            \item \done
+            \item \pinmodeout N
         \end{itemize}
     \end{itemize}
     
-    \item \Verb|0xN0a2| - Read 1bit ports \Verb|constant| into \Verb|rN| (bitwise addressing)
-    \begin{itemize}
+   \item \Verb|00a2| - Set I/O pin \Verb|N| to low.
+   \begin{itemize}
         \item Micro-instruction sequence:
         \begin{itemize}
-            \item \pkptrout
-            \item \echodataaddr
-            \item \readbitportb
-            \item \datatoreg N
-            \incrementpk
-            \item \done
+            \item \setpinlow N
         \end{itemize}
     \end{itemize}
     
-    \item \Verb|0xN0a3| - Write \Verb|rN| to 1bit ports \Verb|constant| (bitwise addressing)
-    \begin{itemize}
+    
+   \item \Verb|00a3| - Set I/O pin \Verb|N| to high.
+   \begin{itemize}
         \item Micro-instruction sequence:
         \begin{itemize}
-            \item \pkptrout
-            \item \echodataaddr
-            \item \regtodata N
-            \item \writebitportb
-            \incrementpk
-            \item \done
-        \end{itemize}
-    \end{itemize}
-
-    \item \Verb|0xN0a4| - Read 16bit port \Verb|constant| into \Verb|rN|
-    \begin{itemize}
-        \item Micro-instruction sequence:
-        \begin{itemize}
-            \item \pkptrout
-            \item \echodataaddr
-            \item \readwideport
-            \item \datatoreg N
-            \incrementpk
-            \item \done
+            \item \setpinhigh N
         \end{itemize}
     \end{itemize}
     
-    \item \Verb|0xN0a5| - Write \Verb|rN| to 16bit port \Verb|constant|
-    \begin{itemize}
+   \item \Verb|NMa4| - Read I/O pin \Verb|N| to register \Verb|M|.
+   \begin{itemize}
         \item Micro-instruction sequence:
         \begin{itemize}
-            \item \pkptrout
-            \item \echodataaddr
-            \item \regtodata N
-            \item \writewideport
-            \incrementpk
-            \item \done
-        \end{itemize}
-    \end{itemize}
-
-    \item \Verb|0xNMa6| - Read 1bit port \Verb|rM| into \Verb|rN| (normal addressing)
-    \begin{itemize}
-        \item Micro-instruction sequence:
-        \begin{itemize}
-            \item \regtoaddr M
-            \item \readbitport
-            \item \datatoreg N
-            \item \done
+            \item \pintodata N
+            \item \datatoreg M
         \end{itemize}
     \end{itemize}
     
-    \item \Verb|0xNMa7| - Write \Verb|rN| to 1bit port \Verb|rM| (normal addressing)
-    \begin{itemize}
+    \item \Verb|NMa5| - Write register \Verb|M| to I/O pin \Verb|N|.
+   \begin{itemize}
         \item Micro-instruction sequence:
         \begin{itemize}
-            \item \regtoaddr M
-            \item \regtodata N
-            \item \writebitport
-            \item \done
+            \item \regtodata M
+            \item \datatopin N
         \end{itemize}
     \end{itemize}
-    
-    \item \Verb|0xNMa8| - Read 1bit ports \Verb|rM| into \Verb|rN| (bitwise addressing)
-    \begin{itemize}
-        \item Micro-instruction sequence:
-        \begin{itemize}
-            \item \regtoaddr M
-            \item \readbitportb
-            \item \datatoreg N
-            \item \done
-        \end{itemize}
-    \end{itemize}
-    
-    \item \Verb|0xN1a9| - Write \Verb|rN| to 1bit ports \Verb|rM| (bitwise addressing)
-    \begin{itemize}
-        \item Micro-instruction sequence:
-        \begin{itemize}
-            \item \regtoaddr M
-            \item \regtodata N
-            \item \writebitportb
-            \item \done
-        \end{itemize}
-    \end{itemize}
-
-    \item \Verb|0xN0aa| - Read 16bit port \Verb|rM| into \Verb|rN|
-    \begin{itemize}
-        \item Micro-instruction sequence:
-        \begin{itemize}
-            \item \regtoaddr M
-            \item \readwideport
-            \item \datatoreg N
-            \item \done
-        \end{itemize}
-    \end{itemize}
-    
-    \item \Verb|0xN0ab| - Write \Verb|rN| to 16bit port \Verb|tM|
-    \begin{itemize}
-        \item Micro-instruction sequence:
-        \begin{itemize}
-            \item \regtoaddr M
-            \item \regtodata N
-            \item \writewideport
-            \incrementpk
-            \item \done
-        \end{itemize}
-    \end{itemize}
-    
-    \iffalse
-    \item \Verb|| - 
-    \begin{itemize}
-        \item Micro-instruction sequence:
-        \begin{itemize}
-            \item \done
-        \end{itemize}
-    \end{itemize}
-    \fi
 \end{itemize}
 
 \end{document}

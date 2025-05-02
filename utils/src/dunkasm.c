@@ -30,7 +30,8 @@
 #define OFFSET_FOLLOWING(N) 0b00010000000 + N
 #define FOLLOWING_MASK 		0b00111111111
 
-#define N_DEFAULT_ALIASES 4
+#define N_ARGUMENT_ALIASES 9
+#define N_DEFAULT_ALIASES 4 + N_ARGUMENT_ALIASES
 
 #define MAX_PARAMS 3
 
@@ -479,6 +480,7 @@ parameter parse_parameter(const char* input)
 			// printf("it's a number !\n");
 		} else {
 			for (int i = 0; i < num_aliases; i++) {
+				printf("Checking aliases...\n");
 				if (strcmp(input, aliases[i].replacee) == 0) {
 					printf("Ah! an alias! I will parse %s in place of %s\n",
                  aliases[i].replacer,
@@ -861,6 +863,18 @@ void init_global_variables() {
 
 	aliases[3].replacer = malloc(strlen("*(sr1+1)") + 1);
 	strcpy(aliases[3].replacer, "*(sr1+1)");
+
+	int arslen = 9;
+	char buf[arslen];
+	for (int i = 0; i < N_ARGUMENT_ALIASES; i++) {
+		sprintf(buf, "argument%d", i);
+		aliases[i+4].replacee = malloc(sizeof(char) * arslen);
+		strcpy(aliases[i+4].replacee, buf);
+		
+		sprintf(buf, "*(sr1+%d)", i);
+		aliases[4].replacer = malloc(sizeof(char) * arslen);
+		strcpy(aliases[4].replacer, buf);
+	}
 
 	for (int i = num_aliases; i < MAX_N_ALIASES; i++) {
 		aliases[i].replacee = NULL;

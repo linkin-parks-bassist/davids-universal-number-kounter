@@ -7,6 +7,8 @@
 #define N_REGISTERS 16
 #define N_SPECIAL_REGS 5
 
+#define N_PINS 16
+
 #define N_ALU_OPS 8
 
 #define begini 0x0001
@@ -84,10 +86,12 @@
 #define echodatalong 0x0025
 #define echoaddrdatalong 0x0026
 
-#define readfrom_onebitport 0x00a0
-#define writeto_onebitport 0x00a1
-#define readfrom_sixtbitport 0x00a2
-#define writeto_sixtbitport 0x00a3
+#define pinmodein(N)  0x00a0 + 0x1000 * N
+#define pinmodeout(N) 0x00a1 + 0x1000 * N
+#define setpinlow(N)  0x00a2 + 0x1000 * N
+#define setpinhigh(N) 0x00a3 + 0x1000 * N
+#define pintodata(N)  0x00a4 + 0x1000 * N
+#define datatopin(N)  0x00a5 + 0x1000 * N
 
 #define done 0xfffe
 #define reset 0xffff
@@ -105,13 +109,13 @@ int
 main(int argc, char* argv[])
 {
 	// Write processed data to output file
-	FILE* mainROM = fopen("../roms/main_rom", "wb");
+	FILE* mainROM = fopen("roms/main_rom", "wb");
 	if (!mainROM) {
 		perror("Error opening output file");
 		exit(EXIT_FAILURE);
 	}
 
-	FILE* decoderROM = fopen("../roms/decoder_rom", "wb");
+	FILE* decoderROM = fopen("roms/decoder_rom", "wb");
 	if (!decoderROM) {
 		perror("Error opening output file");
 		exit(EXIT_FAILURE);
@@ -861,6 +865,36 @@ main(int argc, char* argv[])
 			//OFFSET_FOLLOWING(1), S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE |
 			//OFFSET_FOLLOWING(2)),
 			CODE_SEQUENCE_FOR(0x005f + 0x1000 * N + 0x0100 * M);
+		}
+	}
+	
+	for (int N = 0; N < N_PINS; N++) {
+		CODE_SEQUENCE_FOR(0x00a0 + 0x1000 * N);
+		WRITEOUT(pinmodein(N));
+		WRITEOUT(done);
+		
+		CODE_SEQUENCE_FOR(0x00a1 + 0x1000 * N);
+		WRITEOUT(pinmodeout(N));
+		WRITEOUT(done);
+		
+		CODE_SEQUENCE_FOR(0x00a2 + 0x1000 * N);
+		WRITEOUT(setpinlow(N));
+		WRITEOUT(done);
+		
+		CODE_SEQUENCE_FOR(0x00a3 + 0x1000 * N);
+		WRITEOUT(setpinhigh(N));
+		WRITEOUT(done);
+		
+		for (int M = 0; M < N_REGISTERS; M++) {
+			CODE_SEQUENCE_FOR(0x00a4 + 0x1000 * N + 0x0100 * M);
+			WRITEOUT(pintodata(N));
+			WRITEOUT(datatoreg(M));
+			WRITEOUT(done);
+			
+			CODE_SEQUENCE_FOR(0x00a5 + 0x1000 * N + 0x0100 * M);
+			WRITEOUT(regtodata(M));
+			WRITEOUT(datatopin(N));
+			WRITEOUT(done);
 		}
 	}
 
