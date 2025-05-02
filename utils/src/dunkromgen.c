@@ -493,7 +493,20 @@ main(int argc, char* argv[])
 		//~ 0x0531, CONSTANT | POINTER, FOLLOWING(1), S_REGISTER | POINTER |
 		//W_OFFSET, FIRST_NIBBLE | FOLLOWING(2))
 		CODE_SEQUENCE_FOR(0x0531 + 0x1000 * N);
-		// implement
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatotmpa);
+		WRITEOUT(incrementpk);
+		WRITEOUT(pkptrout);
+		WRITEOUT(datatooffs);
+		WRITEOUT(specialptodatao(N));
+		WRITEOUT(datatotmpb);
+		WRITEOUT(tmpatoaddr);
+		WRITEOUT(echoaddraddrlong);
+		WRITEOUT(tmpbtodata);
+		WRITEOUT(writeRAMo);
+		WRITEOUT(incrementpk);
+		WRITEOUT(done);
+
 	}
 
 	for (N = 0; N < N_REGISTERS; N++) {

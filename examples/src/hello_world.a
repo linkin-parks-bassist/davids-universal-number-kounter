@@ -1,0 +1,34 @@
+alias screen_input *0xfffc
+alias screen_print  0xe
+
+
+push 0x6f
+push 0x6c
+push 0x6c
+push 0x65
+push 0x48
+
+pinmode_output screen_print
+
+call print_char
+pop
+call print_char
+pop
+call print_char
+pop
+call print_char
+pop
+call print_char
+pop
+
+loop:
+	push 0x21
+	call print_char
+	goto loop
+
+print_char:
+	set screen_input argument
+	set_pin_high screen_print
+	set_pin_low  screen_print
+	
+	return

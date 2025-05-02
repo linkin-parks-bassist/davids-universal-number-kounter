@@ -111,7 +111,7 @@ alias aliases[MAX_N_ALIASES];
 #define TERNARY_COMMAND(name, code, a1_t, a1_p, a2_t, a2_p, a3_t, a3_p)        \
 	{ name, code, 2, { a1_t, a2_t, a3_t, 0 }, { a1_p, a2_p, a3_p, 0 } }
 
-#define N_INSTR 94
+#define N_INSTR 100
 
 dunk_instr dunk_instrs[N_INSTR] = {
 	NULLARY_COMMAND("chill", 0x0000),
@@ -138,8 +138,8 @@ dunk_instr dunk_instrs[N_INSTR] = {
 	BINARY__COMMAND("not",	0x001c, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 
 	UNARY___COMMAND("lshift", 0x001d, REGISTER, FIRST_NIBBLE | SECOND_NIBBLE),
+	BINARY__COMMAND("shift",  0x001d, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 	UNARY___COMMAND("rshift", 0x001e, REGISTER, FIRST_NIBBLE | SECOND_NIBBLE),
-	BINARY__COMMAND("shift",  0x001e, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 
 	//**stack stuff**//
 	NULLARY_COMMAND("return", 0x0005),
@@ -243,6 +243,16 @@ dunk_instr dunk_instrs[N_INSTR] = {
 	BINARY__COMMAND("set", 0x005d, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), S_REGISTER, SECOND_NIBBLE),
 	BINARY__COMMAND("set", 0x005e, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), S_REGISTER | POINTER, SECOND_NIBBLE),
 	BINARY__COMMAND("set", 0x005f, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1), S_REGISTER | POINTER | W_OFFSET, SECOND_NIBBLE | OFFSET_FOLLOWING(2)),
+	
+	// I/O pins
+	UNARY___COMMAND("pinmode_input",  0x00a0, CONSTANT, FIRST_NIBBLE),
+	UNARY___COMMAND("pinmode_output", 0x00a1, CONSTANT, FIRST_NIBBLE),
+	
+	UNARY___COMMAND("set_pin_low",  0x00a2, CONSTANT, FIRST_NIBBLE),
+	UNARY___COMMAND("set_pin_high", 0x00a3, CONSTANT, FIRST_NIBBLE),
+	
+	BINARY__COMMAND("read_pin",  0x00a3, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+	BINARY__COMMAND("write_pin", 0x00a4, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE)
 };
 
 void free_line_data(line_data_str* line_data)
@@ -388,22 +398,22 @@ parameter parse_parameter(const char* input)
 	char* sub_exp;        // = strndup(inside, len);
 	parameter sub_result; // = parse_string(sub_expr);
 
-	// printf("Parsing parameter ``%s\"\n", input);
+	printf("Parsing parameter ``%s\"\n", input);
 
 	if (input[0] == '*') {
-		// printf("It's a pointer, ");
+		printf("It's a pointer, ");
 		if (input[1] == '(') {
-			// printf("parenthesised, with inner expression");
+			printf("parenthesised, with inner expression");
 			inside = &input[2];
 			close_paren = strchr(inside, ')');
 
 			if (close_paren == NULL) {
-				// printf("... but not closing paren :(\n");
+				printf("... but not closing paren :(\n");
 				result.type = INVALID;
 				return result;
 			}
 			if (close_paren[1] != 0) {
-				// printf("... but does not end after its closing paren :(\n");
+				printf("... but does not end after its closing paren :(\n");
 
 				result.type = INVALID;
 				return result;
@@ -412,7 +422,7 @@ parameter parse_parameter(const char* input)
 			len = close_paren - inside;
 			sub_exp = strndup(inside, len);
 
-			// printf(" \"%s\", ", sub_exp);
+			printf(" \"%s\", ", sub_exp);
 
 			plus = &sub_exp[strcspn(sub_exp, "+-")];
 
@@ -424,38 +434,36 @@ parameter parse_parameter(const char* input)
 				}
 
 				if (sub_result.type != CONSTANT) {
-					// printf("... but it contains an offset which is not a constant
-					// :(\n");
+					printf("... but it contains an offset which is not a constant :(\n");
 
 					result.type = INVALID;
 					return result;
 				}
 				if (sub_result.offset != 0) {
-					// printf("... but it contains a double-offset :(\n");
+					printf("... but it contains a double-offset :(\n");
 
 					result.type = INVALID;
 					return result;
 				}
 
 				result.offset = sub_result.value;
-				// printf(" which has offset %i\n", result.offset);
+				printf(" which has offset %i\n", result.offset);
 				*plus = 0;
 			}
 
 		} else {
-			// printf("non-parenthesised, ");
+			printf("non-parenthesised, ");
 			inside = &input[1];
 			len = strlen(inside);
 			sub_exp = strndup(inside, len);
 		}
 
-		// printf("with sub-expression %s\n", sub_exp);
+		printf("with sub-expression %s\n", sub_exp);
 		sub_result = parse_parameter(sub_exp);
 		free(sub_exp);
 
 		if (input[1] != '(' && sub_result.offset != 0) {
-			// printf("... which has an offset, which is obviously not valid without
-			// parenthesisation >:/\n", sub_exp);
+			printf("... which has an offset, which is obviously not valid without parenthesisation >:/\n", sub_exp);
 			result.type = INVALID;
 			return result;
 		}
@@ -463,21 +471,21 @@ parameter parse_parameter(const char* input)
 		result.type = sub_result.type | POINTER;
 		result.value = sub_result.value;
 	} else {
-		// printf("It's not a pointer... ");
+		printf("It's not a pointer... ");
 		if (input[0] == 's' && input[1] == 'r' && is_number(&input[2])) {
 			// "srN" form
 			result.type = S_REGISTER;
 			result.value = parse_number(&input[2]);
-			// printf("it's a special register !\n");
+			printf("it's a special register !\n");
 		} else if (input[0] == 'r' && is_number(&input[1])) {
 			// "rN" form
-			// printf("it's a register !\n");
+			printf("it's a register !\n");
 			result.type = REGISTER;
 			result.value = parse_number(&input[1]);
 		} else if (is_number(input)) {
 			result.type = CONSTANT;
 			result.value = parse_number(input);
-			// printf("it's a number !\n");
+			printf("it's a number !\n");
 		} else {
 			for (int i = 0; i < num_aliases; i++) {
 				printf("Checking aliases...\n");
@@ -488,7 +496,7 @@ parameter parse_parameter(const char* input)
 					return parse_parameter(aliases[i].replacer);
 				}
 			}
-			// printf("idk what this is...\n");
+			printf("idk what this is...\n");
 			result.type = INVALID;
 		}
 	}
@@ -691,6 +699,15 @@ void process_line(line_data_str line, const char* fname) {
 		
 		parameter params[MAX_PARAMS];
 		int argc = line.token_count - 1;
+		
+		printf("Number of arguments: %d\n", argc);
+		
+		printf("I repeat: line %d, which has %d tokens, which are\n    ``%s\"", line.line_number, line.token_count, line.tokens[0]);
+
+		for (int i = 1; i < line.token_count; ++i)
+			printf(", ``%s\"", line.tokens[i]);
+		
+		putchar('\n');
 		
 		if (argc >= MAX_PARAMS) {
 			fprintf(
