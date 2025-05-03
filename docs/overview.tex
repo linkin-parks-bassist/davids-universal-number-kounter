@@ -85,19 +85,21 @@ Another quality-of-life feature included in the assembler is \textit{aliases}. T
 	        
 \end{BVerbatim}
 
-This code defines a function which copies the two arguments into registers, computes the remainder of \Verb|argument1| on division by \Verb|remainder2|, and returns the result\footnote{Of course, it doesn't account for the possibility of negative inputs. A more robust version is provided in the examples folder.}. The return is achieved via last two lines. The line \Verb|set result x| uses the inbuilt \Verb|result| alias, which is replaced by the assembler with \Verb|*(sr1+1)|, which points to the first word on the stack preceding the stack pointer. The following code snippet calls this function on the arguments 17 and 7 and stores the result in the register \Verb|r0|.
+This code defines a function which copies the two arguments into registers, computes the remainder of \Verb|argument1| on division by \Verb|argument2|, and returns the result\footnote{Of course, it doesn't account for the possibility of negative inputs. A more robust version is provided in the examples folder.}. The return is achieved via last two lines. The line \Verb|set result x| uses the inbuilt \Verb|result| alias, which is replaced by the assembler with \Verb|*(sr1+1)|, which points to the first word on the stack preceding the stack pointer. The following code snippet calls this function on the arguments 17 and 7 and stores the result in the register \Verb|r0|.
 
-\begin{center}
 \begin{BVerbatim}
-push 7
-push 17
 
-call remainder
 
-pop r0
-pop
+	push 7
+	push 17
+
+	call remainder
+
+	pop r0
+	pop
+
+
 \end{BVerbatim}
-\end{center}
 
 Note the two pops. The first pop saves the return value of the function into \Verb|r0| and increments the stack pointer (the stack grows downwards), while the second has no argument, and simply increments the stack pointer, popping off the now-unnecessary 7. While they are both written ``pop'', on a machine level, these are entirely distinct instructions. This illustrates the third quality-of-life feature in dunkasm; the same name can refer to different instructions. The assembler examines the number and type of arguments provided to an instruction, and selects the specific instruction corresponding to the name provided given but also the arguments provided. The main instance of this is the \Verb|set| command. You may also have noticed the lines \Verb|set x argument 1| and \Verb|set result x|. The first loads a word from memory into a register, while the second saves a word from a register into memory. Not only does \Verb|set| handle these two cases, in fact \Verb|set| can be compiled down to any one of (at the time of writing) \textit{fifty six} different machine code instructions, corresponding to all possible cases of ``set''ing some register or memory equal to some other thing by copying the value from one into the other.
 
