@@ -1,0 +1,139 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{fvextra}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+}
+
+\title{Instruction Set}
+\author{David Farrell}
+\date{March 2025}
+
+\def\nothing{\Verb|0x0000| - do nothing}
+
+\def\begini{\Verb|0x0001| - begin instruction (and increment \Verb|pk|)}
+
+\def\specialtodata#1#2  {\Verb|0x#1#202| - output \Verb|sr#1| to data bus for #2 clock cycles}
+\def\specialtoaddr#1#2  {\Verb|0x#1#203| - output \Verb|sr#1| to addr bus for #2 clock cycles}
+\def\specialptodata#1#2 {\Verb|0x#1#204| - output *\Verb|sr#1| to data bus for #2 clock cycles}
+\def\specialptodatao#1#2{\Verb|0x#1#205| - output *(\Verb|sr#1|+\Verb|offs|) to data bus for #2 clock cycles}
+\def\datatospecial#1    {\Verb|0x#1006| - write to \Verb|sr#1| from data bus}
+
+\def\sregsfuncn#1#2{\Verb|0x#1_1#2| - Special register #1 special function #2}
+
+\def\incrementpk    {\Verb|0x0010| - increment \Verb|pk|}
+
+\def\tmpatopkifz    {\Verb|0x0011| - write to \Verb|pk| from \Verb|tmpA| if data bus is zero; increment otherwise}
+\def\tmpatopkifnz   {\Verb|0x0012| - write to \Verb|pk| from \Verb|tmpA| if data bus is nonzero; increment otherwise}
+
+\def\tmpatopkifn    {\Verb|0x0013| - write to \Verb|pk| from \Verb|tmpA| if data bus is negative; increment otherwise}
+\def\tmpatopkifnn   {\Verb|0x0014| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-negative; increment otherwise}  
+
+\def\tmpatopkifp    {\Verb|0x0015| - write to \Verb|pk| from \Verb|tmpA| if data bus is positive; increment otherwise}
+\def\tmpatopkifnp   {\Verb|0x0016| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-positive; increment otherwise}
+
+\def\tmpatopk#1#2   {\Verb|0x0#117| - output \Verb|tmpA| to \Verb|pk| via secret bus for #2 clock cycles}
+\def\tmpbtopk#1#2   {\Verb|0x0#118| - output \Verb|tmpB| to \Verb|pk| via secret bus for #2 clock cycles}
+
+\def\incrementsp    {\Verb|0x1010| - increment \Verb|sp|}
+\def\decrementsp    {\Verb|0x1011| - decrement \Verb|sp|}
+
+\def\regtodata#1#2    {\Verb|0x#1#220| - output \Verb|r#1| to data bus for #2 clock cycles}
+\def\regtoaddr#1#2    {\Verb|0x#1#221| - output \Verb|r#1| to addr bus for #2 clock cycles}
+\def\regptodata#1#2   {\Verb|0x#1#222| - output *\Verb|r#1| to data bus for #2 clock cycles}
+\def\regptodatao#1#2  {\Verb|0x#1#223| - output *(\Verb|r#1|+\Verb|offs|) to data bus for #2 clock cycles}
+\def\datatoreg#1      {\Verb|0x#1024| - write to \Verb|r#1| from data bus}
+
+\def\writeRAM       {\Verb|0x0025| - write data bus to *(addr bus)}
+\def\writeRAMo      {\Verb|0x0027| - write data bus to *(addr bus+\Verb|offs|)}
+\def\readRAM#1      {\Verb|0x0#128| - output *(addr bus) RAM to data bus for #1 clock cycles}
+\def\readRAMo#1     {\Verb|0x0#129| - output *(addr bus+\Verb|offs|) RAM to data bus for #1 clock cycles}
+
+\def\echodata           {\Verb|0x0030| - echo data bus to itself for 2 cycles}
+\def\echodataaddr       {\Verb|0x0031| - echo data bus to addr bus for 3 cycles}
+\def\echoaddrdata       {\Verb|0x0032| - echo addr bus to data bus for 2 cycles}
+\def\echoaddraddr       {\Verb|0x0033| - echo addr bus to itself for 2 cycles}
+\def\echoaddraddrlong   {\Verb|0x0034| - echo addr bus to itself for 3 cycles}
+\def\echodatalong       {\Verb|0x0035| - echo data bus to itself for 3 cycles}
+\def\echoaddrdatalong   {\Verb|0x0036| - echo addr bus to data bus for 3 cycles}
+
+\def\pinmodein#1    {\Verb|0x#1030| - set I/O pin \Verb|N| to input mode}
+\def\pinmodeout#1   {\Verb|0x#1031| - set I/O pin \Verb|N| to output mode}
+\def\setpinlow#1    {\Verb|0x#1032| - set I/O pin \Verb|N| to low}
+\def\setpinhigh#1   {\Verb|0x#1033| - set I/O pin \Verb|N| to high}
+\def\pintodata#1    {\Verb|0x#1034| - output I/O pin \Verb|N| to data bus}
+\def\datatopin#1    {\Verb|0x#1035| - write data bus to I/O pin \Verb|N|}
+
+\def\ALUop#1#2#3#4{\Verb|0x#1#2(4+#4)#3| - output ALU operation #3 on (\Verb|r#1|, \Verb|r#2|) to data bus for #4 clock cycles}
+
+\def\done{\Verb|0xfffe| - end instruction}
+\def\reset{\Verb|0xffff| - reset everything}
+
+\begin{document}
+
+\maketitle
+
+\section{Micro-instructions}
+
+\begin{itemize}
+    \item   \nothing
+
+    \item   \begini
+
+    \item\specialtodata{N}{K}
+    \item\specialtoaddr{N}{K}
+    \item\specialptodata{N}{K}
+    \item\specialptodatao{N}{K}
+    \item\datatospecial	  N
+
+    \item\sregsfuncn{N}{M}
+
+    \item\incrementpk
+    \item\tmpatopkifz
+    \item\tmpatopkifnz
+
+    \item\tmpatopkifn
+    \item\tmpatopkifnn
+
+    \item\tmpatopkifp
+    \item\tmpatopkifnp
+
+    \item\tmpatopk K
+    \item\tmpbtopk K
+
+    \item\incrementsp
+    \item\decrementsp
+
+    \item\regtodata{N}{K}
+    \item\regtoaddr{N}{K}
+    \item\regptodata{N}{K}
+    \item\regptodatao{N}{K}
+    \item\datatoreg   N
+
+    \item\writeRAM
+    \item\writeRAMo
+    \item\readRAM  K
+    \item\readRAMo K
+
+    \item\ALUop{N}{M}{A}{K}
+
+    \item\pinmodein  N
+    \item\pinmodeout N
+    \item\setpinlow  N
+    \item\setpinhigh N
+    \item\pintodata  N
+    \item\datatopin  N
+
+    \item\done
+    \item\reset
+\end{itemize}
+
+\newpage
+
+
+
+\end{document}
