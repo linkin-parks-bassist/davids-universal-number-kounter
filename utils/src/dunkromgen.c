@@ -13,85 +13,91 @@
 
 #define begini 0x0001
 
-#define specialtodata(X) 0x0002 + 0x1000 * X
-#define specialtoaddr(X) 0x0102 + 0x1000 * X
-#define specialptodata(X) 0x0202 + 0x1000 * X
-#define specialptodatao(X) 0x0302 + 0x1000 * X
-#define datatospecial(X) 0x0402 + 0x1000 * X
+#define specialtodata(X) 	0x0002 + 0x1000 * X
+#define specialtoaddr(X) 	0x0003 + 0x1000 * X
+#define specialptodata(X) 	0x0004 + 0x1000 * X
+#define specialptodatao(X) 	0x0005 + 0x1000 * X
+#define datatospecial(X) 	0x0006 + 0x1000 * X
 
-#define pktodata 0x0002
-#define pktoaddr 0x0102
-#define pkptrout 0x0202
-#define pkoptrout 0x0302
-#define datatopk 0x0402
+#define pktodata 		0x0002
+#define pktoaddr 		0x0003
+#define pkptrout 		0x0004
+#define pkoptrout 		0x0005
+#define datatopk 		0x0006
 
-#define sptodata 0x1002
-#define sptoaddr 0x1102
-#define spptodata 0x1202
-#define spptodatao 0x1302
-#define datatosp 0x1402
+#define sptodata 		0x1002
+#define sptoaddr 		0x1003
+#define spptodata 		0x1004
+#define spptodatao 		0x1005
+#define datatosp 		0x1006
 
-#define tmpatodata 0x2002
-#define tmpatoaddr 0x2102
-#define tmpaptodata 0x2202
-#define tmpaptodatao 0x2302
-#define datatotmpa 0x2402
+#define tmpatodata 		0x2002
+#define tmpatoaddr 		0x2003
+#define tmpaptodata 	0x2004
+#define tmpaptodatao 	0x2005
+#define datatotmpa 		0x2006
 
-#define tmpbtodata 0x3002
-#define tmpbtoaddr 0x3102
-#define tmpbptodata 0x3202
-#define tmpbptodatao 0x3302
-#define datatotmpb 0x3402
+#define tmpbtodata 		0x3002
+#define tmpbtoaddr 		0x3003
+#define tmpbptodata 	0x3004
+#define tmpbptodatao 	0x3005
+#define datatotmpb 		0x3006
 
-#define offstodata 0x4002
-#define offstoaddr 0x4102
-#define offsptodata 0x4202
-#define offsptodatao 0x4302
-#define datatooffs 0x4402
+#define offstodata 		0x4002
+#define offstoaddr 		0x4003
+#define offsptodata 	0x4004
+#define offsptodatao 	0x4005
+#define datatooffs 		0x4006
 
-#define incrementpk 0x0502
-#define incrementsp 0x1502
-#define tmpatopk 0x2502
-#define tmpbtopk 0x3502
+#define incrementpk 	0x0010
 
-#define decrementsp 0x1602
+#define pkptroutinc		0x0011
 
-#define tmpatopkifz 0x0602
-#define tmpatopkifnz 0x0702
+#define writetmpatopk 	0x0012
+#define writetmpbtopk 	0x0013
 
-#define tmpatopkifn 0x0802
-#define tmpatopkifnn 0x0902
+#define tmpatopkifz 	0x0014
+#define tmpatopkifnz 	0x0015
 
-#define tmpatopkifp 0x0a02
-#define tmpatopkifnp 0x0b02
+#define tmpatopkifn 	0x0016
+#define tmpatopkifnn 	0x0017
 
-#define regtodata(X) 0x0003 + 0x1000 * X
-#define regtoaddr(X) 0x0103 + 0x1000 * X
-#define regptodata(X) 0x0203 + 0x1000 * X
-#define regptodatao(X) 0x0303 + 0x1000 * X
-#define datatoreg(X) 0x0403 + 0x1000 * X
+#define tmpatopkifp 	0x0018
+#define tmpatopkifnp 	0x0019
 
-#define writeRAM 0x0004
-#define writeRAMo 0x0104
-#define readRAM 0x0005
-#define readRAMo 0x0105
 
-#define ALUop(X, Y, Z) 0x0010 + 0x1000 * X + 0x0100 * Y + 0x0001 * Z
+#define incrementsp 	0x1010
+#define decrementsp 	0x1011
 
-#define echodata 0x0020
-#define echodataaddr 0x0021
-#define echoaddrdata 0x0022
-#define echoaddraddr 0x0023
-#define echoaddraddrlong 0x0024
-#define echodatalong 0x0025
-#define echoaddrdatalong 0x0026
 
-#define pinmodein(N)  0x00a0 + 0x1000 * N
-#define pinmodeout(N) 0x00a1 + 0x1000 * N
-#define setpinlow(N)  0x00a2 + 0x1000 * N
-#define setpinhigh(N) 0x00a3 + 0x1000 * N
-#define pintodata(N)  0x00a4 + 0x1000 * N
-#define datatopin(N)  0x00a5 + 0x1000 * N
+#define regtodata(X) 	0x0020 + 0x1000 * X
+#define regtoaddr(X) 	0x0021 + 0x1000 * X
+#define regptodata(X) 	0x0022 + 0x1000 * X
+#define regptodatao(X) 	0x0023 + 0x1000 * X
+#define datatoreg(X) 	0x0024 + 0x1000 * X
+
+#define writeRAM 		0x0025
+#define writeRAMo 		0x0026
+
+#define readRAM 		0x0027
+#define readRAMo 		0x0028
+
+#define pinmodein(N)  	0x0030 + 0x1000 * N
+#define pinmodeout(N) 	0x0031 + 0x1000 * N
+#define setpinlow(N)  	0x0032 + 0x1000 * N
+#define setpinhigh(N) 	0x0033 + 0x1000 * N
+#define pintodata(N) 	0x0034 + 0x1000 * N
+#define datatopin(N)  	0x0035 + 0x1000 * N
+
+#define ALUop(X, Y, Z) 	0x0040 + 0x1000 * X + 0x0100 * Y + 0x0001 * Z
+
+#define echodata 		 0x0090
+#define echodataaddr 	 0x0091
+#define echoaddrdata 	 0x0092
+#define echoaddraddr 	 0x0093
+#define echoaddraddrlong 0x0094
+#define echodatalong 	 0x0095
+#define echoaddrdatalong 0x0096
 
 #define done 0xfffe
 #define reset 0xffff
@@ -136,7 +142,7 @@ main(int argc, char* argv[])
 	int k;
 	uint16_t* word_ptr = (uint16_t*)(&mr_data[current_position]);
 
-	WRITEOUT(pkptrout);
+	WRITEOUT(pkptroutinc);
 	WRITEOUT(begini);
 
 	CODE_SEQUENCE_FOR(0x0000); // chill
@@ -147,8 +153,8 @@ main(int argc, char* argv[])
 	CODE_SEQUENCE_FOR(0x0001); // goto
 
 	WRITEOUT(pkptrout);
-	WRITEOUT(0x0402);
-	WRITEOUT(0xfffe);
+	WRITEOUT(datatopk);
+	WRITEOUT(done);
 
 	// the various conditional gotos
 	for (N = 0; N < N_REGISTERS; N++) {
@@ -159,7 +165,7 @@ main(int argc, char* argv[])
 				WRITEOUT(pkptrout);
 				WRITEOUT(datatotmpa);
 				WRITEOUT(regtodata(N));
-				WRITEOUT(0x0602 + 0x0100 * (i + 2 * j));
+				WRITEOUT(0x0014 + (i + 2 * j));
 				WRITEOUT(done);
 			}
 		}
