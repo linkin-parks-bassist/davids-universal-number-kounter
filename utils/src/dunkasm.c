@@ -35,16 +35,6 @@
 
 #define MAX_PARAMS 3
 
-/** A macro to make it easy to append machine code to output-in-progress **/
-#define WRITEOUT(X)                                                            \
-	do {                                                                         \
-		printf("WRITEOUT 0x%04x at position %i=0x%x\n", X, current_position, current_position);           \
-		word_ptr = (uint16_t*)(&binary_output[2 * current_position]);                  \
-		*word_ptr = X;                                                             \
-		current_position += 1;                                                     \
-		word_ptr = (uint16_t*)(&binary_output[2 * current_position]);                  \
-	} while (0);
-
 /** TYPEDEFS **/
 
 typedef struct
@@ -254,6 +244,15 @@ dunk_instr dunk_instrs[N_INSTR] = {
 	BINARY__COMMAND("read_pin",  0x00a3, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 	BINARY__COMMAND("write_pin", 0x00a4, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE)
 };
+
+void WRITEOUT(uint16_t v)
+{
+	printf("WRITEOUT 0x%04x at position %i=0x%x\n", v, current_position, current_position); 
+	word_ptr = (uint16_t*)(&binary_output[2 * current_position]); 
+	*word_ptr = v;
+	current_position += 1;
+	word_ptr = (uint16_t*)(&binary_output[2 * current_position]);
+}
 
 void free_line_data(line_data_str* line_data)
 {

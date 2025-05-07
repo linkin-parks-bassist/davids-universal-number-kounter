@@ -15,101 +15,75 @@
 
 \def\nothing{\Verb|0000| - do nothing}
 
-\def\begini{\Verb|0001| - begin instruction (and increment \Verb|pk|)}
+\def\nothing{\Verb|0x0000| - do nothing}
 
-\def\specialtodata#1{\Verb|#1002| - output \Verb|sr#1| to data bus}
-\def\specialtoaddr#1{\Verb|#1102| - output \Verb|sr#1| to addr bus}
-\def\specialptodata#1{\Verb|#1202| - output *\Verb|sr#1| to data bus}
-\def\specialptodatao#1{\Verb|#1302| - output *(\Verb|sr#1|+\Verb|offs|) to data bus}
-\def\datatospecial#1{\Verb|#1402| - write to \Verb|sr#1| from data bus}
+\def\begini{\Verb|0x0001| - begin instruction (and increment \Verb|pk|)}
 
-\def\pktodata{\Verb|0002| - output \Verb|pk| to data bus}
-\def\pktoaddr{\Verb|0102| - output \Verb|pk| to addr bus}
-\def\pkptrout{\Verb|0202| - output *\Verb|pk| to data bus}
-\def\pkoptrout{\Verb|0302| - output *(\Verb|pk|+\Verb|offs|) to data bus}
-\def\datatopk{\Verb|0402| - write to \Verb|pk| from data bus}
+\def\specialtodata#1#2  {\Verb|0x#1#202| - output \Verb|sr#1| to data bus for #2 clock cycles}
+\def\specialtoaddr#1#2  {\Verb|0x#1#203| - output \Verb|sr#1| to addr bus for #2 clock cycles}
+\def\specialptodata#1#2 {\Verb|0x#1#204| - output *\Verb|sr#1| to data bus for #2 clock cycles}
+\def\specialptodatao#1#2{\Verb|0x#1#205| - output *(\Verb|sr#1|+\Verb|offs|) to data bus for #2 clock cycles}
+\def\datatospecial#1    {\Verb|0x#1006| - write to \Verb|sr#1| from data bus}
 
-\def\sptodata{\Verb|1002| - output \Verb|sp| to data bus}
-\def\sptoaddr{\Verb|1102| - output \Verb|sp| to addr bus}
-\def\spptodata{\Verb|1202| - output *\Verb|sp| to data bus}
-\def\spptodatao{\Verb|1302| - output *(\Verb|sp|+\Verb|offs|) to data bus}
-\def\datatosp{\Verb|1402| - write to \Verb|sp| from data bus}
+\def\sregsfuncn#1#2{\Verb|0x#1_1#2| - Special register #1 special function #2}
 
-\def\tmpatodata{\Verb|2002| - output \Verb|tmpA| to data bus}
-\def\tmpatoaddr{\Verb|2102| - output \Verb|tmpA| to addr bus}
-\def\tmpaptodata{\Verb|2202| - output *\Verb|tmpA| to data bus}
-\def\tmpaptodatao{\Verb|2302| - output *(\Verb|tmpA|+\Verb|offs|) to data bus}
-\def\datatotmpa{\Verb|2402| - write to \Verb|tmpA| from data bus}
+\def\incrementpk    {\Verb|0x0010| - increment \Verb|pk|}
 
-\def\tmpbtodata{\Verb|3002| - output \Verb|tmpB| to data bus}
-\def\tmpbtoaddr{\Verb|3102| - output \Verb|tmpB| to addr bus}
-\def\tmpbptodata{\Verb|3202| - output *\Verb|tmpB| to data bus}
-\def\tmpbptodatao{\Verb|3302| - output *(\Verb|tmpB|+\Verb|offs|) to data bus}
-\def\datatotmpb{\Verb|3402| - write to \Verb|tmpB| from data bus}
+\def\pkptroutinc#1    {\Verb|0x0#111| - output *\Verb|sr#1| to data bus for #1 cycles and increment \Verb|pk|}
 
-\def\offstodata{\Verb|4002| - output \Verb|offs| to data bus}
-\def\offstoaddr{\Verb|4102| - output \Verb|offs| to addr bus}
-\def\offsptodata{\Verb|4202| - output *\Verb|offs| to data bus}
-\def\offsptodatao{\Verb|4302| - output *(\Verb|offs|+\Verb|offs|) to data bus}
-\def\datatooffs{\Verb|4402| - write to \Verb|offs| from data bus}
+\def\writetmpatopk       {\Verb|0x0012| - write to \Verb|pk| from \Verb|tmpA|}
+\def\writetmpbtopk	 {\Verb|0x0013| - write to \Verb|pk| from \Verb|tmpB|} 	
 
-\def\incrementpk{\Verb|0502| - increment \Verb|pk|}
-\def\incrementsp{\Verb|1502| - increment \Verb|sp|}
-\def\tmpatopk{\Verb|2502| - output \Verb|tmpA| to \Verb|pk| via secret bus}
-\def\tmpbtopk{\Verb|3502| - output \Verb|tmpB| to \Verb|pk| via secret bus}
+\def\tmpatopkifz    {\Verb|0x0014| - write to \Verb|pk| from \Verb|tmpA| if data bus is zero; increment otherwise}
+\def\tmpatopkifnz   {\Verb|0x0015| - write to \Verb|pk| from \Verb|tmpA| if data bus is nonzero; increment otherwise}
 
-\def\decrementsp{\Verb|1602| - decrement \Verb|sp|}
+\def\tmpatopkifn    {\Verb|0x0016| - write to \Verb|pk| from \Verb|tmpA| if data bus is negative; increment otherwise}
+\def\tmpatopkifnn   {\Verb|0x0017| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-negative; increment otherwise}  
 
-\def\tmpatopkifz{\Verb|0602| - write to \Verb|pk| from \Verb|tmpA| if data bus is zero; increment otherwise}
-\def\tmpatopkifnz{\Verb|0702| - write to \Verb|pk| from \Verb|tmpA| if data bus is nonzero; increment otherwise}
+\def\tmpatopkifp    {\Verb|0x0018| - write to \Verb|pk| from \Verb|tmpA| if data bus is positive; increment otherwise}
+\def\tmpatopkifnp   {\Verb|0x0019| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-positive; increment otherwise}
 
-\def\tmpatopkifn{\Verb|0802| - write to \Verb|pk| from \Verb|tmpA| if data bus is negative; increment otherwise}
-\def\tmpatopkifnn{\Verb|0902| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-negative; increment otherwise}
+\def\incrementsp    {\Verb|0x1010| - increment \Verb|sp|}
+\def\decrementsp    {\Verb|0x1011| - decrement \Verb|sp|}
 
-\def\tmpatopkifp{\Verb|0a02| - write to \Verb|pk| from \Verb|tmpA| if data bus is positive; increment otherwise}
-\def\tmpatopkifnp{\Verb|0b02| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-positive; increment otherwise}
+\def\tmpatopk#1     {\Verb|0x2#110| - output \Verb|tmpA| to \Verb|pk| via secret line for #1 clock cycles}
+\def\tmpbtopk#1     {\Verb|0x2#110| - output \Verb|tmpB| to \Verb|pk| via secret line for #1 clock cycles}
 
-\def\regtodata#1{\Verb|#1003| - output \Verb|r#1| to data bus}
-\def\regtoaddr#1{\Verb|#1103| - output \Verb|r#1| to addr bus}
-\def\regptodata#1{\Verb|#1203| - output *\Verb|r#1| to data bus}
-\def\regptodatao#1{\Verb|#1303| - output *(\Verb|r#1|+\Verb|offs|) to data bus}
-\def\datatoreg#1{\Verb|#1403| - write to \Verb|r#1| from data bus}
+\def\regtodata#1#2    {\Verb|0x#1#220| - output \Verb|r#1| to data bus for #2 clock cycles}
+\def\regtoaddr#1#2    {\Verb|0x#1#221| - output \Verb|r#1| to addr bus for #2 clock cycles}
+\def\regptodata#1#2   {\Verb|0x#1#222| - output *\Verb|r#1| to data bus for #2 clock cycles}
+\def\regptodatao#1#2  {\Verb|0x#1#223| - output *(\Verb|r#1|+\Verb|offs|) to data bus for #2 clock cycles}
+\def\datatoreg#1      {\Verb|0x#1024| - write to \Verb|r#1| from data bus}
 
-\def\writeRAM{\Verb|0004| - write data bus to *(addr bus)}
-\def\writeRAMb#1{\Verb|#1004| - write data bus to *(addr bus)}
-\def\writeRAMo{\Verb|0104| - write data bus to *(addr bus+\Verb|offs|)}
-\def\readRAM{\Verb|0005| - output *(addr bus) RAM to data bus}
-\def\readRAMo{\Verb|0105| - output *(addr bus+\Verb|offs|) RAM to data bus}
+\def\writeRAM       {\Verb|0x0025| - write data bus to *(addr bus)}
+\def\writeRAMo      {\Verb|0x0026| - write data bus to *(addr bus+\Verb|offs|)}
+\def\readRAM#1      {\Verb|0x0#127| - output *(addr bus) RAM to data bus for #1 clock cycles}
+\def\readRAMo#1     {\Verb|0x0#128| - output *(addr bus+\Verb|offs|) RAM to data bus for #1 clock cycles}
 
-\def\RAMout#1{\Verb|#1006| - read #1 bytes from RAM and put on the data bus}
+\def\echodata           {\Verb|0x0030| - echo data bus to itself for 2 cycles}
+\def\echodataaddr       {\Verb|0x0031| - echo data bus to addr bus for 3 cycles}
+\def\echoaddrdata       {\Verb|0x0032| - echo addr bus to data bus for 2 cycles}
+\def\echoaddraddr       {\Verb|0x0033| - echo addr bus to itself for 2 cycles}
+\def\echoaddraddrlong   {\Verb|0x0034| - echo addr bus to itself for 3 cycles}
+\def\echodatalong       {\Verb|0x0035| - echo data bus to itself for 3 cycles}
+\def\echoaddrdatalong   {\Verb|0x0036| - echo addr bus to data bus for 3 cycles}
 
-\def\ALUop#1#2#3{\Verb|#1#21#3| - output ALU operation #3 on (\Verb|r#1|, \Verb|r#2|) to data bus}
+\def\pinmodein#1    {\Verb|0x#1030| - set I/O pin \Verb|N| to input mode}
+\def\pinmodeout#1   {\Verb|0x#1031| - set I/O pin \Verb|N| to output mode}
+\def\setpinlow#1    {\Verb|0x#1032| - set I/O pin \Verb|N| to low}
+\def\setpinhigh#1   {\Verb|0x#1033| - set I/O pin \Verb|N| to high}
+\def\pintodata#1#2  {\Verb|0x#1#234| - output I/O pin \Verb|N| to data bus for #2 clock cycles}
+\def\datatopin#1    {\Verb|0x#1035| - write data bus to I/O pin \Verb|N|}
 
-\def\echodata{\Verb|0020| - echo data bus to itself for 2 cycles}
-\def\echodataaddr{\Verb|0021| - echo data bus to addr bus for 3 cycles}
-\def\echoaddrdata{\Verb|0022| - echo addr bus to data bus for 2 cycles}
-\def\echoaddraddr{\Verb|0023| - echo addr bus to itself for 2 cycles}
-\def\echoaddraddrlong{\Verb|0024| - echo addr bus to itself for 3 cycles}
-\def\echodatalong{\Verb|0025| - echo data bus to itself for 3 cycles}
-\def\echoaddrdatalong{\Verb|0026| - echo addr bus to data bus for 3 cycles}
+\def\ALUop#1#2#3#4{\Verb|0x#1#2(4+#4)#3| - output ALU operation #3 on (\Verb|r#1|, \Verb|r#2|) to data bus for #4 clock cycles}
 
-\def\pinmodein#1 {\Verb|#10a0| - set I/O pin \Verb|N| to input mode}
-\def\pinmodeout#1{\Verb|#10a1| - set I/O pin \Verb|N| to output mode}
-\def\setpinlow#1    {\Verb|#10a2| - set I/O pin \Verb|N| to low}
-\def\setpinhigh#1   {\Verb|#10a3| - set I/O pin \Verb|N| to high}
-\def\pintodata#1 {\Verb|#10a4| - output I/O pin \Verb|N| to data bus}
-\def\datatopin#1 {\Verb|#10a5| - write data bus to I/O pin \Verb|N|}
+\def\done{\Verb|0xfffe| - end instruction}
+\def\reset{\Verb|0xffff| - reset everything}
 
-\def\biosromtodata{\Verb|00b0| - read BIOS rom to data bus}
-
-\def\done{\Verb|fffe| - end instruction}
-\def\reset{\Verb|ffff| - reset everything}
 
 \begin{document}
 
 \maketitle
-
-\section{Micro-instructions}
 
 Special registers:
 \begin{itemize}
@@ -120,75 +94,7 @@ Special registers:
     \item \Verb|sr4| - offset register \Verb{offs}.
 \end{itemize}
 
-\par
-Micro-instructions:
-
-\begin{itemize}
-    \item \nothing
-
-    \item\begini
-
-    \item\specialtodata N
-    \item\specialtoaddr N
-    \item\specialptodata N
-    \item\specialptodatao N
-    \item\datatospecial N
-    
-    \item\tmpatopk
-    \item\tmpbtopk
-    
-    \item\incrementpk
-    \item\incrementsp
-    \item\decrementsp
-    
-    \item\tmpatopkifz
-    \item\tmpatopkifnz
-    \item\tmpatopkifn
-    \item\tmpatopkifnn
-    \item\tmpatopkifp
-    \item\tmpatopkifnp
-    
-    \item\regtodata N
-    \item\regtoaddr N
-    \item\regptodata N
-    \item\regptodatao N
-    \item\datatoreg N
-    
-    \item\writeRAM
-    \item\writeRAMo
-
-    \item\readRAM
-    \item\readRAMo
-
-    \item\RAMout N. N = 1,2,4.
-
-    \item\ALUop N M K
-
-    \item\echodata
-    \item\echodataaddr
-    \item\echoaddrdata
-    \item\echoaddraddr
-    \item\echoaddraddrlong
-    \item\echodatalong
-    \item\echoaddrdatalong
-
-    \item\pinmodein  N
-    \item\pinmodeout N
-    
-    \item\setpinhigh N
-    \item\setpinlow  N
-    
-    \item\pintodata N M
-    \item\datatopin  N M
-
-
-    \item \done
-    \item \reset
-\end{itemize}
-
-\newpage
-
-\section{Actual instructions}
+\section{instructions}
 
 \subsection{Control}
 \begin{itemize}
