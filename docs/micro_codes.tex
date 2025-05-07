@@ -23,24 +23,41 @@
 \def\specialptodatao#1#2{\Verb|0x#1#205| - output *(\Verb|sr#1|+\Verb|offs|) to data bus for #2 clock cycles}
 \def\datatospecial#1    {\Verb|0x#1006| - write to \Verb|sr#1| from data bus}
 
+\def\pktodata#1  {\Verb|0x0#102| - output \Verb|pk| to data bus for #1 clock cycles}
+\def\pktoaddr#1  {\Verb|0x0#103| - output \Verb|pk| to addr bus for #1 clock cycles}
+\def\pkptrouta#1 {\Verb|0x0#104| - output *\Verb|pk| to data bus for #1 clock cycles}
+\def\pkptrout#1  {\Verb|0x0#105| - output *(\Verb|pk|+\Verb|offs|) to data bus for #1 clock cycles}
+\def\datatopk    {\Verb|0x0006| - write to \Verb|pk| from data bus}
+
+\def\sptodata#1  {\Verb|0x0#102| - output \Verb|sp| to data bus for #1 clock cycles}
+\def\sptoaddr#1  {\Verb|0x0#103| - output \Verb|sp| to addr bus for #1 clock cycles}
+\def\spptrout#1  {\Verb|0x0#104| - output *\Verb|sp| to data bus for #1 clock cycles}
+\def\spptrout#1  {\Verb|0x0#105| - output *(\Verb|sp|+\Verb|offs|) to data bus for #1 clock cycles}
+\def\datatosp    {\Verb|0x0006| - write to \Verb|sp| from data bus}
+
 \def\sregsfuncn#1#2{\Verb|0x#1_1#2| - Special register #1 special function #2}
 
 \def\incrementpk    {\Verb|0x0010| - increment \Verb|pk|}
 
-\def\tmpatopkifz    {\Verb|0x0011| - write to \Verb|pk| from \Verb|tmpA| if data bus is zero; increment otherwise}
-\def\tmpatopkifnz   {\Verb|0x0012| - write to \Verb|pk| from \Verb|tmpA| if data bus is nonzero; increment otherwise}
+\def\pkptroutinc#1   {\Verb|0x0#111| - output *\Verb|sr#1| to data bus for #1 cycles and increment \Verb|pk|}
 
-\def\tmpatopkifn    {\Verb|0x0013| - write to \Verb|pk| from \Verb|tmpA| if data bus is negative; increment otherwise}
-\def\tmpatopkifnn   {\Verb|0x0014| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-negative; increment otherwise}  
+\def\writetmpatopk   {\Verb|0x0012| - write to \Verb|pk| from \Verb|tmpA|}
+\def\writetmpbtopk	 {\Verb|0x0013| - write to \Verb|pk| from \Verb|tmpB|} 	
 
-\def\tmpatopkifp    {\Verb|0x0015| - write to \Verb|pk| from \Verb|tmpA| if data bus is positive; increment otherwise}
-\def\tmpatopkifnp   {\Verb|0x0016| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-positive; increment otherwise}
+\def\tmpatopkifz    {\Verb|0x0014| - write to \Verb|pk| from \Verb|tmpA| if data bus is zero; increment otherwise}
+\def\tmpatopkifnz   {\Verb|0x0015| - write to \Verb|pk| from \Verb|tmpA| if data bus is nonzero; increment otherwise}
 
-\def\tmpatopk#1#2   {\Verb|0x0#117| - output \Verb|tmpA| to \Verb|pk| via secret bus for #2 clock cycles}
-\def\tmpbtopk#1#2   {\Verb|0x0#118| - output \Verb|tmpB| to \Verb|pk| via secret bus for #2 clock cycles}
+\def\tmpatopkifn    {\Verb|0x0016| - write to \Verb|pk| from \Verb|tmpA| if data bus is negative; increment otherwise}
+\def\tmpatopkifnn   {\Verb|0x0017| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-negative; increment otherwise}  
+
+\def\tmpatopkifp    {\Verb|0x0018| - write to \Verb|pk| from \Verb|tmpA| if data bus is positive; increment otherwise}
+\def\tmpatopkifnp   {\Verb|0x0019| - write to \Verb|pk| from \Verb|tmpA| if data bus is non-positive; increment otherwise}
 
 \def\incrementsp    {\Verb|0x1010| - increment \Verb|sp|}
 \def\decrementsp    {\Verb|0x1011| - decrement \Verb|sp|}
+
+\def\tmpatopk#1     {\Verb|0x2#110| - output \Verb|tmpA| to \Verb|pk| via secret line for #1 clock cycles}
+\def\tmpbtopk#1     {\Verb|0x2#110| - output \Verb|tmpB| to \Verb|pk| via secret line for #1 clock cycles}
 
 \def\regtodata#1#2    {\Verb|0x#1#220| - output \Verb|r#1| to data bus for #2 clock cycles}
 \def\regtoaddr#1#2    {\Verb|0x#1#221| - output \Verb|r#1| to addr bus for #2 clock cycles}
@@ -49,9 +66,9 @@
 \def\datatoreg#1      {\Verb|0x#1024| - write to \Verb|r#1| from data bus}
 
 \def\writeRAM       {\Verb|0x0025| - write data bus to *(addr bus)}
-\def\writeRAMo      {\Verb|0x0027| - write data bus to *(addr bus+\Verb|offs|)}
-\def\readRAM#1      {\Verb|0x0#128| - output *(addr bus) RAM to data bus for #1 clock cycles}
-\def\readRAMo#1     {\Verb|0x0#129| - output *(addr bus+\Verb|offs|) RAM to data bus for #1 clock cycles}
+\def\writeRAMo      {\Verb|0x0026| - write data bus to *(addr bus+\Verb|offs|)}
+\def\readRAM#1      {\Verb|0x0#127| - output *(addr bus) RAM to data bus for #1 clock cycles}
+\def\readRAMo#1     {\Verb|0x0#128| - output *(addr bus+\Verb|offs|) RAM to data bus for #1 clock cycles}
 
 \def\echodata           {\Verb|0x0030| - echo data bus to itself for 2 cycles}
 \def\echodataaddr       {\Verb|0x0031| - echo data bus to addr bus for 3 cycles}
@@ -65,10 +82,13 @@
 \def\pinmodeout#1   {\Verb|0x#1031| - set I/O pin \Verb|N| to output mode}
 \def\setpinlow#1    {\Verb|0x#1032| - set I/O pin \Verb|N| to low}
 \def\setpinhigh#1   {\Verb|0x#1033| - set I/O pin \Verb|N| to high}
-\def\pintodata#1    {\Verb|0x#1034| - output I/O pin \Verb|N| to data bus}
+\def\pintodata#1#2  {\Verb|0x#1#234| - output I/O pin \Verb|N| to data bus for #2 clock cycles}
 \def\datatopin#1    {\Verb|0x#1035| - write data bus to I/O pin \Verb|N|}
 
-\def\ALUop#1#2#3#4{\Verb|0x#1#2(4+#4)#3| - output ALU operation #3 on (\Verb|r#1|, \Verb|r#2|) to data bus for #4 clock cycles}
+\def\ALUop#1#2#3#4{\Verb|0x#1#24#3| - output ALU operation #3 on (\Verb|r#1|, \Verb|r#2|) to data bus for #4 clock cycles}
+
+\def\holddatabus#1	{\Verb|0x0#150| - prevent data bus from updating for #1 clock cycles}
+\def\holdaddrbus#1	{\Verb|0x0#151| - prevent addr bus from updating for #1 clock cycles}
 
 \def\done{\Verb|0xfffe| - end instruction}
 \def\reset{\Verb|0xffff| - reset everything}
@@ -88,11 +108,16 @@
     \item\specialtoaddr{N}{K}
     \item\specialptodata{N}{K}
     \item\specialptodatao{N}{K}
-    \item\datatospecial	  N
+    \item\datatospecial{N}
 
     \item\sregsfuncn{N}{M}
 
     \item\incrementpk
+    \item\pkptroutinc K
+    
+    \item\writetmpatopk
+    \item\writetmpbtopk
+    
     \item\tmpatopkifz
     \item\tmpatopkifnz
 
@@ -102,11 +127,12 @@
     \item\tmpatopkifp
     \item\tmpatopkifnp
 
-    \item\tmpatopk K
-    \item\tmpbtopk K
-
     \item\incrementsp
     \item\decrementsp
+    
+    
+    \item\tmpatopk{K}
+    \item\tmpbtopk{K}
 
     \item\regtodata{N}{K}
     \item\regtoaddr{N}{K}
@@ -125,8 +151,11 @@
     \item\pinmodeout N
     \item\setpinlow  N
     \item\setpinhigh N
-    \item\pintodata  N
+    \item\pintodata{N}{K}
     \item\datatopin  N
+
+	\item\holddatabus K
+	\item\holdaddrbus K
 
     \item\done
     \item\reset
