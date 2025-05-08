@@ -244,10 +244,10 @@ dunk_instr dunk_instrs[N_INSTR] = {
 	UNARY___COMMAND("set_pin_high", 0xa3, CONSTANT, FIRST_NIBBLE),
 	
 	BINARY__COMMAND("read_pin",  0xa3, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
-	BINARY__COMMAND("write_pin", 0xa4, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE)
+	BINARY__COMMAND("write_pin", 0xa4, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 	
 	
-	NULLARY_COMMAND("halt_and_catch_fire", 0xff);
+	NULLARY_COMMAND("halt_and_catch_fire", 0xff)
 };
 
 // These instructions are handled separately, using macros

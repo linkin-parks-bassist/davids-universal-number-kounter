@@ -1,7 +1,6 @@
 alias screen_input *0xfffc
 alias screen_print  0x3
 
-
 push 0x6f
 push 0x6c
 push 0x6c
