@@ -16,11 +16,11 @@
 #define do_nothing 			0x0000
 #define begini 				0x0001
 
-#define sregtodata(X) 	0x0002 + 0x1000 * X | MIX_IN
-#define sregtoaddr(X) 	0x0003 + 0x1000 * X | MIX_IN
-#define sregptodata(X) 	0x0004 + 0x1000 * X | MIX_IN
-#define sregptodata_o(X) 	0x0005 + 0x1000 * X | MIX_IN
-#define datatosreg(X) 	0x0006 + 0x1000 * X | MIX_IN
+#define sregtodata(X) 	 (0x0002 + 0x1000 * X) | MIX_IN
+#define sregtoaddr(X) 	 (0x0003 + 0x1000 * X) | MIX_IN
+#define sregptodata(X) 	 (0x0004 + 0x1000 * X) | MIX_IN
+#define sregptodata_o(X) (0x0005 + 0x1000 * X) | MIX_IN
+#define datatosreg(X) 	 (0x0006 + 0x1000 * X) | MIX_IN
 
 #define pktodata 		0x0002
 #define pktoaddr 		0x0003
@@ -231,6 +231,13 @@ void generate_roms() {
 	code_sequence_for(0x15);		// Set *constant to srN
 	code_sequence_for(0x16);		// Set *constant to *srN
 	code_sequence_for(0x17);		// Set *constant to *(srN+offs)
+	append_mc1(pkptroutinc);
+	append_mc2(datatotmpa, pkptroutinc);
+	append_mc1(datatooffs);
+	append_mc1(sregptodata_o(1));
+	append_mc2(holddata, tmpatoaddr);
+	append_mc1(writeRAM);
+	append_mc1(done);
 
 	code_sequence_for(0x18);		// Set rN to constant
 	append_mc1(pkptroutinc);
@@ -680,7 +687,7 @@ void generate_roms() {
 	
 	code_sequence_for(0x81);		// return
 	append_mc1(spptodata);
-	append_mc2(datatopk, decrementsp);
+	append_mc2(datatopk, incrementsp);
 	append_mc1(done);
 
 	// I/O pins
@@ -700,12 +707,12 @@ void generate_roms() {
 	append_mc1(setpinhigh(1));
 	append_mc1(done);
 
-	code_sequence_for(0xa3);		// read_pin constant, rN
+	code_sequence_for(0xa4);		// read_pin constant, rN
 	append_mc1(pintodata(1));
 	append_mc1(datatoreg(2));
 	append_mc1(done);
 	
-	code_sequence_for(0xa4);		// write_pin constant, rN
+	code_sequence_for(0xa5);		// write_pin constant, rN
 	append_mc1(regtodata(2));
 	append_mc1(datatopin(1));
 	append_mc1(done);
