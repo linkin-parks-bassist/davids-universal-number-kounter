@@ -229,7 +229,19 @@ void generate_roms() {
 	append_mc1(done);
 
 	code_sequence_for(0x15);		// Set *constant to srN
+	append_mc1(pkptroutinc);
+	append_mc2(holddataaddr, sregtodata(1));
+	append_mc1(writeRAM);
+	append_mc1(done);
+	
 	code_sequence_for(0x16);		// Set *constant to *srN
+	append_mc1(pkptroutinc);
+	append_mc2(datatotmpa, sregptodata(1));
+	append_mc1(datatotmpb);
+	append_mc2(tmpatoaddr, tmpbtodata);
+	append_mc1(writeRAM);
+	append_mc1(done);
+	
 	code_sequence_for(0x17);		// Set *constant to *(srN+offs)
 	append_mc1(pkptroutinc);
 	append_mc2(datatotmpa, pkptroutinc);
