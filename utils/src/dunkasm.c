@@ -382,7 +382,6 @@ int is_bnumber(const char* str)
 
 int is_char(const char* str)
 {
-	printf("checking if \"%s\" is a char...\n", str);
 	if (!str) return 0;
 	
 	int len = strlen(str);
@@ -397,32 +396,36 @@ int is_char(const char* str)
 		if (str[2] != '\'') return 0;
 	}
 	
-	
-	printf("It is!\n");
 	return 1;
 }
+
+char unescape(char token)
+{
+	switch (token) {
+		case 'a': return '\a';
+		case 'b': return '\b';
+		case 'f': return '\f';
+		case 'n': return '\n';
+		case 'r': return '\r';
+		case 't': return '\t';
+		case 'v': return '\v';
+		case '\\': return '\\';
+		case '\'': return '\'';
+		case '\"': return '\"';
+		case '\?': return '\?';
+		default: return 0;
+	}
+}
+
+
 
 uint16_t parse_char(const char *str) {
 	if (!str) return 0;
 	
-	int len = strlen(str);
+	if (str[1] == '\\')
+		return (uint16_t)unescape(str[2]);
 	
-	/* ensure sprintf doesn't expect an argument */
-	for (int i = 0; i < len; i++) {
-		if (str[i] == '\%') {
-			if (i == 0) {
-				return 0;
-			}
-			if (str[i-1] != '\\') {
-				return 0;
-			}
-		}
-	}
-	
-	char buf[3];
-	sprintf(buf, str);
-	
-	return buf[1];
+	return str[1];
 }
 
 long parse_number(const char* str)
@@ -551,7 +554,6 @@ parameter parse_parameter(const char* input)
 		} else if (is_char(input)) {
 			result.type = CONSTANT;
 			result.value = parse_char(input);
-			printf("it's a char! with value 0x%x = \'%c\'\n", result.value, (char)result.value);
 		} else {
 			for (int i = 0; i < num_aliases; i++) {
 				printf("Checking aliases...\n");
