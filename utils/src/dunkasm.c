@@ -63,6 +63,7 @@ typedef struct
 typedef struct
 {
 	int line_number;
+	char *raw_line;
 	char** tokens;
 	int token_count;
 } line_data_str;
@@ -379,6 +380,51 @@ int is_bnumber(const char* str)
 	return 1;
 }
 
+int is_char(const char* str)
+{
+	printf("checking if \"%s\" is a char...\n", str);
+	if (!str) return 0;
+	
+	int len = strlen(str);
+	if (len < 3) return 0;
+	
+	if (str[0] != '\'') return 0;
+	
+	if (str[1] == '\\') {
+		if (len != 4) return 0;
+		if (str[3] != '\'') return 0;
+	} else {
+		if (str[2] != '\'') return 0;
+	}
+	
+	
+	printf("It is!\n");
+	return 1;
+}
+
+uint16_t parse_char(const char *str) {
+	if (!str) return 0;
+	
+	int len = strlen(str);
+	
+	/* ensure sprintf doesn't expect an argument */
+	for (int i = 0; i < len; i++) {
+		if (str[i] == '\%') {
+			if (i == 0) {
+				return 0;
+			}
+			if (str[i-1] != '\\') {
+				return 0;
+			}
+		}
+	}
+	
+	char buf[3];
+	sprintf(buf, str);
+	
+	return buf[1];
+}
+
 long parse_number(const char* str)
 {
 	if (str[0] == '-')
@@ -502,6 +548,10 @@ parameter parse_parameter(const char* input)
 			result.type = CONSTANT;
 			result.value = parse_number(input);
 			printf("it's a number !\n");
+		} else if (is_char(input)) {
+			result.type = CONSTANT;
+			result.value = parse_char(input);
+			printf("it's a char! with value 0x%x = \'%c\'\n", result.value, (char)result.value);
 		} else {
 			for (int i = 0; i < num_aliases; i++) {
 				printf("Checking aliases...\n");
@@ -809,15 +859,6 @@ void process_file(const char* input_path)
 
 	line_data_node *head = tokenize_file(input_path);
 	line_data_node* current = head;
-	
-	uint16_t word, addr, c;
-	int reg1, reg2;
-	int found = 0;
-	uint16_t bonus_writeouts[5];
-	uint16_t writeout_mask[10];
-	int n_bwriteouts, k, temp;
-	int argc;
-	
 	line_data_str line;
 
 	while (current) {
@@ -945,6 +986,7 @@ void insert_label_addresses() {
 	}
 }
 
+
 // Main function to handle input arguments
 int main(int argc, char* argv[])
 {
@@ -954,9 +996,9 @@ int main(int argc, char* argv[])
 	}
 
 	char** input_paths = NULL;
-	char* output_path = NULL;
-
 	int n_files = 0;
+
+	char* output_path = NULL;
 
 	// Parse arguments
 	for (int i = 1; i < argc; i++) {
