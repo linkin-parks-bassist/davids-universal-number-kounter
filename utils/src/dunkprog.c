@@ -710,21 +710,51 @@ void generate_roms() {
 	code_sequence_for(0xa1);		// pinmode_output constant
 	append_mc1(pinmodeout(1));
 	append_mc1(done);
+	
+	
+	code_sequence_for(0xa2);		// pinmode_input rN
+	append_mc1(pinmodein(1));
+	append_mc1(done);
+	
+	code_sequence_for(0xa3);		// pinmode_output rN
+	append_mc1(pinmodeout(1));
+	append_mc1(done);
+	
 
-	code_sequence_for(0xa2);		// set_pin_low constant
+	code_sequence_for(0xa4);		// set_pin_low constant
 	append_mc1(setpinlow(1));
 	append_mc1(done);
 	
-	code_sequence_for(0xa3);		// set_pin_high constant
+	code_sequence_for(0xa5);		// set_pin_high constant
 	append_mc1(setpinhigh(1));
 	append_mc1(done);
 
-	code_sequence_for(0xa4);		// read_pin constant, rN
+
+	code_sequence_for(0xa6);		// set_pin_low rN
+	append_mc1(setpinlow(1));
+	append_mc1(done);
+	
+	code_sequence_for(0xa7);		// set_pin_high rN
+	append_mc1(setpinhigh(1));
+	append_mc1(done);
+	
+	code_sequence_for(0xa8);		// read_pin constant, rN
 	append_mc1(pintodata(1));
 	append_mc1(datatoreg(2));
 	append_mc1(done);
 	
-	code_sequence_for(0xa5);		// write_pin constant, rN
+	code_sequence_for(0xa9);		// write_pin constant, rN
+	append_mc1(regtodata(2));
+	append_mc1(datatopin(1));
+	append_mc1(done);
+	
+	
+	code_sequence_for(0xaa);		// read_pin rN, rM
+	append_mc1(pintodata(1));
+	append_mc1(datatoreg(2));
+	append_mc1(done);
+	
+	code_sequence_for(0xab);		// write_pin rN, rM
 	append_mc1(regtodata(2));
 	append_mc1(datatopin(1));
 	append_mc1(done);

@@ -102,7 +102,19 @@ alias aliases[MAX_N_ALIASES];
 #define TERNARY_COMMAND(name, code, a1_t, a1_p, a2_t, a2_p, a3_t, a3_p)        \
 	{ name, code, 2, { a1_t, a2_t, a3_t, 0 }, { a1_p, a2_p, a3_p, 0 } }
 
-#define N_INSTR 101
+#define N_INSTR 107
+
+// These instructions are handled separately, using macros
+
+#define FUNCTION_CALL 		0x80
+
+#define PLAIN_GOTO 			0x01
+#define GOTO_C_ZERO 		0x02
+#define GOTO_C_NONZERO 		0x03
+#define GOTO_C_NEGATIVE 	0x04
+#define GOTO_C_NONNEGATIVE 	0x05
+#define GOTO_C_POSITIVE 	0x06
+#define GOTO_C_NONPOSITIVE 	0x07
 
 dunk_instr dunk_instrs[N_INSTR] = {
 	NULLARY_COMMAND("chill", 0x00),
@@ -241,27 +253,23 @@ dunk_instr dunk_instrs[N_INSTR] = {
 	UNARY___COMMAND("pinmode_input",  0xa0, CONSTANT, FIRST_NIBBLE),
 	UNARY___COMMAND("pinmode_output", 0xa1, CONSTANT, FIRST_NIBBLE),
 	
-	UNARY___COMMAND("set_pin_low",  0xa2, CONSTANT, FIRST_NIBBLE),
-	UNARY___COMMAND("set_pin_high", 0xa3, CONSTANT, FIRST_NIBBLE),
+	UNARY___COMMAND("pinmode_input",  0xa2, REGISTER, FIRST_NIBBLE),
+	UNARY___COMMAND("pinmode_output", 0xa3, REGISTER, FIRST_NIBBLE),
 	
-	BINARY__COMMAND("read_pin",  0xa3, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
-	BINARY__COMMAND("write_pin", 0xa4, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+	UNARY___COMMAND("set_pin_low",  0xa4, CONSTANT, FIRST_NIBBLE),
+	UNARY___COMMAND("set_pin_high", 0xa5, CONSTANT, FIRST_NIBBLE),
 	
+	UNARY___COMMAND("set_pin_low",  0xa6, REGISTER, FIRST_NIBBLE),
+	UNARY___COMMAND("set_pin_high", 0xa7, REGISTER, FIRST_NIBBLE),
+	
+	BINARY__COMMAND("read_pin",  0xa8, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+	BINARY__COMMAND("write_pin", 0xa9, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+	
+	BINARY__COMMAND("read_pin",  0xaa, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+	BINARY__COMMAND("write_pin", 0xab, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 	
 	NULLARY_COMMAND("halt_and_catch_fire", 0xff)
 };
-
-// These instructions are handled separately, using macros
-
-#define FUNCTION_CALL 		0x80
-
-#define PLAIN_GOTO 			0x01
-#define GOTO_C_ZERO 		0x02
-#define GOTO_C_NONZERO 		0x03
-#define GOTO_C_NEGATIVE 	0x04
-#define GOTO_C_NONNEGATIVE 	0x05
-#define GOTO_C_POSITIVE 	0x06
-#define GOTO_C_NONPOSITIVE 	0x07
 
 void WRITEOUT(uint16_t v)
 {
@@ -938,8 +946,8 @@ void init_global_variables() {
 		strcpy(aliases[i+4].replacee, buf);
 		
 		sprintf(buf, "*(sr1+%d)", i);
-		aliases[4].replacer = malloc(sizeof(char) * arslen);
-		strcpy(aliases[4].replacer, buf);
+		aliases[i+4].replacer = malloc(sizeof(char) * arslen);
+		strcpy(aliases[i+4].replacer, buf);
 	}
 
 	for (int i = num_aliases; i < MAX_N_ALIASES; i++) {
