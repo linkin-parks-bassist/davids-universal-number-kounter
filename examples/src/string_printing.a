@@ -1,0 +1,15 @@
+set *0x1000 'H'
+set *0x1001 'e'
+set *0x1002 'l'
+set *0x1003 'l'
+set *0x1004 'o'
+set *0x1005 0
+
+push 3
+push 0xfffc
+
+push 0x1000
+
+call prints
+
+halt_and_catch_fire

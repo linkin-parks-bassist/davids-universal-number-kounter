@@ -1,0 +1,50 @@
+alias output_ptr_default 0xfffc
+alias print_pin_default  0x3
+
+alias output_ptr r2
+alias print_pin	 r3
+
+alias input_ptr r0
+alias current_char r1
+
+prints:
+	set input_ptr 	argument1
+	set output_ptr 	argument2
+	set print_pin  	argument3
+	
+	prints_loop:
+		set current_char *input_ptr
+		
+		goto_if_zero current_char prints_reached_null_terminator
+		
+		set *output_ptr current_char
+		
+		set_pin_high print_pin
+		set_pin_low  print_pin
+		
+		increment input_ptr
+		
+		goto prints_loop
+	
+	prints_reached_null_terminator:
+		return
+
+printsd:
+	set input_ptr argument
+	
+	prints_loop:
+		set current_char *input_ptr
+		
+		goto_if_zero current_char prints_reached_null_terminator
+		
+		set *output_ptr_default current_char
+		
+		set_pin_high print_pin_default
+		set_pin_low  print_pin_default
+		
+		increment input_ptr
+		
+		goto prints_loop
+	
+	prints_reached_null_terminator:
+		return

@@ -1,0 +1,76 @@
+alias kounter 	r0
+alias mod3 		r1
+alias mod5 		r2
+alias position 	r3
+alias start_position *0xff
+alias comparison 	 r6
+alias temp			 r7
+
+alias max 		r4
+
+set max 		10
+
+set kounter 		1
+set position 		0x100
+set start_position  0x100
+
+euler1_mainloop:
+	set max 10
+	subtract max kounter
+	
+	goto_if_nonpositive max euler1_adding
+	
+	% make sure to save the important registers on the stack before calling a function
+	push start_position
+	push position
+	push kounter
+	push 3
+	call remainder
+	pop mod3
+	pop kounter
+	pop position
+	pop start_position
+	
+	goto_if_zero mod3 include_number
+	
+	push start_position
+	push position
+	push kounter
+	push 5
+	call remainder
+	pop mod5
+	pop kounter
+	pop position
+	pop start_position
+	
+	goto_if_zero mod5 include_number
+	
+	increment kounter
+	goto euler1_mainloop
+	
+	include_number:
+		set *position kounter
+		increment position
+		increment kounter
+		goto euler1_mainloop
+	
+euler1_adding:
+	set kounter 0
+	decrement position
+	
+	euler1_adding_loop:
+		set temp *position
+		add kounter temp
+		
+		decrement position
+		
+		set temp start_position
+		sub temp position
+		
+		goto_if_negative temp euler1_adding_loop
+	
+	set *0xffff kounter
+
+endloop:
+	goto endloop
+	
