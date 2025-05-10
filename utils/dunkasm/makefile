@@ -1,5 +1,8 @@
-hnames := dunkasm.h instr.h param.h lines.h label.h alias.h
-cnames := main.c instr.c label.c alias.c lines.c param.c
+mnames := instr param lines label alias files tokenizer
+hnames := dunkasm.h $(addsuffix .h, $(mnames))
+cnames := main.c $(addsuffix .c, $(mnames))
+
+CFLAGS = 
 
 incdir := include
 srcdir := src
@@ -10,16 +13,18 @@ cfiles  := $(addprefix $(srcdir)/,$(cnames))
 objs    := $(addprefix $(objdir)/,$(cnames:.c=.o))
 
 all: $(objs)
-	gcc $(objs) -o bin/dunkasm
+	gcc $(CFLAGS) $(objs) -o bin/dunkasm
 
 install: all
 	cp bin/dunkasm /usr/bin/
 
 $(objdir)/%.o : $(cfiles)
-	gcc -I include -c $(srcdir)/$*.c -o $@
+	gcc $(CFLAGS) -I include -c $(srcdir)/$*.c -o $@
 
 $(cfiles) : $(headers)
 
 clean:
-	rm bin/* 2> /dev/null || true
+	yes | rm bin/dunkasm $(objs) 2> /dev/null || true
 
+debug:
+	make CFLAGS="-g"

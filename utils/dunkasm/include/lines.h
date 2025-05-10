@@ -19,6 +19,7 @@ typedef struct line_data_node
 
 void free_line_data(line_data_str* line_data);
 void free_list(line_data_node* head);
-line_data_str *tokenize_line(char* line, int line_number);
+
+void process_line(line_data_str line, const char* fname);
 
 #endif

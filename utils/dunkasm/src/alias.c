@@ -8,7 +8,8 @@ int num_aliases;
 alias aliases[MAX_N_ALIASES];
 
 
-void init_aliases() {
+void init_aliases()
+{
 	num_aliases = N_DEFAULT_ALIASES;
 	
 	aliases[0].replacee = malloc(strlen("pk") + 1);
