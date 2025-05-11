@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "dunkasm.h"
 
 dunk_instr dunk_instrs[N_INSTR] = {

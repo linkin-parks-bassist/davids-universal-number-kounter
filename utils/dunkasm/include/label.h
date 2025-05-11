@@ -5,18 +5,28 @@
 #define MAX_LABELS			1024
 #define MAX_LABEL_REFS		1024
 
+#define CODE_LABEL 	  0
+#define STRING_LABEL  1
+
+typedef struct {
+	struct pa_file *parent;
+	char *name;
+	unsigned int position;
+	int type;
+} dasm_label;
+
 typedef struct
 {
-	const char *fname;
+	struct pa_file *parent;
 	char label[MAX_LABEL_LENGTH];
-	uint16_t position;
-	int line_number;
+	unsigned int position;
+	unsigned int line_number;
 } label_ref;
 
-void insert_label_addresses();
+int insert_label_addresses(dasm_context *cxt, dasm_buffer *buf);
 
-extern char labels[MAX_LABELS][MAX_LABEL_LENGTH];
-extern uint16_t label_positions[MAX_LABELS];
-extern label_ref label_refs[MAX_LABEL_REFS];
+void free_label(dasm_label l);
+
+int init_context_labels(dasm_context *context);
 
 #endif

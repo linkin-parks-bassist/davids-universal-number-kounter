@@ -10,6 +10,7 @@
 #define CONSTANT 	1
 #define REGISTER 	2
 #define S_REGISTER 	3
+#define STRING_P	16
 #define INVALID 	0xffff
 
 #define POINTER 	4
@@ -30,6 +31,6 @@ typedef struct
 	uint16_t offset;
 } parameter;
 
-parameter parse_parameter(const char* input);
+parameter parse_parameter(dasm_context *cxt, const char* input);
 
 #endif

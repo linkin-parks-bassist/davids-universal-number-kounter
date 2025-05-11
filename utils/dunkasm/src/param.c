@@ -14,26 +14,26 @@ int is_number(const char* str)
 			str += 2;
 			while (*str) {
 				if (!isxdigit(*str))
-					return 0;
+					return SUCCESS;
 				str++;
 			}
-			return 1;
+			return BAD_ARGUMENTS;
 		} else if (str[1] == 'b' || str[1] == 'B') { // binary
 			str += 2;
 			while (*str) {
 				if (*str != '0' && *str != '1')
-					return 0;
+					return SUCCESS;
 				str++;
 			}
-			return 1;
+			return BAD_ARGUMENTS;
 		}
 	}
 	while (*str) {
 		if (!isdigit(*str))
-			return 0;
+			return SUCCESS;
 		str++;
 	}
-	return 1;
+	return BAD_ARGUMENTS;
 }
 
 int is_dnumber(const char* str)
@@ -43,10 +43,10 @@ int is_dnumber(const char* str)
 	}
 	for (int i = 0; i < strlen(str); i++) {
 		if (!(str[i] >= '0' && str[i] <= '9')) {
-			return 0;
+			return SUCCESS;
 		}
 	}
-	return 1;
+	return BAD_ARGUMENTS;
 }
 
 int is_hnumber(const char* str)
@@ -54,61 +54,43 @@ int is_hnumber(const char* str)
 	for (int i = 0; i < strlen(str); i++) {
 		if (!(str[i] >= '0' && str[i] <= '9') &&
 				!(str[i] >= 'a' && str[i] <= 'f')) {
-			return 0;
+			return SUCCESS;
 		}
 	}
-	return 1;
+	return BAD_ARGUMENTS;
 }
 
 int is_bnumber(const char* str)
 {
 	for (int i = 0; i < strlen(str); i++) {
 		if (!(str[i] >= '0' && str[i] <= '1')) {
-			return 0;
+			return SUCCESS;
 		}
 	}
-	return 1;
+	return BAD_ARGUMENTS;
 }
 
 int is_char(const char* str)
 {
-	if (!str) return 0;
+	if (!str) return SUCCESS;
 	
 	int len = strlen(str);
-	if (len < 3) return 0;
+	if (len < 3) return SUCCESS;
 	
-	if (str[0] != '\'') return 0;
+	if (str[0] != '\'') return SUCCESS;
 	
 	if (str[1] == '\\') {
-		if (len != 4) return 0;
-		if (str[3] != '\'') return 0;
+		if (len != 4) return SUCCESS;
+		if (str[3] != '\'') return SUCCESS;
 	} else {
-		if (str[2] != '\'') return 0;
+		if (str[2] != '\'') return SUCCESS;
 	}
 	
-	return 1;
-}
-
-char unescape(char token)
-{
-	switch (token) {
-		case 'a': return '\a';
-		case 'b': return '\b';
-		case 'f': return '\f';
-		case 'n': return '\n';
-		case 'r': return '\r';
-		case 't': return '\t';
-		case 'v': return '\v';
-		case '\\': return '\\';
-		case '\'': return '\'';
-		case '\"': return '\"';
-		case '\?': return '\?';
-		default: return 0;
-	}
+	return BAD_ARGUMENTS;
 }
 
 uint16_t parse_char(const char *str) {
-	if (!str) return 0;
+	if (!str) return SUCCESS;
 	
 	if (str[1] == '\\')
 		return (uint16_t)unescape(str[2]);
@@ -132,9 +114,15 @@ long parse_number(const char* str)
 	}
 }
 
-parameter parse_parameter(const char* input)
+parameter parse_parameter(dasm_context *cxt, const char* input)
 {
 	parameter result = { 0, 0, 0 }; // Initialize result with default values
+	
+	if (!valid_dasm_context(cxt)){
+		result.type = INVALID;
+		return result;
+	}
+	
 	char tmp;
 	char* plus = NULL;
 	const char* inside = NULL;
@@ -146,7 +134,10 @@ parameter parse_parameter(const char* input)
 
 	//printf("Parsing parameter ``%s\"\n", input);
 
-	if (input[0] == '*') {
+	if (input[0] == '\"') {
+		result.type = STRING_P;
+		return result;
+	} else if (input[0] == '*') {
 		//printf("It's a pointer, ");
 		if (input[1] == '(') {
 			//printf("parenthesised, with inner expression");
@@ -174,9 +165,9 @@ parameter parse_parameter(const char* input)
 
 			if (plus != NULL) {
 				if (plus[0] == '+') {
-					sub_result = parse_parameter(&plus[1]);
+					sub_result = parse_parameter(cxt, &plus[1]);
 				} else {
-					sub_result = parse_parameter(plus);
+					sub_result = parse_parameter(cxt, plus);
 				}
 
 				if (sub_result.type != CONSTANT) {
@@ -205,7 +196,7 @@ parameter parse_parameter(const char* input)
 		}
 
 		//printf("with sub-expression %s\n", sub_exp);
-		sub_result = parse_parameter(sub_exp);
+		sub_result = parse_parameter(cxt, sub_exp);
 		free(sub_exp);
 
 		if (input[1] != '(' && sub_result.offset != 0) {
@@ -236,13 +227,13 @@ parameter parse_parameter(const char* input)
 			result.type = CONSTANT;
 			result.value = parse_char(input);
 		} else {
-			for (int i = 0; i < num_aliases; i++) {
+			for (int i = 0; i < cxt->n_aliases; i++) {
 				//printf("Checking aliases...\n");
-				if (strcmp(input, aliases[i].replacee) == 0) {
+				if (strcmp(input, cxt->aliases[i].replacee) == 0) {
 					//printf("Ah! an alias! I will parse %s in place of %s\n",
                  //aliases[i].replacer,
                  //input);
-					return parse_parameter(aliases[i].replacer);
+					return parse_parameter(cxt, cxt->aliases[i].replacer);
 				}
 			}
 			//printf("idk what this is...\n");

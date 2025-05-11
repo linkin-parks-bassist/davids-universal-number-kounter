@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include "dunkasm.h"
 
-void free_line_data(line_data_str* line_data)
+//IMPLEMENT_LINKED_LIST(line_data_struct);
+
+void free_line_data(line_data_struct *line_data)
 {
 	for (int i = 0; i < line_data->token_count; i++) {
 		free(line_data->tokens[i]);
@@ -13,7 +15,7 @@ void free_line_data(line_data_str* line_data)
 	free(line_data);
 }
 
-void free_list(line_data_node* head)
+void free_list(line_data_node *head)
 {
 	line_data_node* temp;
 	while (head) {
@@ -24,9 +26,12 @@ void free_list(line_data_node* head)
 	}
 }
 
-void process_line(line_data_str line, const char* fname) {
+int process_line(line_data_struct line, pa_file *file, dasm_context *cxt)
+{
+	if (!valid_pa_file(file) || !valid_dasm_context(cxt))
+		return BAD_ARGUMENTS;
 	if (line.token_count == 0)
-		return;
+		return SUCCESS;
 	
 	printf("Processing line %d, \"%s\", which has %d tokens, which are\n    ``%s\"", line.line_number, line.raw_line, line.token_count, line.tokens[0]);
 
@@ -43,70 +48,70 @@ void process_line(line_data_str line, const char* fname) {
 			exit(EXIT_FAILURE);
 		}
 
-		aliases[num_aliases].replacee = malloc(strlen(line.tokens[1]) + 1);
-		strcpy(aliases[num_aliases].replacee, line.tokens[1]);
+		cxt->aliases[cxt->n_aliases].replacee = malloc(strlen(line.tokens[1]) + 1);
+		strcpy(cxt->aliases[cxt->n_aliases].replacee, line.tokens[1]);
 
-		aliases[num_aliases].replacer = malloc(strlen(line.tokens[2]) + 1);
-		strcpy(aliases[num_aliases].replacer, line.tokens[2]);
+		cxt->aliases[cxt->n_aliases].replacer = malloc(strlen(line.tokens[2]) + 1);
+		strcpy(cxt->aliases[cxt->n_aliases].replacer, line.tokens[2]);
 
-		num_aliases += 1;
+		cxt->n_aliases += 1;
+	} else if (strcmp(line.tokens[0], "include") == 0) {
+		for (int i = 1; i < line.token_count; i++) {
+			char *tempstring = strdup(&line.tokens[i][1]);
+			tempstring[strlen(tempstring) - 1] = 0;
+			
+			printf("Included file \"%s\"\n", tempstring);
+			process_file(tempstring, cxt, INCLUDED_FILE);
+			printf("Done!\n");
+			
+			free(tempstring);
+		}
 	} else if (strcmp(line.tokens[0], "dealias") == 0) {
 		for (int k = 1; k < line.token_count; k++) {
-			for (int i = 0; i < num_aliases; i++) {
-				if (strcmp(line.tokens[k], aliases[i].replacee) == 0) {
-					free(aliases[i].replacee);
-					free(aliases[i].replacer);
+			for (int i = 0; i < cxt->n_aliases; i++) {
+				if (strcmp(line.tokens[k], cxt->aliases[i].replacee) == 0) {
+					free(cxt->aliases[i].replacee);
+					free(cxt->aliases[i].replacer);
 					
-					num_aliases -= 1;
-					for (int j = i; j < num_aliases; j++) {
-						aliases[j].replacee = aliases[j + 1].replacee;
-						aliases[j].replacer = aliases[j + 1].replacer;
+					cxt->n_aliases -= 1;
+					for (int j = i; j < cxt->n_aliases; j++) {
+						cxt->aliases[j].replacee = cxt->aliases[j + 1].replacee;
+						cxt->aliases[j].replacer = cxt->aliases[j + 1].replacer;
 					}
 				}
 			}
 		}
 	} else if (line.token_count == 1 && line.tokens[0][first_token_length - 1] == ':') {
-		strncpy(labels[n_labels], line.tokens[0], first_token_length - 1);
-		// I have to manually null-terminate the string, since strncpy doesn't copy it over
-		labels[n_labels][first_token_length - 1] = 0;
-		label_positions[n_labels] = current_position;
-		n_labels += 1;
+		char *temp_string = strdup(line.tokens[0]);
+		temp_string[first_token_length - 1] = 0;
+		add_label_to_context(cxt, file, temp_string, file->text.position, CODE_LABEL);
+		
+		free(temp_string);
 	} else if (strncmp(line.tokens[0], "goto", 4) == 0 ||
 		   strcmp(line.tokens[0], "call") == 0) {
-		int code = encode_goto(line);
+		int code = encode_goto(cxt, line);
 
 		if (code == INVALID) {
-			fprintf(stderr,
-							"Error: nonsense ``goto\"-type statement `on line %i.\n",
+			fprintf(stderr, "Error: nonsense ``goto\"-type statement `on line %i.\n",
 							line.tokens[0],
 							line.line_number);
 			exit(EXIT_FAILURE);
 		}
 
 		if (code == PLAIN_GOTO || code == FUNCTION_CALL) {
-			strncpy(label_refs[n_label_refs].label,
-							line.tokens[1],
-							MAX_LABEL_LENGTH);
+			add_label_ref_to_file(file, line.tokens[1], file->text.position + 1, line.line_number);
 		} else {
-			strncpy(label_refs[n_label_refs].label,
-							line.tokens[2],
-							MAX_LABEL_LENGTH);
+			add_label_ref_to_file(file, line.tokens[2], file->text.position + 1, line.line_number);
 		}
 
-		label_refs[n_label_refs].position = current_position;
-		label_refs[n_label_refs].line_number = line.line_number;
-		label_refs[n_label_refs].fname = fname;
-		n_label_refs += 1;
-
-		buffer_word(code);
-		buffer_word(0);
+		append_buffer(&file->text, code);
+		append_buffer(&file->text, 0);
 	} else {
-		for (int i = 0; i < num_aliases; i++) {
+		for (int i = 0; i < cxt->n_aliases; i++) {
 			for (int j = 0; j < line.token_count; j++) {
-				if (strcmp(line.tokens[j], aliases[i].replacee) == 0) {
-					line.tokens[j] = realloc(line.tokens[j],
-										   strlen(aliases[i].replacer) + 1);
-					strcpy(line.tokens[j], aliases[i].replacer);
+				if (strcmp(line.tokens[j], cxt->aliases[i].replacee) == 0) {
+					line.tokens[j] = realloc(line.tokens[j], strlen(cxt->aliases[i].replacer) + 1);
+					strcpy(line.tokens[j], cxt->aliases[i].replacer);
 				}
 			}
 		}
@@ -119,12 +124,16 @@ void process_line(line_data_str line, const char* fname) {
 		if (argc >= MAX_PARAMS) {
 			fprintf(
 					stderr,
-					"Error: too many arguments on ``%s\", line %i.\n", fname, line.line_number);
+					"Error: too many arguments on ``%s\", line %i.\n", file->fname, line.line_number);
 				exit(EXIT_FAILURE);
 		}
 		
 		for (int i = 0; i < argc; ++i) {
-			params[i] = parse_parameter(line.tokens[i + 1]);
+			params[i] = parse_parameter(cxt, line.tokens[i + 1]);
+			
+			if (params[i].type == STRING_P) {
+				handle_string_parameter(cxt, file, &params[i], line.tokens[i + 1], line.line_number);
+			}
 			//printf("argument ``%s\", type %i\n", line.tokens[i + 1], params[i].type);
 			if (params[i].type == INVALID) {
 				fprintf(
@@ -175,15 +184,7 @@ void process_line(line_data_str line, const char* fname) {
 				}
 			}
 
-			buffer_word(code);
-
-			//printf("Command %s, %i arguments:\n", dunk_instrs[index].name, argc);
-			
-			//for (int j = 0; j < argc; j++) {
-				//printf("    type %i in position 0b%16b\n",
-				//dunk_instrs[index].arg_types[j],
-				//dunk_instrs[index].arg_positions[j]);
-			//}
+			append_buffer(&file->text, code);
 
 			for (int k = 1; k < argc + 1; k++) {
 				for (int j = 0; j < argc; j++) {
@@ -192,13 +193,15 @@ void process_line(line_data_str line, const char* fname) {
 						
 					if ((dunk_instrs[index].arg_positions[j] & FOLLOWING_MASK) == FOLLOWING(k)) {
 						//printf("it does.\n", j, k);
-						buffer_word(params[j].value);
+						append_buffer(&file->text, params[j].value);
 					} else if ((dunk_instrs[index].arg_positions[j] & FOLLOWING_MASK) == OFFSET_FOLLOWING(k)) {
 						//printf("its offset does.\n", j, k);
-						buffer_word(params[j].offset);
+						append_buffer(&file->text, params[j].offset);
 					}
 				}
 			}
 		}
 	}
+	
+	return SUCCESS;
 }

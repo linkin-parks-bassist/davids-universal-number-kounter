@@ -12,7 +12,9 @@ typedef struct
 
 void init_aliases();
 
-extern int num_aliases;
-extern alias aliases[MAX_N_ALIASES];
+void free_alias(alias a);
+
+int init_context_aliases(dasm_context *cxt);
+int clear_nondefault_aliases(dasm_context *cxt);
 
 #endif

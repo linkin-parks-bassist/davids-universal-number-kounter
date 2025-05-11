@@ -1,4 +1,4 @@
-mnames := instr param lines label alias files tokenizer
+mnames := instr param lines label alias files tokenizer buffer context dstrings
 hnames := dunkasm.h $(addsuffix .h, $(mnames))
 cnames := main.c $(addsuffix .c, $(mnames))
 
@@ -27,4 +27,4 @@ clean:
 	yes | rm bin/dunkasm $(objs) 2> /dev/null || true
 
 debug:
-	make CFLAGS="-g"
+	make CFLAGS="$(CFLAGS) -g"

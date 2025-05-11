@@ -25,7 +25,7 @@ line_data_node *tokenize_file(const char *input_path) {
 			continue;
 		}
 
-		line_data_str* line_data = tokenize_line(trimmed_line, line_number);
+		line_data_struct* line_data = tokenize_line(trimmed_line, line_number);
 
 		line_data_node* new_node = malloc(sizeof(line_data_node));
 		new_node->data = line_data;
@@ -44,9 +44,9 @@ line_data_node *tokenize_file(const char *input_path) {
 	return head;
 }
 
-line_data_str *tokenize_line(char* line, int line_number)
+line_data_struct *tokenize_line(char* line, int line_number)
 {
-	line_data_str *line_data = malloc(sizeof(line_data_str));
+	line_data_struct *line_data = malloc(sizeof(line_data_struct));
 	if (!line_data) {
 		perror("Memory allocation failed");
 		exit(EXIT_FAILURE);
@@ -75,7 +75,7 @@ char **tokenize_string(const char *src, int *n_tokens) {
 	
 	*n_tokens = 0;
 	
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < len + 1; i++) {
 		if (src[i] == '"') {
 			if (mode == 0) {
 				mode = 1;
@@ -93,7 +93,7 @@ char **tokenize_string(const char *src, int *n_tokens) {
 		}
 		
 		if (token_finished) {
-			if (i > token_start + 1 || (mode == 1 && i > 0 && src[i-1] == '\"')) {
+			if (i > token_start) {
 				if (*n_tokens >= ta_size - 1) {
 					ta_size += 8;
 					
