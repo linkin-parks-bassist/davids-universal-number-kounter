@@ -1,15 +1,28 @@
-set *0x1000 'H'
-set *0x1001 'e'
-set *0x1002 'l'
-set *0x1003 'l'
-set *0x1004 'o'
-set *0x1005 0
+include "prints.a"
 
-push 3
-push 0xfffc
+call enable_printing
 
-push 0x1000
+set r0 1
 
-call prints
-
-halt_and_catch_fire
+loop:
+	push r0
+	push "This is the "
+	call prints
+	pop
+	
+	set r0 *sp
+	
+	push 10
+	push r0
+	call print_integer
+	
+	pop
+	pop
+	
+	push "th iteration.\n"
+	call prints
+	pop
+	pop r0
+	increment r0
+	
+	goto loop

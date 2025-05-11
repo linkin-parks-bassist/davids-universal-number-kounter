@@ -1,3 +1,5 @@
+include "remainder.a"
+
 alias output_ptr_default 0xfffc
 alias print_pin_default  0x3
 
@@ -7,29 +9,18 @@ alias print_pin	 r3
 alias input_ptr r0
 alias current_char r1
 
-prints:
-	set input_ptr 	argument1
-	set output_ptr 	argument2
-	set print_pin  	argument3
-	
-	prints_loop:
-		set current_char *input_ptr
-		
-		goto_if_zero current_char prints_reached_null_terminator
-		
-		set *output_ptr current_char
-		
-		set_pin_high print_pin
-		set_pin_low  print_pin
-		
-		increment input_ptr
-		
-		goto prints_loop
-	
-	prints_reached_null_terminator:
-		return
+enable_printing:
+	pinmode_output print_pin
+	return
 
-printsd:
+print_char:
+	set *output_ptr_default argument1
+	
+	set_pin_high print_pin_default
+	set_pin_low  print_pin_default
+	return
+
+prints:
 	set input_ptr argument
 	
 	prints_loop:
@@ -47,4 +38,90 @@ printsd:
 		goto prints_loop
 	
 	prints_reached_null_terminator:
+		return
+
+print_digit:
+	set r0 argument1
+	
+	set r1 r0
+	set r2 10
+	
+	compare r1 r2
+	
+	goto_if_nonnegative r1 digit_over_9
+	
+	goto digit_at_most_9
+	
+	digit_over_9:
+		set r1 0x61
+		add r0 r1
+		
+		goto print_digit_print
+		
+	digit_at_most_9:
+		set r1 0x30
+		add r0 r1
+	
+	print_digit_print:
+		push r0
+		call print_char
+		pop
+		return
+		
+alias n r0
+alias b r1
+
+alias r r2
+
+print_integer:
+	set n argument1
+	set b argument2
+	increment b
+	push b
+	decrement b
+	
+	goto_if_zero n print_zero
+	
+	printeger_loop:
+		goto_if_zero n printeger_done
+		
+		push b
+		push n
+		push b
+		
+		call div_rem
+		
+		pop r
+		pop n
+		pop b
+		
+		push r
+		
+		goto printeger_loop
+
+	print_zero:
+		push 0
+		call print_char
+		pop
+		return
+	
+	printeger_done:
+		printeger_printloop:
+			pop r0
+			set r2 r0
+			
+			compare r2 b
+			
+			goto_if_positive r2 printeger_return
+			
+			push b
+			push r0
+			
+			call print_digit
+			
+			pop
+			pop b
+			
+			goto printeger_done
+	printeger_return:
 		return

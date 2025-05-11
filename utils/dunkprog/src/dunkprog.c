@@ -498,45 +498,47 @@ void generate_roms() {
 	append_mc1(done);
 	
 	code_sequence_for(0x62);		// push *constant
-	append_mc1(pkptroutinc);
+	append_mc2(pkptroutinc, decrementsp);
 	append_mc2(holddata, sptoaddr);
-	append_mc2(writeRAM, decrementsp);
+	append_mc1(writeRAM);
 	append_mc1(done);
 	
 	code_sequence_for(0x63);		// push rN
+	append_mc1(decrementsp);
 	append_mc2(sptoaddr, regtodata(1));
-	append_mc2(writeRAM, decrementsp);
+	append_mc1(writeRAM);
 	append_mc1(done);
 	
 	code_sequence_for(0x64);		// push *rN
-	append_mc1(regptodata(1));
+	append_mc2(regptodata(1), decrementsp);
 	append_mc2(holddata, sptoaddr);
-	append_mc2(writeRAM, decrementsp);
+	append_mc1(writeRAM);
 	append_mc1(done);
 	
 	code_sequence_for(0x65);		// push *(rN+offs)
-	append_mc1(pkptroutinc);
+	append_mc2(pkptroutinc, decrementsp);
 	append_mc2(datatooffs, regptodata(1));
 	append_mc2(holddata, sptoaddr);
-	append_mc2(writeRAM_o, decrementsp);
+	append_mc1(writeRAM_o);
 	append_mc1(done);
 	
 	code_sequence_for(0x66);		// push srN
+	append_mc1(decrementsp);
 	append_mc2(sptoaddr, sregtodata(1));
-	append_mc2(writeRAM, decrementsp);
+	append_mc1(writeRAM);
 	append_mc1(done);
 	
 	code_sequence_for(0x67);		// push *srN
-	append_mc1(sregptodata(1));
+	append_mc2(sregptodata(1), decrementsp);
 	append_mc2(holddata, sptoaddr);
-	append_mc2(writeRAM, decrementsp);
+	append_mc1(writeRAM);
 	append_mc1(done);
 	
 	code_sequence_for(0x68);		// push *(srN+offs)
-	append_mc1(pkptroutinc);
+	append_mc2(pkptroutinc, decrementsp);
 	append_mc2(datatooffs, sregtodata(1));
 	append_mc2(holddata, sptoaddr);
-	append_mc2(writeRAM_o, decrementsp);
+	append_mc1(writeRAM_o);
 	append_mc1(done);
 
 	// pops

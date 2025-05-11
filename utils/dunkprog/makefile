@@ -1,6 +1,8 @@
 hnames := dunkprog.h
 cnames := dunkprog.c
 
+CFLAGS = 
+
 incdir := include
 srcdir := src
 objdir := bin
@@ -10,13 +12,13 @@ cfiles  := $(addprefix $(srcdir)/,$(cnames))
 objs    := $(addprefix $(objdir)/,$(cnames:.c=.o))
 
 all: $(objs)
-	gcc $(objs) -o bin/dunkasm
+	gcc $(CFLAGS) $(objs) -o bin/dunkprog
 
 install: all
-	cp bin/dunkasm /usr/bin/
+	cp bin/dunkprog /usr/bin/
 
 $(objdir)/%.o : $(cfiles)
-	gcc -I include -c $(srcdir)/$*.c -o $@
+	gcc -I include -c $(CFLAGS) $(srcdir)/$*.c -o $@
 
 $(cfiles) : $(headers)
 

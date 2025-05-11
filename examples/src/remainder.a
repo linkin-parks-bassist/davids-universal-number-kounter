@@ -27,3 +27,37 @@ remainder:
 		add x y
 		set result x
 		return
+
+
+alias m r2
+
+div_rem:
+	set y *(sp+1)
+	set x *(sp+2)
+	set m 0
+	
+	goto_if_nonnegative y divrem_y_is_nonnegative
+	
+	negate y
+	
+	divrem_y_is_nonnegative:
+	
+	goto_if_negative x divrem_fix_negative
+	
+	divrem_loop:
+		subtract x y
+		goto_if_negative x divrem_remainder_done
+		increment m
+		goto divrem_loop
+	
+	divrem_fix_negative:
+		add x y
+		goto_if_negative x divrem_fix_negative
+		goto divrem_loop
+	
+	divrem_remainder_done:
+		add x y
+		
+		set *(sr1+1) x
+		set *(sr1+2) m
+		return
