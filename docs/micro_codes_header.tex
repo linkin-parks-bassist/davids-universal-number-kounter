@@ -59,6 +59,8 @@
 \def\incrementsp    {\Verb|0x1010| - increment \Verb|sp|}
 \def\decrementsp    {\Verb|0x1011| - decrement \Verb|sp|}
 
+\def\predecsptoaddr {\Verb|0x1012| - put \Verb|sp-1| on the addr bus, and decrement sp}
+
 \def\tmpatopk     {\Verb|0x2010| - output \Verb|tmpA| to \Verb|pk| via secret line}
 \def\tmpbtopk     {\Verb|0x2010| - output \Verb|tmpB| to \Verb|pk| via secret line}
 
@@ -94,6 +96,9 @@
 
 \def\holdaddrdata	{\Verb|0x0052| - move the value on the addr bus to the data bus}
 \def\holddataaddr	{\Verb|0x0053| - move the value on the data bus to the addr bus}
+
+\def\givestackercontrol {\Verb|0x0060| - give the Stacker control of the CPU}
+\def\giveunstackercontrol {\Verb|0x0061| - give the UnStacker control of the CPU}
 
 \def\done{\Verb|0xfffe| - end instruction}
 \def\reset{\Verb|0xffff| - reset everything}

@@ -595,11 +595,14 @@ void generate_roms() {
 	append_mc2(datatotmpa, pktodata);
 	append_mc2(holddata, sptoaddr);
 	append_mc2(writeRAM, tmpatopk);
+	append_mc1(stacking);
 	append_mc1(done);
 	
 	code_sequence_for(0x81);		// return
-	append_mc1(spptodata);
-	append_mc2(datatopk, incrementsp);
+	append_mc2(spptodata, incrementsp);
+	append_mc1(unstacking);
+	append_mc2(spptodata, incrementsp);
+	append_mc1(datatopk);
 	append_mc1(done);
 
 	// I/O pins

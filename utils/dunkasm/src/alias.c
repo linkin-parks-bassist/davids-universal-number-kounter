@@ -30,14 +30,14 @@ int init_context_aliases(dasm_context *cxt)
 	cxt->aliases[2].replacee = malloc(strlen("argument") + 1);
 	strcpy(cxt->aliases[2].replacee, "argument");
 
-	cxt->aliases[2].replacer = malloc(strlen("*(sr1+1)") + 1);
-	strcpy(cxt->aliases[2].replacer, "*(sr1+1)");
+	cxt->aliases[2].replacer = malloc(strlen("r8") + 1);
+	strcpy(cxt->aliases[2].replacer, "r8");
 
 	cxt->aliases[3].replacee = malloc(strlen("result") + 1);
 	strcpy(cxt->aliases[3].replacee, "result");
 
-	cxt->aliases[3].replacer = malloc(strlen("*(sr1+1)") + 1);
-	strcpy(cxt->aliases[3].replacer, "*(sr1+1)");
+	cxt->aliases[3].replacer = malloc(strlen("r8") + 1);
+	strcpy(cxt->aliases[3].replacer, "r8");
 
 	int arslen = 9;
 	char buf[arslen];
@@ -46,7 +46,7 @@ int init_context_aliases(dasm_context *cxt)
 		cxt->aliases[i+4].replacee = malloc(sizeof(char) * arslen);
 		strcpy(cxt->aliases[i+4].replacee, buf);
 		
-		sprintf(buf, "*(sr1+%d)", i);
+		sprintf(buf, "r%d", 8+i);
 		cxt->aliases[i+4].replacer = malloc(sizeof(char) * arslen);
 		strcpy(cxt->aliases[i+4].replacer, buf);
 	}

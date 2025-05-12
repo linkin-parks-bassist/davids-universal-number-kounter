@@ -70,6 +70,7 @@
 
 #define incrementsp 	0x1010
 #define decrementsp 	0x1011
+#define predecsptoaddr 	0x1012
 
 
 #define regtodata(X) 	(0x0020 + 0x1000 * X) | MIX_IN
@@ -98,6 +99,9 @@
 
 #define holdaddrdata 	0x0052
 #define holddataaddr 	0x0053
+
+#define stacking  		0x0060
+#define unstacking 		0x0061
 
 #define done  0xfffe
 #define reset 0xffff
