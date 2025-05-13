@@ -87,8 +87,7 @@ int process_line(line_data_struct line, pa_file *file, dasm_context *cxt)
 		add_label_to_context(cxt, file, temp_string, file->text.position, CODE_LABEL);
 		
 		free(temp_string);
-	} else if (strncmp(line.tokens[0], "goto", 4) == 0 ||
-		   strcmp(line.tokens[0], "call") == 0) {
+	} else if (strncmp(line.tokens[0], "goto", 4) == 0) {
 		int code = encode_goto(cxt, line);
 
 		if (code == INVALID) {
@@ -131,7 +130,10 @@ int process_line(line_data_struct line, pa_file *file, dasm_context *cxt)
 		for (int i = 0; i < argc; ++i) {
 			params[i] = parse_parameter(cxt, line.tokens[i + 1]);
 			
-			if (params[i].type == STRING_P) {
+			if (params[i].type == LABEL_P) {
+				handle_label_parameter(cxt, file, &params[i], line.tokens[i + 1], line.line_number);
+			}
+			else if (params[i].type == STRING_P) {
 				handle_string_parameter(cxt, file, &params[i], line.tokens[i + 1], line.line_number);
 			}
 			//printf("argument ``%s\", type %i\n", line.tokens[i + 1], params[i].type);
@@ -173,33 +175,7 @@ int process_line(line_data_struct line, pa_file *file, dasm_context *cxt)
 		} else {
 			index--;
 
-			int code = dunk_instrs[index].code;
-			
-			for (int j = 0; j < argc; j++) {
-				if (dunk_instrs[index].arg_positions[j] & FIRST_NIBBLE) {
-					code += params[j].value * 0x1000;
-				}
-				if (dunk_instrs[index].arg_positions[j] & SECOND_NIBBLE) {
-					code += params[j].value * 0x0100;
-				}
-			}
-
-			append_buffer(&file->text, code);
-
-			for (int k = 1; k < argc + 1; k++) {
-				for (int j = 0; j < argc; j++) {
-					//printf("Check if argument %i follows in position %i, by comparing 0b%16b with 0b%16b and 0b%16b\n",
-					//	j, k, dunk_instrs[index].arg_positions[j], FOLLOWING(k), OFFSET_FOLLOWING(k));
-						
-					if ((dunk_instrs[index].arg_positions[j] & FOLLOWING_MASK) == FOLLOWING(k)) {
-						//printf("it does.\n", j, k);
-						append_buffer(&file->text, params[j].value);
-					} else if ((dunk_instrs[index].arg_positions[j] & FOLLOWING_MASK) == OFFSET_FOLLOWING(k)) {
-						//printf("its offset does.\n", j, k);
-						append_buffer(&file->text, params[j].offset);
-					}
-				}
-			}
+			encode_instruction(&file->text, &dunk_instrs[index], params, argc);
 		}
 	}
 	

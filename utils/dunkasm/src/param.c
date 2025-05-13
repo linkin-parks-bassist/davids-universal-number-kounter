@@ -14,26 +14,26 @@ int is_number(const char* str)
 			str += 2;
 			while (*str) {
 				if (!isxdigit(*str))
-					return SUCCESS;
+					return 0;
 				str++;
 			}
-			return BAD_ARGUMENTS;
+			return 1;
 		} else if (str[1] == 'b' || str[1] == 'B') { // binary
 			str += 2;
 			while (*str) {
 				if (*str != '0' && *str != '1')
-					return SUCCESS;
+					return 0;
 				str++;
 			}
-			return BAD_ARGUMENTS;
+			return 1;
 		}
 	}
 	while (*str) {
 		if (!isdigit(*str))
-			return SUCCESS;
+			return 0;
 		str++;
 	}
-	return BAD_ARGUMENTS;
+	return 1;
 }
 
 int is_dnumber(const char* str)
@@ -43,10 +43,10 @@ int is_dnumber(const char* str)
 	}
 	for (int i = 0; i < strlen(str); i++) {
 		if (!(str[i] >= '0' && str[i] <= '9')) {
-			return SUCCESS;
+			return 0;
 		}
 	}
-	return BAD_ARGUMENTS;
+	return 1;
 }
 
 int is_hnumber(const char* str)
@@ -54,39 +54,67 @@ int is_hnumber(const char* str)
 	for (int i = 0; i < strlen(str); i++) {
 		if (!(str[i] >= '0' && str[i] <= '9') &&
 				!(str[i] >= 'a' && str[i] <= 'f')) {
-			return SUCCESS;
+			return 0;
 		}
 	}
-	return BAD_ARGUMENTS;
+	return 1;
 }
 
 int is_bnumber(const char* str)
 {
 	for (int i = 0; i < strlen(str); i++) {
 		if (!(str[i] >= '0' && str[i] <= '1')) {
-			return SUCCESS;
+			return 0;
 		}
 	}
-	return BAD_ARGUMENTS;
+	return 1;
 }
 
 int is_char(const char* str)
 {
-	if (!str) return SUCCESS;
+	if (!str) return 0;
 	
 	int len = strlen(str);
-	if (len < 3) return SUCCESS;
+	if (len < 3) return 0;
 	
-	if (str[0] != '\'') return SUCCESS;
+	if (str[0] != '\'') return 0;
 	
 	if (str[1] == '\\') {
-		if (len != 4) return SUCCESS;
-		if (str[3] != '\'') return SUCCESS;
+		if (len != 4) return 0;
+		if (str[3] != '\'') return 0;
 	} else {
-		if (str[2] != '\'') return SUCCESS;
+		if (str[2] != '\'') return 0;
 	}
 	
-	return BAD_ARGUMENTS;
+	return 1;
+}
+
+int is_label(const char *str) {
+	if (str == NULL)
+		return 0;
+	
+	int len = strlen(str);
+	
+	if (len == 0)
+		return 0;
+	
+	for (int i = 0; i < len; i++) {
+		if ('a' <= str[i] <= 'z')
+			continue;
+		
+		if ('A' <= str[i] <= 'Z')
+			continue;
+		
+		if ('0' <= str[i] <= '9')
+			continue;
+		
+		if (str[i] == '_')
+			continue;
+		
+		return 0;
+	}
+	
+	return 1;
 }
 
 uint16_t parse_char(const char *str) {
@@ -236,8 +264,13 @@ parameter parse_parameter(dasm_context *cxt, const char* input)
 					return parse_parameter(cxt, cxt->aliases[i].replacer);
 				}
 			}
-			//printf("idk what this is...\n");
-			result.type = INVALID;
+			if (is_label(input)) {
+				result.type = LABEL_P;
+			}
+			else
+			{
+				result.type = INVALID;
+			}
 		}
 	}
 
@@ -246,4 +279,36 @@ parameter parse_parameter(dasm_context *cxt, const char* input)
 	}
 
 	return result;
+}
+
+int handle_label_parameter(dasm_context *cxt, pa_file *file, parameter *param, const char *str, unsigned int line_number)
+{
+	if (!valid_dasm_context(cxt) || !valid_pa_file(file) || param == NULL) {
+		return BAD_ARGUMENTS;
+	}
+	
+	param->type = CONSTANT;
+	
+	add_label_ref_to_file(file, str, file->text.position + 1, line_number);
+	
+	return SUCCESS;
+}
+
+int handle_string_parameter(dasm_context *cxt, pa_file *file, parameter *param, const char *str, unsigned int line_number)
+{
+	if (!valid_dasm_context(cxt) || !valid_pa_file(file) || param == NULL) {
+		return BAD_ARGUMENTS;
+	}
+	
+	int label_n = add_string_to_context(cxt, str, file, file->text.position);
+	
+	if (label_n < 0)
+		return -label_n;
+	
+	param->type = CONSTANT;
+	param->value = file->text.position;
+	
+	add_label_ref_to_file(file, cxt->labels[label_n].name, file->text.position + 1, line_number);
+	
+	return SUCCESS;
 }

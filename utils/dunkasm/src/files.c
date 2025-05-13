@@ -8,7 +8,7 @@
 
 #include "dunkasm.h"
 
-IMPLEMENT_LINKED_PTR_LIST(pa_file);
+//IMPLEMENT_LINKED_PTR_LIST(pa_file);
 
 pa_file *new_pa_file(const char *fname)
 {

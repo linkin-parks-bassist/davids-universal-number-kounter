@@ -590,7 +590,8 @@ void generate_roms() {
 	append_mc1(done);
 
 	// function stuff
-	code_sequence_for(0x80);		// call
+	code_sequence_for(0x80);		 // call f
+	
 	append_mc2(pkptroutinc, decrementsp);
 	append_mc2(datatotmpa, pktodata);
 	append_mc2(holddata, sptoaddr);
@@ -598,7 +599,43 @@ void generate_roms() {
 	append_mc1(stacking);
 	append_mc1(done);
 	
-	code_sequence_for(0x81);		// return
+	code_sequence_for(0x81);		// call f rN
+	append_mc2(pkptroutinc, decrementsp);
+	append_mc2(datatotmpa, pktodata);
+	append_mc2(holddata, sptoaddr);
+	append_mc2(writeRAM, pkptroutinc);
+	append_mc1(datatotmpa);
+	append_mc1(regtodata(9));
+	append_mc1((datatoreg(0) & ~MIX_IN) + (8 << 12));
+	append_mc1(stacking);
+	append_mc1(done);
+	
+	
+	code_sequence_for(0x90);		// return
+	append_mc2(spptodata, incrementsp);
+	append_mc1(unstacking);
+	append_mc2(spptodata, incrementsp);
+	append_mc1(datatopk);
+	append_mc1(done);
+	
+	code_sequence_for(0x91);		// return rN
+	append_mc1(pkptroutinc);
+	append_mc1(datatotmpa);
+	append_mc1(regtodata(9));
+	append_mc1((datatoreg(0) & ~MIX_IN) + (8 << 12));
+	append_mc2(spptodata, incrementsp);
+	append_mc1(unstacking);
+	append_mc2(spptodata, incrementsp);
+	append_mc1(datatopk);
+	append_mc1(done);
+	
+	code_sequence_for(0x92);		// return rN_1 rN_2
+	append_mc1(pkptroutinc);
+	append_mc1(datatotmpa);
+	append_mc1(regtodata(9));
+	append_mc1((datatoreg(0) & ~MIX_IN) + (8 << 12));
+	append_mc1(regtodata(6));
+	append_mc1((datatoreg(0) & ~MIX_IN) + (9 << 12));
 	append_mc2(spptodata, incrementsp);
 	append_mc1(unstacking);
 	append_mc2(spptodata, incrementsp);

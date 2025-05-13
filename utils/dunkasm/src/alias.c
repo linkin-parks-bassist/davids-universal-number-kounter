@@ -42,13 +42,23 @@ int init_context_aliases(dasm_context *cxt)
 	int arslen = 9;
 	char buf[arslen];
 	for (int i = 0; i < N_ARGUMENT_ALIASES; i++) {
-		sprintf(buf, "argument%d", i);
-		cxt->aliases[i+4].replacee = malloc(sizeof(char) * arslen);
-		strcpy(cxt->aliases[i+4].replacee, buf);
+		sprintf(buf, "argument%d", i + 1);
+		cxt->aliases[i + 4].replacee = malloc(sizeof(char) * arslen);
+		strcpy(cxt->aliases[i + 4].replacee, buf);
 		
-		sprintf(buf, "r%d", 8+i);
-		cxt->aliases[i+4].replacer = malloc(sizeof(char) * arslen);
-		strcpy(cxt->aliases[i+4].replacer, buf);
+		sprintf(buf, "r%d", 8 + i);
+		cxt->aliases[i + 4].replacer = malloc(sizeof(char) * arslen);
+		strcpy(cxt->aliases[i + 4].replacer, buf);
+	}
+	
+	for (int i = 0; i < N_RESULT_ALIASES; i++) {
+		sprintf(buf, "result%d", i + 1);
+		cxt->aliases[i + 4 + N_ARGUMENT_ALIASES].replacee = malloc(sizeof(char) * arslen);
+		strcpy(cxt->aliases[i + 4 + N_ARGUMENT_ALIASES].replacee, buf);
+		
+		sprintf(buf, "r%d", 8 + i);
+		cxt->aliases[i + 4 + N_ARGUMENT_ALIASES].replacer = malloc(sizeof(char) * arslen);
+		strcpy(cxt->aliases[i + 4 + N_ARGUMENT_ALIASES].replacer, buf);
 	}
 
 	for (int i = cxt->n_aliases; i < MAX_N_ALIASES; i++) {

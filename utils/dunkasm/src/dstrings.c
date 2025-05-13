@@ -60,22 +60,3 @@ int free_dasm_string(dasm_string res)
 {
 	free(res.value);
 }
-
-int handle_string_parameter(dasm_context *cxt, pa_file *file, parameter *param, const char *str, unsigned int line_number)
-{
-	if (!valid_dasm_context(cxt) || !valid_pa_file(file) || param == NULL) {
-		return BAD_ARGUMENTS;
-	}
-	
-	int label_n = add_string_to_context(cxt, str, file, file->text.position);
-	
-	if (label_n < 0)
-		return -label_n;
-	
-	param->type = CONSTANT;
-	param->value = file->text.position;
-	
-	add_label_ref_to_file(file, cxt->labels[label_n].name, file->text.position + 1, line_number);
-	
-	return SUCCESS;
-}

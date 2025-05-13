@@ -152,7 +152,7 @@ int add_string_to_context(dasm_context *cxt, const char *value, pa_file *parent,
 	cxt->strings[cxt->n_strings] = new_dasm_string(value, cxt->n_labels);
 	cxt->n_strings++;
 	
-	char namebuf[48];
+	char namebuf[64];
 	
 	sprintf(namebuf, "%s_string_0x%x__%d", parent->fname, cxt->n_strings, rand());
 	

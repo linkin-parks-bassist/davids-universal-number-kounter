@@ -22,7 +22,7 @@ struct pa_file {
 	label_ref label_refs[MAX_LABEL_REFS];
 };
 
-DECLARE_LINKED_PTR_LIST(pa_file);
+//DECLARE_LINKED_PTR_LIST(pa_file);
 
 pa_file *process_file(const char* input_path, dasm_context *cxt, int flags);
 

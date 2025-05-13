@@ -1,4 +1,4 @@
-mnames := instr param lines label alias files tokenizer buffer context dstrings
+mnames := instr param lines label alias files tokenizer buffer context dstrings encoding
 hnames := dunkasm.h $(addsuffix .h, $(mnames))
 cnames := main.c $(addsuffix .c, $(mnames))
 
@@ -28,3 +28,6 @@ clean:
 
 debug:
 	make CFLAGS="$(CFLAGS) -g"
+
+debug_install:
+	make install CFLAGS="$(CFLAGS) -g"

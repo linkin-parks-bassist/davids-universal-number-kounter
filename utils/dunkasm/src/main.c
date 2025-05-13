@@ -15,8 +15,6 @@ uint16_t encode_goto(dasm_context *cxt, line_data_struct line)
 
 	if (strcmp(line.tokens[0], "goto") == 0) {
 		code = PLAIN_GOTO;
-	} else if (strcmp(line.tokens[0], "call") == 0) {
-		code = FUNCTION_CALL;
 	} else if (strncmp(line.tokens[0], "goto_if_", 8) == 0) {
 		if (strcmp(line.tokens[0], "goto_if_zero") == 0) {
 			code = GOTO_C_ZERO;
