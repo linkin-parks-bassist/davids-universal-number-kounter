@@ -52,20 +52,23 @@
 #define datatooffs 		0x4006
 
 #define incrementpk 	0x0010
-
 #define pkptroutinc		0x0011
 
-#define tmpatopk 		0x0012
-#define tmpbtopk 		0x0013
+#define decrementpk 	0x0012
 
-#define tmpatopkifz 	0x0014
-#define tmpatopkifnz 	0x0015
+#define tmpatopk 		0x0013
+#define tmpbtopk 		0x0014
 
-#define tmpatopkifn 	0x0016
-#define tmpatopkifnn 	0x0017
+#define tmpatopkifz 	0x0015
+#define tmpatopkifnz 	0x0016
 
-#define tmpatopkifp 	0x0018
-#define tmpatopkifnp 	0x0019
+#define tmpatopkifn 	0x0017
+#define tmpatopkifnn 	0x0018
+
+#define tmpatopkifp 	0x0019
+#define tmpatopkifnp 	0x001a
+
+#define it_to_pk		0x001b
 
 
 #define incrementsp 	0x1010

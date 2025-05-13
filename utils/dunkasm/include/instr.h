@@ -39,7 +39,7 @@ typedef struct
 	(dunk_instr){ name, code, n, {REGISTER, 		 REGISTER, 		  REGISTER,		   REGISTER, 		REGISTER,	 	 REGISTER, 		  REGISTER,		   REGISTER, 0}, \
 								 {FOLLOWING_FN(1), FOLLOWING_SN(1), FOLLOWING_TN(1), FOLLOWING_LN(1), FOLLOWING_FN(2), FOLLOWING_SN(2), FOLLOWING_TN(2), FOLLOWING_LN(2), 0} }
 
-#define N_INSTR 123
+#define N_INSTR 107
 
 // These instructions are handled separately, using macros
 

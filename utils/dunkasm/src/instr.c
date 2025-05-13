@@ -131,25 +131,9 @@ dunk_instr dunk_instrs[N_INSTR] = {
 	UNARY___COMMAND("pop", 0x70, S_REGISTER | POINTER | W_OFFSET, FIRST_NIBBLE | OFFSET_FOLLOWING(1)),
 	
 	// function stuff
-	CALL_COMMAND("call", 0x80, 0),
-	CALL_COMMAND("call", 0x81, 1),
-	CALL_COMMAND("call", 0x82, 2),
-	CALL_COMMAND("call", 0x83, 3),
-	CALL_COMMAND("call", 0x84, 4),
-	CALL_COMMAND("call", 0x85, 5),
-	CALL_COMMAND("call", 0x86, 6),
-	CALL_COMMAND("call", 0x87, 7),
-	CALL_COMMAND("call", 0x88, 8),
+	UNARY___COMMAND("call", 0x80, CONSTANT, FOLLOWING(1)),
 	
-	RET_COMMAND("return", 0x90, 0),
-	RET_COMMAND("return", 0x91, 1),
-	RET_COMMAND("return", 0x92, 2),
-	RET_COMMAND("return", 0x93, 3),
-	RET_COMMAND("return", 0x94, 4),
-	RET_COMMAND("return", 0x95, 5),
-	RET_COMMAND("return", 0x96, 6),
-	RET_COMMAND("return", 0x97, 7),
-	RET_COMMAND("return", 0x98, 8),
+	NULLARY_COMMAND("return", 0x90),
 	
 	// I/O pins
 	UNARY___COMMAND("pinmode_input",  0xa0, CONSTANT, FIRST_NIBBLE),
