@@ -1,63 +1,6 @@
 #include <string.h>
 #include "dunkasm.h"
 
-/*uint16_t encode_goto(dasm_context *cxt, dasm_line line)
-{
-	uint16_t code = INVALID;
-
-	if (strcmp(line.tokens[0], "goto") == 0) {
-		code = PLAIN_GOTO;
-	} else if (strncmp(line.tokens[0], "goto_if_", 8) == 0) {
-		if (strcmp(line.tokens[0], "goto_if_zero") == 0) {
-			code = GOTO_C_ZERO;
-		} else if (strcmp(line.tokens[0], "goto_if_nonzero") == 0) {
-			code = GOTO_C_NONZERO;
-		} else if (strcmp(line.tokens[0], "goto_if_negative") == 0) {
-			code = GOTO_C_NEGATIVE;
-		} else if (strcmp(line.tokens[0], "goto_if_nonnegative") == 0) {
-			code = GOTO_C_NONNEGATIVE;
-		} else if (strcmp(line.tokens[0], "goto_if_positive") == 0) {
-			code = GOTO_C_POSITIVE;
-		} else if (strcmp(line.tokens[0], "goto_if_nonpositive") == 0) {
-			code = GOTO_C_NONPOSITIVE;
-		}
-
-		if (code == INVALID) {
-			fprintf(stderr,
-							"Error: invalid ``goto\" code statement ``%s\" on line %i.\n",
-							line.tokens[0],
-							line.line_number);
-			exit(EXIT_FAILURE);
-		}
-
-		if (line.n_tokens < 3) {
-			fprintf(stderr,
-							"Error: too few arguments for ``%s\" on line %i.\n",
-							line.tokens[0],
-							line.line_number);
-			exit(EXIT_FAILURE);
-		}
-
-		parameter param = parse_parameter(cxt, line.tokens[1]);
-
-		if (param.type != REGISTER || param.offset != 0) {
-			if (line.n_tokens < 3) {
-				fprintf(
-					stderr,
-					"Error: conditional ``goto\"-type statements only take registers as "
-					"arguments, but ``%s\" on line %i is not a register.\n",
-					line.tokens[1],
-					line.line_number);
-				exit(EXIT_FAILURE);
-			}
-		}
-		
-		code += 0x1000 * param.value;
-	}
-
-	return code;
-}*/
-
 /* A DUNK instruction is encoded as a 16bit word by the following function.
  * The second byte of the word is the opcode, while the first byte is used
  * for parameters. If the needed parameters will not fit in the 16bit word
