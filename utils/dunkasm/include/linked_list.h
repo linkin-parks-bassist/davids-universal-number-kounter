@@ -65,6 +65,7 @@ void destructor_free_##X##_linked_list(X##_linked_list *list, void (*destructor)
 																																						\
 	X##_linked_list *current = list;																													\
 	X##_linked_list *next = NULL;																														\
+																																						\
 	while (current != NULL) {																															\
 		next = current->next;																															\
 		destructor(current->data);																														\
@@ -138,10 +139,16 @@ X##_linked_list *X##_linked_list_cmp_search(X##_linked_list *list, int (*cmp_fun
 	if (list == NULL)																																	\
 		return NULL;																																	\
 																																						\
-	if (cmp_function(list->data, x) == 0)																												\
-		return list;																																	\
-	else																																				\
-		return X##_linked_list_cmp_search(list->next, cmp_function, x);																					\
+	X##_linked_list *current = list;																													\
+																																						\
+	while (current) {																																	\
+		if (cmp_function(current->data, x) == 0)																										\
+			return current;																																\
+																																						\
+		current = current->next;																														\
+	}																																					\
+																																						\
+	return NULL;																																		\
 }																																						\
 																																						\
 X##_linked_list *X##_linked_list_destructor_free_and_remove_matching(X##_linked_list *list, int (*cmp_function)(X, X), X x, void (*destructor)(X))		\
@@ -311,10 +318,16 @@ X##_ptr_linked_list *X##_ptr_linked_list_cmp_search(X##_ptr_linked_list *list, i
 	if (list == NULL)																																	\
 		return NULL;																																	\
 																																						\
-	if (cmp_function(list->data, x) == 0)																												\
-		return list;																																	\
-	else																																				\
-		return X##_ptr_linked_list_cmp_search(list->next, cmp_function, x);																				\
+	X##_ptr_linked_list *current = list;																												\
+																																						\
+	while (current) {																																	\
+		if (cmp_function(current->data, x) == 0)																										\
+			return current;																																\
+																																						\
+		current = current->next;																														\
+	}																																					\
+																																						\
+	return NULL;																																		\
 }																																						\
 																																						\
 																																						\

@@ -135,7 +135,8 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 	
-	display_buffer(&output_buffer, "Final output buffer");
+	if (cxt.flags & VERBOSE)
+		display_buffer(&output_buffer, "final output buffer:");
 	
 	writeout_buffer(&output_buffer, output_file);
 	

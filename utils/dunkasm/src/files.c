@@ -28,7 +28,7 @@ dasm_file *new_dasm_file(const char *fname)
 	char abs_path_buf[PATH_MAX];
 	
 	if (realpath(fname, abs_path_buf) == NULL) {
-		perror("Error opening file");
+		perror(fname);
 		exit(EXIT_FAILURE);
 	}
 	
