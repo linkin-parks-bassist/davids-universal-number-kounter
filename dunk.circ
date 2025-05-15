@@ -252,7 +252,8 @@
       <a name="label" val="running"/>
       <a name="labelloc" val="west"/>
     </comp>
-    <comp lib="5" loc="(480,720)" name="Button"/>
+    <comp lib="5" loc="(470,700)" name="Button"/>
+    <comp lib="5" loc="(470,720)" name="Button"/>
     <comp lib="8" loc="(815,55)" name="Text">
       <a name="font" val="Source Code Pro bold 23"/>
       <a name="text" val="David's Universal Number Kounter"/>
@@ -393,12 +394,14 @@
     <wire from="(460,130)" to="(460,150)"/>
     <wire from="(470,130)" to="(470,150)"/>
     <wire from="(470,130)" to="(850,130)"/>
+    <wire from="(470,700)" to="(480,700)"/>
+    <wire from="(470,720)" to="(490,720)"/>
     <wire from="(480,160)" to="(490,160)"/>
     <wire from="(480,170)" to="(490,170)"/>
     <wire from="(480,180)" to="(500,180)"/>
     <wire from="(480,200)" to="(510,200)"/>
     <wire from="(480,210)" to="(520,210)"/>
-    <wire from="(480,720)" to="(490,720)"/>
+    <wire from="(480,660)" to="(480,700)"/>
     <wire from="(490,140)" to="(490,160)"/>
     <wire from="(490,140)" to="(980,140)"/>
     <wire from="(490,170)" to="(490,280)"/>
@@ -432,7 +435,7 @@
     <wire from="(640,660)" to="(640,710)"/>
     <wire from="(640,710)" to="(650,710)"/>
     <wire from="(650,170)" to="(650,600)"/>
-    <wire from="(650,710)" to="(650,740)"/>
+    <wire from="(650,710)" to="(650,730)"/>
     <wire from="(650,710)" to="(660,710)"/>
     <wire from="(660,660)" to="(660,680)"/>
     <wire from="(660,700)" to="(660,710)"/>
