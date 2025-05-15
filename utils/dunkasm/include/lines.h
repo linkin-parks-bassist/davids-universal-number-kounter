@@ -8,20 +8,19 @@ typedef struct
 	int line_number;
 	char *raw_line;
 	char** tokens;
-	int token_count;
-} line_data_struct;
+	int n_tokens;
+} dasm_line;
 
-typedef struct line_data_node
-{
-	line_data_struct* data;
-	struct line_data_node* next;
-} line_data_node;
+DECLARE_LINKED_LIST(dasm_line);
 
-//DECLARE_LINKED_LIST(line_data_struct);
+typedef dasm_line_linked_list dasm_line_linked_list;
 
-void free_line_data(line_data_struct* line_data);
-void free_list(line_data_node* head);
 
-int process_line(line_data_struct line, struct pa_file *file, struct dasm_context *cxt);
+dasm_line new_dasm_line(const char *src, unsigned int line_number);
+void dasm_line_destructor(dasm_line line);
+
+void strip_comments(dasm_line *line);
+
+int process_line(dasm_line line, struct dasm_file *file, struct dasm_context *cxt);
 
 #endif

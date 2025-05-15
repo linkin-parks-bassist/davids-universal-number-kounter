@@ -3,73 +3,63 @@
 #include <stdio.h>
 #include "dunkasm.h"
 
+IMPLEMENT_LINKED_LIST(dasm_alias);
 
-int n_aliases;
-alias aliases[MAX_N_ALIASES];
+void dasm_alias_destructor(dasm_alias a)
+{
+	free(a.replacee);
+	free(a.replacer);
+}
 
+int compare_aliases(dasm_alias a, dasm_alias b)
+{
+	return strcmp(a.replacee, b.replacee);
+}
 
 int init_context_aliases(dasm_context *cxt)
 {
 	if (cxt == NULL)
 		return BAD_ARGUMENTS;
 	
-	cxt->n_aliases = N_DEFAULT_ALIASES;
+	add_alias_to_context(cxt, "pk", "sr0");
+	add_alias_to_context(cxt, "sp", "sr1");
 	
-	cxt->aliases[0].replacee = malloc(strlen("pk") + 1);
-	strcpy(cxt->aliases[0].replacee, "pk");
-
-	cxt->aliases[0].replacer = malloc(strlen("sr0") + 1);
-	strcpy(cxt->aliases[0].replacer, "sr0");
-
-	cxt->aliases[1].replacee = malloc(strlen("sp") + 1);
-	strcpy(cxt->aliases[1].replacee, "sp");
-
-	cxt->aliases[1].replacer = malloc(strlen("sr1") + 1);
-	strcpy(cxt->aliases[1].replacer, "sr1");
-
-	cxt->aliases[2].replacee = malloc(strlen("argument") + 1);
-	strcpy(cxt->aliases[2].replacee, "argument");
-
-	cxt->aliases[2].replacer = malloc(strlen("r8") + 1);
-	strcpy(cxt->aliases[2].replacer, "r8");
-
-	cxt->aliases[3].replacee = malloc(strlen("result") + 1);
-	strcpy(cxt->aliases[3].replacee, "result");
-
-	cxt->aliases[3].replacer = malloc(strlen("r8") + 1);
-	strcpy(cxt->aliases[3].replacer, "r8");
-
-	int arslen = 9;
-	char buf[arslen];
-	for (int i = 0; i < N_ARGUMENT_ALIASES; i++) {
-		sprintf(buf, "argument%d", i + 1);
-		cxt->aliases[i + 4].replacee = malloc(sizeof(char) * arslen);
-		strcpy(cxt->aliases[i + 4].replacee, buf);
-		
-		sprintf(buf, "r%d", 8 + i);
-		cxt->aliases[i + 4].replacer = malloc(sizeof(char) * arslen);
-		strcpy(cxt->aliases[i + 4].replacer, buf);
-	}
+	add_alias_to_context(cxt, "argument", "r8");
 	
-	for (int i = 0; i < N_RESULT_ALIASES; i++) {
-		sprintf(buf, "result%d", i + 1);
-		cxt->aliases[i + 4 + N_ARGUMENT_ALIASES].replacee = malloc(sizeof(char) * arslen);
-		strcpy(cxt->aliases[i + 4 + N_ARGUMENT_ALIASES].replacee, buf);
-		
-		sprintf(buf, "r%d", 8 + i);
-		cxt->aliases[i + 4 + N_ARGUMENT_ALIASES].replacer = malloc(sizeof(char) * arslen);
-		strcpy(cxt->aliases[i + 4 + N_ARGUMENT_ALIASES].replacer, buf);
-	}
-
-	for (int i = cxt->n_aliases; i < MAX_N_ALIASES; i++) {
-		cxt->aliases[i].replacee = NULL;
-		cxt->aliases[i].replacer = NULL;
-	}
+	add_alias_to_context(cxt, "argument1", "r1");
+	add_alias_to_context(cxt, "argument2", "r2");
+	add_alias_to_context(cxt, "argument3", "r3");
+	add_alias_to_context(cxt, "argument4", "r4");
+	add_alias_to_context(cxt, "argument5", "r5");
+	add_alias_to_context(cxt, "argument6", "r6");
+	add_alias_to_context(cxt, "argument7", "r7");
+	add_alias_to_context(cxt, "argument8", "r8");
+	
+	add_alias_to_context(cxt, "result", "r8");
+	
+	add_alias_to_context(cxt, "result1", "r1");
+	add_alias_to_context(cxt, "result2", "r2");
+	add_alias_to_context(cxt, "result3", "r3");
+	add_alias_to_context(cxt, "result4", "r4");
+	add_alias_to_context(cxt, "result5", "r5");
+	add_alias_to_context(cxt, "result6", "r6");
+	add_alias_to_context(cxt, "result7", "r7");
+	add_alias_to_context(cxt, "result8", "r8");
+	
+	
+	add_alias_to_context(cxt, "ih1", "sr8");
+	add_alias_to_context(cxt, "ih2", "sr9");
+	add_alias_to_context(cxt, "ih3", "sra");
+	add_alias_to_context(cxt, "ih4", "srb");
+	add_alias_to_context(cxt, "ih5", "src");
+	add_alias_to_context(cxt, "ih6", "srd");
+	add_alias_to_context(cxt, "ih7", "sre");
+	add_alias_to_context(cxt, "ih8", "srf");
 
 	return 0;
 }
 
-void free_alias(alias a)
+void free_alias(dasm_alias a)
 {
 	if (a.replacee != NULL)
 		free(a.replacee);
@@ -82,14 +72,24 @@ int clear_nondefault_aliases(dasm_context *cxt)
 	if (!valid_dasm_context(cxt))
 		return BAD_ARGUMENTS;
 	
-	for (int i = N_DEFAULT_ALIASES; i < cxt->n_aliases; i++) {
+	dasm_alias_linked_list *current = cxt->aliases;
+	
+	if (current == NULL)
+		return BAD_ARGUMENTS;
+	
+	while (current && strcmp(current->data.replacee, "ih8"))
+		current = current->next;
+	
+	destructor_free_dasm_alias_linked_list(current->next, &dasm_alias_destructor);
+	
+	current->next = NULL;
+	
+	/*for (int i = N_DEFAULT_ALIASES; i < cxt->n_aliases; i++) {
 		free(cxt->aliases[i].replacee);
 		cxt->aliases[i].replacee = NULL;
 		free(cxt->aliases[i].replacer);
 		cxt->aliases[i].replacer = NULL;
-	}
-	
-	cxt->n_aliases = N_DEFAULT_ALIASES;
+	}*/
 	
 	return 0;
 }

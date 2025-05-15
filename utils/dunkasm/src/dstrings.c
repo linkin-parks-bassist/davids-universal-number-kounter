@@ -4,6 +4,9 @@
 
 #include "dunkasm.h"
 
+IMPLEMENT_LINKED_PTR_LIST(char);
+IMPLEMENT_LINKED_LIST(dasm_string);
+
 char unescape(char token)
 {
 	switch (token) {
@@ -23,9 +26,10 @@ char unescape(char token)
 }
 
 
-dasm_string new_dasm_string(const char *str, int label_n)
+dasm_string new_dasm_string(const char *str, dasm_label *label)
 {
 	dasm_string res;
+	
 	if (str == NULL) {
 		res.value = NULL;
 		return res;
@@ -51,12 +55,18 @@ dasm_string new_dasm_string(const char *str, int label_n)
 	
 	res.value[p] = 0;
 	
-	res.label_n = label_n;
+	res.label = label;
 	
 	return res;
+}
+
+void dasm_string_destructor(dasm_string str)
+{
+	free(str.value);
 }
 
 int free_dasm_string(dasm_string res)
 {
 	free(res.value);
+	return SUCCESS;
 }

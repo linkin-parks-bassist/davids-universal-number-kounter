@@ -13,9 +13,9 @@
 typedef struct dasm_context dasm_context;
 typedef struct dasm_buffer dasm_buffer;
 typedef struct dasm_string dasm_string;
-typedef struct pa_file pa_file;
+typedef struct dasm_file dasm_file;
 
-//#include "linked_list.h"
+#include "linked_list.h"
 #include "instr.h"
 #include "param.h"
 #include "lines.h"
@@ -28,6 +28,8 @@ typedef struct pa_file pa_file;
 #include "context.h"
 #include "encoding.h"
 
-uint16_t encode_goto(dasm_context *cxt, line_data_struct line);
+//#include "malloc_free.h"
+
+uint16_t encode_goto(dasm_context *cxt, dasm_line line);
 
 #endif

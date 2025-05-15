@@ -3,127 +3,162 @@
 #include <stdio.h>
 #include "dunkasm.h"
 
-//IMPLEMENT_LINKED_LIST(line_data_struct);
+IMPLEMENT_LINKED_LIST(dasm_line);
 
-void free_line_data(line_data_struct *line_data)
+dasm_line new_dasm_line(const char *src, unsigned int line_number)
 {
-	for (int i = 0; i < line_data->token_count; i++) {
-		free(line_data->tokens[i]);
+	if (src == NULL) {
+		fprintf(stderr, "Error: NULL pointer passed to function `new_dasm_line'.\n");
+		exit(EXIT_FAILURE);
 	}
-	free(line_data->tokens);
-	free(line_data->raw_line);
-	free(line_data);
+	
+	dasm_line result;
+	
+	result.line_number = line_number;
+	result.raw_line = strdup(src);
+	result.tokens = tokenize_string(result.raw_line, &result.n_tokens);
+	
+	return result;
 }
 
-void free_list(line_data_node *head)
+void dasm_line_destructor(dasm_line line)
 {
-	line_data_node* temp;
-	while (head) {
-		temp = head;
-		head = head->next;
-		free_line_data(temp->data);
-		free(temp);
+	for (int i = 0; i < line.n_tokens; i++) {
+		free(line.tokens[i]);
+		line.tokens[i] = NULL;
+	}
+	free(line.tokens);
+	line.tokens = NULL;
+	free(line.raw_line);
+	line.raw_line = NULL;
+}
+
+void strip_comments(dasm_line *line) {
+	if (line == NULL)
+		return;
+	
+	for (int i = 0; i < line->n_tokens; ++i) {
+		if (line->tokens[i][0] == '%') {
+			for (int j = i + 1; j < line->n_tokens; j++) {
+				free(line->tokens[j]);
+			}
+			line->n_tokens = i;
+			break;
+		}
 	}
 }
 
-int process_line(line_data_struct line, pa_file *file, dasm_context *cxt)
+int process_line(dasm_line line, dasm_file *file, dasm_context *cxt)
 {
-	if (!valid_pa_file(file) || !valid_dasm_context(cxt))
+	if (!valid_dasm_file(file) || !valid_dasm_context(cxt))
 		return BAD_ARGUMENTS;
-	if (line.token_count == 0)
+	if (line.n_tokens == 0)
 		return SUCCESS;
 	
-	printf("Processing line %d, \"%s\", which has %d tokens, which are\n    ``%s\"", line.line_number, line.raw_line, line.token_count, line.tokens[0]);
-
-	for (int i = 1; i < line.token_count; ++i)
-		printf(", ``%s\"", line.tokens[i]);
+	if (cxt->flags & VERBOSE) {
+		printf("Assembling %s:%d, whose tokens are:\n\t", file->given_path, line.line_number);
+		
+		for (int i = 0; i < line.n_tokens; i++) {
+			printf("%s", line.tokens[i]);
+			if (i == line.n_tokens - 1)
+				printf("\n");
+			else
+				printf(", ");
+			
+		}
+	}
 	
-	putchar('\n');
+	char *temp_string = NULL;
+	dasm_alias temp_alias;
 	
 	int first_token_length = strlen(line.tokens[0]);
 	
 	if (strcmp(line.tokens[0], "alias") == 0) {
-		if (line.token_count != 3) {
+		if (line.n_tokens != 3) {
 			fprintf(stderr, "Error: syntax error defining alias on line %i; usage is alias [replacee] [replacer].\n", line.line_number);
 			exit(EXIT_FAILURE);
 		}
 
-		cxt->aliases[cxt->n_aliases].replacee = malloc(strlen(line.tokens[1]) + 1);
-		strcpy(cxt->aliases[cxt->n_aliases].replacee, line.tokens[1]);
-
-		cxt->aliases[cxt->n_aliases].replacer = malloc(strlen(line.tokens[2]) + 1);
-		strcpy(cxt->aliases[cxt->n_aliases].replacer, line.tokens[2]);
-
-		cxt->n_aliases += 1;
+		add_alias_to_context(cxt, line.tokens[1], line.tokens[2]);
 	} else if (strcmp(line.tokens[0], "include") == 0) {
-		for (int i = 1; i < line.token_count; i++) {
-			char *tempstring = strdup(&line.tokens[i][1]);
-			tempstring[strlen(tempstring) - 1] = 0;
+		for (int i = 1; i < line.n_tokens; i++) {
 			
-			printf("Included file \"%s\"\n", tempstring);
-			process_file(tempstring, cxt, INCLUDED_FILE);
-			printf("Done!\n");
+			char *temp_string = strdup(&line.tokens[i][1]);
 			
-			free(tempstring);
+			if (temp_string == NULL) {
+				perror("Memory allocation failure (lines.c:83)");
+				exit(EXIT_FAILURE);
+			}
+			
+			temp_string[strlen(temp_string) - 1] = 0;
+			
+			if (cxt->flags & VERBOSE)
+				printf("Included file \"%s\"\n", temp_string);
+			
+			switch (is_file_already_in_context(cxt, temp_string)) {
+				case 1:
+					// Attempted double file inclusion; simply skip this silently
+					if (cxt->flags & VERBOSE)
+						printf("File is already in list; skipping...\n");
+					break;
+				
+				case 2:
+					fprintf(stderr, "%s:%d: error opening included file \"%s\"\n", file->given_path, line.line_number, temp_string);
+					exit(EXIT_FAILURE);
+					break;
+				
+				default:
+					process_file(temp_string, cxt, INCLUDED_FILE);
+					break;
+			}
+			
+			free(temp_string);
 		}
 	} else if (strcmp(line.tokens[0], "dealias") == 0) {
-		for (int k = 1; k < line.token_count; k++) {
-			for (int i = 0; i < cxt->n_aliases; i++) {
-				if (strcmp(line.tokens[k], cxt->aliases[i].replacee) == 0) {
-					free(cxt->aliases[i].replacee);
-					free(cxt->aliases[i].replacer);
-					
-					cxt->n_aliases -= 1;
-					for (int j = i; j < cxt->n_aliases; j++) {
-						cxt->aliases[j].replacee = cxt->aliases[j + 1].replacee;
-						cxt->aliases[j].replacer = cxt->aliases[j + 1].replacer;
-					}
-				}
-			}
+		for (int k = 1; k < line.n_tokens; k++) {
+			temp_alias.replacee = line.tokens[k];
+			
+			cxt->aliases = dasm_alias_linked_list_destructor_free_and_remove_matching(cxt->aliases, &compare_aliases, temp_alias, &dasm_alias_destructor);
 		}
-	} else if (line.token_count == 1 && line.tokens[0][first_token_length - 1] == ':') {
-		char *temp_string = strdup(line.tokens[0]);
-		temp_string[first_token_length - 1] = 0;
-		add_label_to_context(cxt, file, temp_string, file->text.position, CODE_LABEL);
+	} else if (line.n_tokens == 1 && line.tokens[0][first_token_length - 1] == ':') {
+		temp_string = strdup(line.tokens[0]);
 		
-		free(temp_string);
-	} else if (strncmp(line.tokens[0], "goto", 4) == 0) {
-		int code = encode_goto(cxt, line);
-
-		if (code == INVALID) {
-			fprintf(stderr, "Error: nonsense ``goto\"-type statement `on line %i.\n",
-							line.tokens[0],
-							line.line_number);
+		if (temp_string == NULL) {
+			perror("Memory allocation failure (lines.c:127)");
 			exit(EXIT_FAILURE);
 		}
-
-		if (code == PLAIN_GOTO || code == FUNCTION_CALL) {
-			add_label_ref_to_file(file, line.tokens[1], file->text.position + 1, line.line_number);
-		} else {
-			add_label_ref_to_file(file, line.tokens[2], file->text.position + 1, line.line_number);
-		}
-
-		append_buffer(&file->text, code);
-		append_buffer(&file->text, 0);
+		
+		temp_string[first_token_length - 1] = 0;
+		add_label_to_context(cxt, file, temp_string, file->text.position, line.line_number, CODE_LABEL);
+		
+		free(temp_string);
 	} else {
-		for (int i = 0; i < cxt->n_aliases; i++) {
-			for (int j = 0; j < line.token_count; j++) {
-				if (strcmp(line.tokens[j], cxt->aliases[i].replacee) == 0) {
-					line.tokens[j] = realloc(line.tokens[j], strlen(cxt->aliases[i].replacer) + 1);
-					strcpy(line.tokens[j], cxt->aliases[i].replacer);
+		dasm_alias_linked_list *current;
+		for (int j = 0; j < line.n_tokens; j++) {
+			current = cxt->aliases;
+			
+			while (current != NULL) {
+				if (current->data.replacee == NULL || current->data.replacer == NULL) {
+					fprintf(stderr, "Error: NULL alias\n");
+					exit(EXIT_FAILURE);
 				}
+				if (strcmp(current->data.replacee, line.tokens[j]) == 0) {
+					free(line.tokens[j]);
+					line.tokens[j] = strdup(current->data.replacee);
+				}
+				
+				current = current->next;
 			}
 		}
 		
 		parameter params[MAX_PARAMS];
-		int argc = line.token_count - 1;
+		int argc = line.n_tokens - 1;
 		
-		//printf("Number of arguments: %d\n", argc);
 		
 		if (argc >= MAX_PARAMS) {
 			fprintf(
 					stderr,
-					"Error: too many arguments on ``%s\", line %i.\n", file->fname, line.line_number);
+					"Error: too many arguments on ``%s\", line %i.\n", file->absolute_path, line.line_number);
 				exit(EXIT_FAILURE);
 		}
 		
@@ -136,7 +171,6 @@ int process_line(line_data_struct line, pa_file *file, dasm_context *cxt)
 			else if (params[i].type == STRING_P) {
 				handle_string_parameter(cxt, file, &params[i], line.tokens[i + 1], line.line_number);
 			}
-			//printf("argument ``%s\", type %i\n", line.tokens[i + 1], params[i].type);
 			if (params[i].type == INVALID) {
 				fprintf(
 					stderr,
@@ -153,11 +187,11 @@ int process_line(line_data_struct line, pa_file *file, dasm_context *cxt)
 			
 		for (index = 0; !found && index < N_INSTR; index++) {
 			if (strcmp(line.tokens[0], dunk_instrs[index].name) == 0 &&
-					line.token_count - 1 == dunk_instrs[index].n_args) {
+					line.n_tokens - 1 == dunk_instrs[index].n_parameters) {
 				found = 1;
 				
 				for (int j = 0; j < argc; j++) {
-					if (params[j].type != dunk_instrs[index].arg_types[j]) {
+					if (params[j].type != dunk_instrs[index].parameter_types[j]) {
 						found = 0;
 						break;
 					}

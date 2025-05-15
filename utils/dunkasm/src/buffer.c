@@ -49,7 +49,7 @@ void destroy_buffer(dasm_buffer *buf)
 		return;
 	
 	if (buf->data != NULL)
-		free (buf->data);
+		free(buf->data);
 }
 
 
@@ -78,8 +78,7 @@ int append_buffer(dasm_buffer *buf, uint16_t w)
 	
 	if (buf->position > buf->length)
 		buf->length = buf->position;
-	
-	printf("Write 0x%x at postion 0x%x\n", w, buf->position);
+
 	
 	return SUCCESS;
 }
@@ -98,8 +97,6 @@ int write_buffer_at(dasm_buffer *buf, uint16_t w, unsigned int pos)
 	
 	if (pos > buf->length)
 		buf->length = pos;
-	
-	printf("Write 0x%x at postion 0x%x\n", w, pos);
 	
 	return SUCCESS;
 }
@@ -170,7 +167,7 @@ int expand_buffer_to_min(dasm_buffer *buf, unsigned int min)
 	return SUCCESS;
 }
 
-int writeout_and_destroy_buffer(dasm_buffer *buf, FILE *outfile)
+int writeout_buffer(dasm_buffer *buf, FILE *outfile)
 {
 	if (buf == NULL || outfile == NULL)
 		return BAD_ARGUMENTS;
@@ -178,12 +175,12 @@ int writeout_and_destroy_buffer(dasm_buffer *buf, FILE *outfile)
 	if (buf->data == NULL)
 		return BAD_ARGUMENTS;
 	
-	if (fwrite(buf->data, sizeof(uint16_t), buf->length, outfile) != sizeof(uint16_t) * buf->length)
-	{
-		return MEMORY_FAILURE;
+	int return_value = fwrite(buf->data, sizeof(uint16_t), buf->length, outfile);
+	
+	if (return_value != buf->length) {
+		return 2;
 	}
 	
-	destroy_buffer(buf);
 	return SUCCESS;
 }
 
@@ -217,7 +214,7 @@ void display_buffer(dasm_buffer *buf, const char *message)
 	
 	for (int i = 0; i < buf->length; i++) {
 		if (i % 8 == 0) {
-			printf("\n    0x%04x |  ", i);
+			printf("\n	0x%04x |  ", i);
 		}
 		printf("0x%04x ", buf->data[i]);
 	}

@@ -128,6 +128,11 @@ uint16_t parse_char(const char *str) {
 
 long parse_number(const char* str)
 {
+	if (str == NULL) {
+		fprintf(stderr, "Error: NULL pointer passed to function `parse_number'\n");
+		exit(EXIT_FAILURE);
+	}
+	
 	if (str[0] == '-')
 		return -parse_number(&str[1]);
 
@@ -139,7 +144,12 @@ long parse_number(const char* str)
 		}
 	} else if (is_dnumber(str)) {
 		return strtol(str, NULL, 10);
+	} else {
+		fprintf(stderr, "Error: non-number string \"%s\" passed to function `parse_number'\n", str);
+		exit(EXIT_FAILURE);
 	}
+	
+	return 0;
 }
 
 parameter parse_parameter(dasm_context *cxt, const char* input)
@@ -156,38 +166,30 @@ parameter parse_parameter(dasm_context *cxt, const char* input)
 	const char* inside = NULL;
 	const char* close_paren = NULL;
 
-	size_t len, leng;     // = close_paren - inside;
-	char* sub_exp;        // = strndup(inside, len);
-	parameter sub_result; // = parse_string(sub_expr);
-
-	//printf("Parsing parameter ``%s\"\n", input);
+	size_t len, leng;
+	char* sub_exp;
+	parameter sub_result;
 
 	if (input[0] == '\"') {
 		result.type = STRING_P;
 		return result;
 	} else if (input[0] == '*') {
-		//printf("It's a pointer, ");
 		if (input[1] == '(') {
-			//printf("parenthesised, with inner expression");
 			inside = &input[2];
 			close_paren = strchr(inside, ')');
 
 			if (close_paren == NULL) {
-				//printf("... but not closing paren :(\n");
 				result.type = INVALID;
 				return result;
 			}
 			if (close_paren[1] != 0) {
-				//printf("... but does not end after its closing paren :(\n");
-
+				
 				result.type = INVALID;
 				return result;
 			}
 
 			len = close_paren - inside;
 			sub_exp = strndup(inside, len);
-
-			//printf(" \"%s\", ", sub_exp);
 
 			plus = &sub_exp[strcspn(sub_exp, "+-")];
 
@@ -199,36 +201,30 @@ parameter parse_parameter(dasm_context *cxt, const char* input)
 				}
 
 				if (sub_result.type != CONSTANT) {
-					//printf("... but it contains an offset which is not a constant :(\n");
-
+					
 					result.type = INVALID;
 					return result;
 				}
 				if (sub_result.offset != 0) {
-					//printf("... but it contains a double-offset :(\n");
-
+					
 					result.type = INVALID;
 					return result;
 				}
 
 				result.offset = sub_result.value;
-				//printf(" which has offset %i\n", result.offset);
 				*plus = 0;
 			}
 
 		} else {
-			//printf("non-parenthesised, ");
 			inside = &input[1];
 			len = strlen(inside);
 			sub_exp = strndup(inside, len);
 		}
 
-		//printf("with sub-expression %s\n", sub_exp);
 		sub_result = parse_parameter(cxt, sub_exp);
 		free(sub_exp);
 
 		if (input[1] != '(' && sub_result.offset != 0) {
-			//printf("... which has an offset, which is obviously not valid without parenthesisation >:/\n", sub_exp);
 			result.type = INVALID;
 			return result;
 		}
@@ -236,39 +232,36 @@ parameter parse_parameter(dasm_context *cxt, const char* input)
 		result.type = sub_result.type | POINTER;
 		result.value = sub_result.value;
 	} else {
-		//printf("It's not a pointer... ");
 		if (input[0] == 's' && input[1] == 'r' && is_number(&input[2])) {
 			// "srN" form
 			result.type = S_REGISTER;
 			result.value = parse_number(&input[2]);
-			//printf("it's a special register !\n");
 		} else if (input[0] == 'r' && is_number(&input[1])) {
 			// "rN" form
-			//printf("it's a register !\n");
 			result.type = REGISTER;
 			result.value = parse_number(&input[1]);
 		} else if (is_number(input)) {
 			result.type = CONSTANT;
 			result.value = parse_number(input);
-			//printf("it's a number !\n");
 		} else if (is_char(input)) {
 			result.type = CONSTANT;
 			result.value = parse_char(input);
 		} else {
-			for (int i = 0; i < cxt->n_aliases; i++) {
-				//printf("Checking aliases...\n");
-				if (strcmp(input, cxt->aliases[i].replacee) == 0) {
-					//printf("Ah! an alias! I will parse %s in place of %s\n",
-                 //aliases[i].replacer,
-                 //input);
-					return parse_parameter(cxt, cxt->aliases[i].replacer);
-				}
+			dasm_alias_linked_list *current = cxt->aliases;
+			
+			while (current != NULL) {
+				if (strcmp(current->data.replacee, input) == 0)
+					break;
+				
+				current = current->next;
 			}
+			
+			if (current != NULL)
+				return parse_parameter(cxt, current->data.replacer);
+			
 			if (is_label(input)) {
 				result.type = LABEL_P;
-			}
-			else
-			{
+			} else {
 				result.type = INVALID;
 			}
 		}
@@ -281,9 +274,9 @@ parameter parse_parameter(dasm_context *cxt, const char* input)
 	return result;
 }
 
-int handle_label_parameter(dasm_context *cxt, pa_file *file, parameter *param, const char *str, unsigned int line_number)
+int handle_label_parameter(dasm_context *cxt, dasm_file *file, parameter *param, const char *str, unsigned int line_number)
 {
-	if (!valid_dasm_context(cxt) || !valid_pa_file(file) || param == NULL) {
+	if (!valid_dasm_context(cxt) || !valid_dasm_file(file) || param == NULL) {
 		return BAD_ARGUMENTS;
 	}
 	
@@ -294,21 +287,21 @@ int handle_label_parameter(dasm_context *cxt, pa_file *file, parameter *param, c
 	return SUCCESS;
 }
 
-int handle_string_parameter(dasm_context *cxt, pa_file *file, parameter *param, const char *str, unsigned int line_number)
+int handle_string_parameter(dasm_context *cxt, dasm_file *file, parameter *param, const char *str, unsigned int line_number)
 {
-	if (!valid_dasm_context(cxt) || !valid_pa_file(file) || param == NULL) {
+	if (!valid_dasm_context(cxt) || !valid_dasm_file(file) || param == NULL) {
 		return BAD_ARGUMENTS;
 	}
 	
-	int label_n = add_string_to_context(cxt, str, file, file->text.position);
+	dasm_label *label = add_string_to_context(cxt, str, file, file->text.position, line_number);
 	
-	if (label_n < 0)
-		return -label_n;
+	if (!label)
+		return MEMORY_FAILURE;
 	
 	param->type = CONSTANT;
 	param->value = file->text.position;
 	
-	add_label_ref_to_file(file, cxt->labels[label_n].name, file->text.position + 1, line_number);
+	add_label_ref_to_file(file, label->name, file->text.position + 1, line_number);
 	
 	return SUCCESS;
 }

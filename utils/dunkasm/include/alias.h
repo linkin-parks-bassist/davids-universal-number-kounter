@@ -9,11 +9,18 @@ typedef struct
 {
 	char* replacee;
 	char* replacer;
-} alias;
+} dasm_alias;
+
+DECLARE_LINKED_LIST(dasm_alias);
+
+typedef dasm_alias_linked_list dasm_alias_linked_list;
 
 void init_aliases();
 
-void free_alias(alias a);
+void free_alias(dasm_alias a);
+
+void dasm_alias_destructor(dasm_alias a);
+int compare_aliases(dasm_alias a, dasm_alias b);
 
 int init_context_aliases(dasm_context *cxt);
 int clear_nondefault_aliases(dasm_context *cxt);

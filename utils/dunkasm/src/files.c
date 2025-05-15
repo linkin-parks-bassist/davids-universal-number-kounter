@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <limits.h>
 #include <ctype.h>
 #include <stdio.h>
 
@@ -8,11 +9,15 @@
 
 #include "dunkasm.h"
 
-//IMPLEMENT_LINKED_PTR_LIST(pa_file);
+IMPLEMENT_LINKED_PTR_LIST(dasm_file);
 
-pa_file *new_pa_file(const char *fname)
+dasm_file *new_dasm_file(const char *fname)
 {
-	pa_file *res = malloc(sizeof(pa_file));
+	if (fname == NULL) {
+		fprintf(stderr, "Error: NULL pointer passed to function `new_dasm_file'\n");
+		exit(EXIT_FAILURE);
+	}
+	dasm_file *res = malloc(sizeof(dasm_file));
 	
 	if (res == NULL)
 		return NULL;
@@ -20,71 +25,103 @@ pa_file *new_pa_file(const char *fname)
 	init_buffer(&res->text);
 	init_buffer(&res->strings);
 	
-	res->fname = strdup(fname);
+	char abs_path_buf[PATH_MAX];
+	
+	if (realpath(fname, abs_path_buf) == NULL) {
+		perror("Error opening file");
+		exit(EXIT_FAILURE);
+	}
+	
+	res->absolute_path = strdup(abs_path_buf);
+	res->given_path = strdup(fname);
 	
 	res->n_label_refs = 0;
+	res->label_refs = NULL;
+	
+	return res;
 }
 
-
-int free_pa_file(pa_file *file)
+void dasm_file_destructor(dasm_file *file)
 {
 	if (file == NULL)
-		return BAD_ARGUMENTS;
+		return;
 	
+	free(file->absolute_path);
+	free(file->given_path);
+	free_label_ref_linked_list(file->label_refs);
 	destroy_buffer(&file->text);
 	destroy_buffer(&file->strings);
-	free(file);
-	
-	return SUCCESS;
 }
 
-pa_file *process_file(const char* input_path, dasm_context *cxt, int flags)
+void free_dasm_file(dasm_file *file)
 {
-	if (input_path == NULL || !valid_dasm_context(cxt))
-		return NULL;
-		
-	char cwd[128];
-	getcwd(cwd, 128);
+	if (file == NULL)
+		return;
 	
-	char filedir[128];
+	dasm_file_destructor(file);
+	
+	free(file);
+}
+
+int get_file_directory(const char* input_path, char *dest)
+{
+	if (input_path == NULL || dest == NULL)
+		return BAD_ARGUMENTS;
 	
 	char *slash = strrchr(input_path, '/');
 	if (slash != NULL) {
-		strncpy(filedir, input_path, strrchr(input_path, '/') + 1 - input_path);
-		filedir[strrchr(input_path, '/') + 1 - input_path] = 0;
+		strncpy(dest, input_path, strrchr(input_path, '/') + 1 - input_path);
+		dest[strrchr(input_path, '/') + 1 - input_path] = 0;
 	} else {
-		filedir[0] = '.';
-		filedir[1] = 0;
+		dest[0] = '.';
+		dest[1] = 0;
 	}
 	
-	pa_file *file = new_pa_file(input_path);
+	return 0;
+}
+
+int compare_filenames(dasm_file *f1, dasm_file *f2)
+{
+	if (f1 == NULL || f2 == NULL)
+		return 1;
+	
+	return strcmp(f1->absolute_path, f2->absolute_path);
+}
+
+dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags)
+{
+	if (input_path == NULL || !valid_dasm_context(cxt))
+		return NULL;
+	
+	dasm_file *file = new_dasm_file(input_path);
+	
+	if (cxt->flags & VERBOSE) {
+		printf("Assembling file \"%s\"\n", input_path);
+	}
 	
 	if (file == NULL)
 		return NULL;
 	
-	add_pa_file_to_context(cxt, file);
+	add_file_to_context(cxt, file);
 	
-	line_data_node *head = tokenize_file(input_path);
+	dasm_line_linked_list *lines = tokenize_file(input_path);
+	dasm_line_linked_list *current = lines;
+		
+	if (lines == NULL)
+		return NULL;
+		
+	char cwd[PATH_MAX];
+	getcwd(cwd, PATH_MAX);
+	
+	char filedir[PATH_MAX];
+	get_file_directory(input_path, filedir);
 	
 	chdir(filedir);
-	
-	if (head == NULL)
-		return NULL;
-	
-	line_data_node *current = head;
-	line_data_struct line;
 
 	while (current) {
-		line = *current->data;
+		strip_comments(&current->data);
 		
-		for (int i = 0; i < line.token_count; ++i) {
-			if (line.tokens[i][0] == '%') {
-				line.token_count = i;
-				break;
-			}
-		}
-		
-		process_line(line, file, cxt);
+		process_line(current->data, file, cxt);
 
 		current = current->next;
 	}
@@ -97,14 +134,14 @@ pa_file *process_file(const char* input_path, dasm_context *cxt, int flags)
 	/* Don't allow declared aliases to carry over between files; free the malloc'd strings */
 	clear_nondefault_aliases(cxt);
 	
-	free_list(head);
+	destructor_free_dasm_line_linked_list(lines, &dasm_line_destructor);
 	
 	chdir(cwd);
 	
 	return file;
 }
 
-int valid_pa_file(const pa_file *file)
+int valid_dasm_file(const dasm_file *file)
 {
 	if (file == NULL)
 		return 0;
@@ -115,7 +152,7 @@ int valid_pa_file(const pa_file *file)
 	if (!valid_dasm_buffer(&file->strings))
 		return 0;
 	
-	if (file->fname == NULL)
+	if (file->absolute_path == NULL)
 		return 0;
 	
 	return 1;
@@ -126,27 +163,28 @@ int init_context_files(dasm_context *cxt)
 	if (cxt == NULL)
 		return BAD_ARGUMENTS;
 	
-	cxt->n_pa_files = 0;
-	
-	for (int i = 0; i < MAX_N_FILES; i++)
-		cxt->pa_files[i] = NULL;
+	cxt->files = NULL;
 	
 	return SUCCESS;
 }
 
 
-int add_label_ref_to_file(pa_file *file, const char *label, unsigned int position, unsigned int line_number)
+int add_label_ref_to_file(dasm_file *file, const char *label, unsigned int position, unsigned int line_number)
 {
-	if (!valid_pa_file(file) || label == NULL)
+	if (!valid_dasm_file(file) || label == NULL)
 		return BAD_ARGUMENTS;
 	
 	if (file->n_label_refs >= MAX_LABEL_REFS)
 		return MEMORY_FAILURE;
 	
-	file->label_refs[file->n_label_refs].parent = file;
-	strncpy(file->label_refs[file->n_label_refs].label, label, MAX_LABEL_LENGTH);
-	file->label_refs[file->n_label_refs].position = position;
-	file->label_refs[file->n_label_refs].line_number = line_number;
+	label_ref ref;
+	
+	ref.parent = file;
+	strncpy(ref.label, label, MAX_LABEL_LENGTH);
+	ref.position = position;
+	ref.line_number = line_number;
+	
+	file->label_refs = label_ref_linked_list_append(file->label_refs, ref);
 	
 	file->n_label_refs++;
 	

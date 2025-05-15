@@ -5,58 +5,54 @@
 #include "dunkasm.h"
 
 
-line_data_node *tokenize_file(const char *input_path) {
-	FILE* input_file = fopen(input_path, "r");
-	if (!input_file) {
-		perror("Error opening input file");
+dasm_line_linked_list *tokenize_file(const char *input_path)
+{
+	if (input_path == NULL) {
+		fprintf(stderr, "Error: file path is NULL pointer");
 		exit(EXIT_FAILURE);
 	}
 
-	line_data_node *head = NULL, *tail = NULL;
+	FILE* input_file = fopen(input_path, "r");
+	if (input_file == NULL) {
+		perror("Error: unable to open file");
+		exit(EXIT_FAILURE);
+	}
+
+	dasm_line_linked_list *list = NULL;
+	dasm_line_linked_list *tail = NULL;
+	dasm_line line;
+	
 	char line_str[MAX_LINE_LENGTH];
 	int line_number = 1;
 
 	while (fgets(line_str, sizeof(line_str), input_file)) {
 		char* trimmed_line = line_str;
+		
 		while (isspace((unsigned char)*trimmed_line))
 			trimmed_line++;
+		
 		if (*trimmed_line == '\0') {
 			line_number++;
 			continue;
 		}
 
-		line_data_struct* line_data = tokenize_line(trimmed_line, line_number);
-
-		line_data_node* new_node = malloc(sizeof(line_data_node));
-		new_node->data = line_data;
-		new_node->next = NULL;
-		if (!head) {
-			head = tail = new_node;
-		} else {
-			tail->next = new_node;
-			tail = new_node;
+		line = new_dasm_line(trimmed_line, line_number);
+		
+		tail = dasm_line_linked_list_append(tail, line);
+		
+		if (tail == NULL) {
+			perror("Memory allocation failure (tokenizer.c:44)");
+			exit(EXIT_FAILURE);
 		}
+		
+		if (list == NULL)
+			list = tail;
 
 		line_number++;
 	}
 	
 	fclose(input_file);
-	return head;
-}
-
-line_data_struct *tokenize_line(char* line, int line_number)
-{
-	line_data_struct *line_data = malloc(sizeof(line_data_struct));
-	if (!line_data) {
-		perror("Memory allocation failed");
-		exit(EXIT_FAILURE);
-	}
-	line_data->raw_line = strdup(line);
-	line_data->line_number = line_number;
-	line_data->tokens = tokenize_string(line, &line_data->token_count);
-
-	
-	return line_data;
+	return list;
 }
 
 char **tokenize_string(const char *src, int *n_tokens) {
@@ -64,6 +60,7 @@ char **tokenize_string(const char *src, int *n_tokens) {
 		return NULL;
 	
 	int ta_size = 8;
+	
 	char **tokens = malloc(sizeof(char*) * ta_size);
 	
 	int len = strlen(src);
@@ -97,7 +94,12 @@ char **tokenize_string(const char *src, int *n_tokens) {
 				if (*n_tokens >= ta_size - 1) {
 					ta_size += 8;
 					
-					tokens = realloc(tokens, sizeof(char*) * ta_size);
+					tokens = realloc(tokens, sizeof(char*) * (ta_size));
+	
+					if (tokens == NULL) {
+						perror("Memory allocation failure (tokenizer.c:100)");
+						exit(EXIT_FAILURE);
+					}
 				}
 				
 				if (mode == 1)
@@ -125,9 +127,6 @@ char **tokenize_string(const char *src, int *n_tokens) {
 			token_finished = 0;
 		}
 	}
-	
-	
-	tokens = realloc(tokens, sizeof(char*) * (*n_tokens + 1));
 	
 	return tokens;
 }
