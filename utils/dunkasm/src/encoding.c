@@ -38,7 +38,7 @@
   * there is a single parameter, written in both the first and second nibble
   * of the instruction. This is why I am using bitflags; so the parameter
   * position can be FIRST_NIBBLE | SECOND_NIBBLE and appear in both positions. */
-int encode_instruction(dasm_buffer *buf, dunk_instr *instr, parameter *params, int n_params)
+int encode_instruction(dasm_buffer *buf, const dunk_instr *instr, parameter *params, int n_params)
 {
 	if (buf == NULL || instr == NULL || params == NULL)
 		return BAD_ARGUMENTS;

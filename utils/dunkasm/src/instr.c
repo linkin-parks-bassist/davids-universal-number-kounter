@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "dunkasm.h"
 
-dunk_instr dunk_instrs[N_INSTR] = {
+const dunk_instr dunk_instrs[N_INSTR] = {
 	NULLARY_INSTR("chill", 0x00),
 	
 	//**flow control**//

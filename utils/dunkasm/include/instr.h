@@ -51,6 +51,6 @@ typedef struct
 #define GOTO_C_POSITIVE 	0x06
 #define GOTO_C_NONPOSITIVE 	0x07
 
-extern dunk_instr dunk_instrs[N_INSTR];
+extern const dunk_instr dunk_instrs[N_INSTR];
 
 #endif
