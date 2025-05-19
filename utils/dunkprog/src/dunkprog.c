@@ -53,39 +53,33 @@ void generate_roms() {
 	append_mc1(done);
 	
 	code_sequence_for(0x02);		// goto_if_zero
-	append_mc1(pkptroutinc);
-	append_mc2(datatotmpa, regtodata(1));
-	append_mc1(tmpatopkifz);
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifz);
 	append_mc1(done);
 	
 	code_sequence_for(0x03);		// goto_if_nonzero
-	append_mc1(pkptroutinc);
-	append_mc2(datatotmpa, regtodata(1));
-	append_mc1(tmpatopkifnz);
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifnz);
 	append_mc1(done);
 	
 	code_sequence_for(0x04);		// goto_if_negative
-	append_mc1(pkptroutinc);
-	append_mc2(datatotmpa, regtodata(1));
-	append_mc1(tmpatopkifn);
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpatosreg, tmptopkifn);
 	append_mc1(done);
 	
 	code_sequence_for(0x05);		// goto_if_nonnegative
-	append_mc1(pkptroutinc);
-	append_mc2(datatotmpa, regtodata(1));
-	append_mc1(tmpatopkifnn);
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifnn);
 	append_mc1(done);
 	
 	code_sequence_for(0x06);		// goto_if_positive
-	append_mc1(pkptroutinc);
-	append_mc2(datatotmpa, regtodata(1));
-	append_mc1(tmpatopkifp);
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifp);
 	append_mc1(done);
 	
 	code_sequence_for(0x07);		// goto_if_nonpositive
-	append_mc1(pkptroutinc);
-	append_mc2(datatotmpa, regtodata(1));
-	append_mc1(tmpatopkifnp);
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifnp);
 	append_mc1(done);
 
 	code_sequence_for(0x10);		// Set *constant to constant
@@ -591,7 +585,6 @@ void generate_roms() {
 
 	// function stuff
 	code_sequence_for(0x80);		 // call
-	
 	append_mc2(pkptroutinc, decrementsp);
 	append_mc2(datatotmpa, pktodata);
 	append_mc2(holddata, sptoaddr);

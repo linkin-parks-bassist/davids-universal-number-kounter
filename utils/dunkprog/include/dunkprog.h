@@ -38,18 +38,27 @@
 #define tmpaptodata 	0x2004
 #define tmpaptodata_o 	0x2005
 #define datatotmpa 		0x2006
+#define tmpatosreg 		0x2007
 
 #define tmpbtodata 		0x3002
 #define tmpbtoaddr 		0x3003
 #define tmpbptodata 	0x3004
 #define tmpbptodata_o 	0x3005
 #define datatotmpb 		0x3006
+#define tmpbtosreg 		0x3006
 
-#define offstodata 		0x4002
-#define offstoaddr 		0x4003
-#define offsptodata 	0x4004
-#define offsptodata_o 	0x4005
-#define datatooffs 		0x4006
+#define tmpctodata 		0x4002
+#define tmpctoaddr 		0x4003
+#define tmpcptodata 	0x4004
+#define tmpcptodata_o 	0x4005
+#define datatotmpc 		0x4006
+#define tmpctosreg 		0x4006
+
+#define offstodata 		0x5002
+#define offstoaddr 		0x5003
+#define offsptodata 	0x5004
+#define offsptodata_o 	0x5005
+#define datatooffs 		0x5006
 
 #define incrementpk 	0x0010
 #define pkptroutinc		0x0011
@@ -57,16 +66,16 @@
 #define decrementpk 	0x0012
 
 #define tmpatopk 		0x0013
-#define tmpbtopk 		0x0014
+#define tmptopk 		0x0014
 
-#define tmpatopkifz 	0x0015
-#define tmpatopkifnz 	0x0016
+#define tmptopkifz 		0x0015
+#define tmptopkifnz 	0x0016
 
-#define tmpatopkifn 	0x0017
-#define tmpatopkifnn 	0x0018
+#define tmptopkifn 		0x0017
+#define tmptopkifnn 	0x0018
 
-#define tmpatopkifp 	0x0019
-#define tmpatopkifnp 	0x001a
+#define tmptopkifp 		0x0019
+#define tmptopkifnp 	0x001a
 
 #define it_to_pk		0x001b
 
