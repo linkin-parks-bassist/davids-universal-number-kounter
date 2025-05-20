@@ -49,121 +49,63 @@ void generate_roms() {
 	append_mc1(do_nothing);
 	append_mc1(done);
 
-	code_sequence_for(GOTO_C);		// goto
+	code_sequence_for(GOTO);		// goto
 	append_mc1(pkptrout);
 	append_mc1(datatopk);
 	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_ZERO_R_C);
-	COND_GOTO_R_C(tmptopkifz);
+	
+	code_sequence_for(GOTO_IF_ZERO);		// goto_if_zero
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifz);
+	append_mc1(done);
+	
+	code_sequence_for(GOTO_IF_NONZERO);		// goto_if_nonzero
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifnz);
+	append_mc1(done);
+	
+	code_sequence_for(GOTO_IF_NEGATIVE);		// goto_if_negative
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpatosreg, tmptopkifn);
+	append_mc1(done);
+	
+	code_sequence_for(GOTO_IF_NONNEGATIVE);		// goto_if_nonnegative
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifnn);
+	append_mc1(done);
+	
+	code_sequence_for(GOTO_IF_POSITIVE);		// goto_if_positive
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifp);
+	append_mc1(done);
+	
+	code_sequence_for(GOTO_IF_NONPOSITIVE);		// goto_if_nonpositive
+	append_mc2(incrementpk, regtodata(1));
+	append_mc2(tmpctosreg, tmptopkifnp);
 	append_mc1(done);
 
-	code_sequence_for(GOTO_IF_NONZERO_R_C);
-	COND_GOTO_R_C(tmptopkifnz);
+	code_sequence_for(GOTO_IF_EQUAL); // unimplemented
+	// TODO
 	append_mc1(done);
 
-	code_sequence_for(GOTO_IF_NEGATIVE_R_C);
-	COND_GOTO_R_C(tmptopkifn);
+	code_sequence_for(GOTO_IF_UNEQUAL); // unimplemented
+	// TODO
 	append_mc1(done);
 
-	code_sequence_for(GOTO_IF_NONNEGATIVE_R_C);
-	COND_GOTO_R_C(tmptopkifnn);
+	code_sequence_for(GOTO_IF_LESS); // unimplemented
+	// TODO
 	append_mc1(done);
 
-	code_sequence_for(GOTO_IF_POSITIVE_R_C);
-	COND_GOTO_R_C(tmptopkifp);
+	code_sequence_for(GOTO_IF_GREATER); // unimplemented
+	// TODO
 	append_mc1(done);
 
-	code_sequence_for(GOTO_IF_NONPOSITIVE_R_C);
-	COND_GOTO_R_C(tmptopkifnp);
+	code_sequence_for(GOTO_IF_LEQ); // unimplemented
+	// TODO
 	append_mc1(done);
 
-	code_sequence_for(GOTO_IF_EQUAL_R_R_C);
-	COND_GOTO_CMP_R_R_C(tmptopkifz);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_UNEQUAL_R_R_C);
-	COND_GOTO_CMP_R_R_C(tmptopkifnz);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_LESS_R_R_C);
-	COND_GOTO_CMP_R_R_C(tmptopkifn);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_GREATER_R_R_C);
-	COND_GOTO_CMP_R_R_C(tmptopkifp);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_LEQ_R_R_C);
-	COND_GOTO_CMP_R_R_C(tmptopkifnp);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_GEQ_R_R_C);
-	COND_GOTO_CMP_R_R_C(tmptopkifnn);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_EQUAL_R_C_C);
-	COND_GOTO_CMP_R_C_C(tmptopkifz);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_UNEQUAL_R_C_C);
-	COND_GOTO_CMP_R_C_C(tmptopkifnz);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_LESS_R_C_C);
-	COND_GOTO_CMP_R_C_C(tmptopkifn);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_GREATER_R_C_C);
-	COND_GOTO_CMP_R_C_C(tmptopkifp);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_LEQ_R_C_C);
-	COND_GOTO_CMP_R_C_C(tmptopkifnp);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_GEQ_R_C_C);
-	COND_GOTO_CMP_R_C_C(tmptopkifnn);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_LESS_UNSGN_R_R_C);
-	COND_GOTO_CMP_UNSGN_R_R_C(tmptopkifn);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_GREATER_UNSGN_R_R_C);
-	COND_GOTO_CMP_UNSGN_R_R_C(tmptopkifp);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_LEQ_UNSGN_R_R_C);
-	COND_GOTO_CMP_UNSGN_R_R_C(tmptopkifnp);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_GEQ_UNSGN_R_R_C);
-	COND_GOTO_CMP_UNSGN_R_R_C(tmptopkifnn);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_EQUAL_UNSGN_R_C_C);
-	COND_GOTO_CMP_UNSGN_R_C_C(tmptopkifz);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_UNEQUAL_UNSGN_R_C_C);
-	COND_GOTO_CMP_UNSGN_R_C_C(tmptopkifnz);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_LESS_UNSGN_R_C_C);
-	COND_GOTO_CMP_UNSGN_R_C_C(tmptopkifn);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_GREATER_UNSGN_R_C_C);
-	COND_GOTO_CMP_UNSGN_R_C_C(tmptopkifp);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_LEQ_UNSGN_R_C_C);
-	COND_GOTO_CMP_UNSGN_R_C_C(tmptopkifnp);
-	append_mc1(done);
-
-	code_sequence_for(GOTO_IF_GEQ_UNSGN_R_C_C);
-	COND_GOTO_CMP_UNSGN_R_C_C(tmptopkifnn);
+	code_sequence_for(GOTO_IF_GEQ); // unimplemented
+	// TODO
 	append_mc1(done);
 
 	code_sequence_for(SWAP_R_R);
@@ -561,216 +503,233 @@ void generate_roms() {
 	append_mc1(writeRAM_o);
 	append_mc1(done);
 	
-	// regex: code_sequence_for\((ADD|SUB|MUL|INC|DEC|NEG|CMP|UCMP|SGN|AND|OR|XOR|NOT|LSHIFT|RSHIFT|SHIFT)((_[RC])+)\);[^\n]*\n[^\n]*\n
-	// replace with: code_sequence_for(\1\2);\n\tALU\2(ALU_\1);\n
+
+	code_sequence_for(ADD_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SUB_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(MUL_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(UCMP_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(CMP_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(AND_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(OR_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(XOR_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SHIFT_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(ADD_R_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SUB_R_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(MUL_R_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(INC_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(DEC_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(NEG_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(UCMP_R_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(CMP_R_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SGN_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(AND_R_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(OR_R_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(XOR_R_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(LSHIFT_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SHIFT_R_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(RSHIFT_R_C); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(ADD_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SUB_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(MUL_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(INC_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(DEC_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(NEG_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(UCMP_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(CMP_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SGN_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(AND_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(OR_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(XOR_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(LSHIFT_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SHIFT_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(RSHIFT_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(ADD_R_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SUB_R_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(MUL_R_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(INC_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(DEC_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(NEG_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(UCMP_R_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(CMP_R_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SGN_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(AND_R_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(OR_R_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(XOR_R_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(NOT_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(LSHIFT_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(SHIFT_R_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	code_sequence_for(RSHIFT_R_R); // unimplemented
+	// TODO
+	append_mc1(done);
+
+	//**ALU**//
+
 	
-	code_sequence_for(ADD_R_C);
-	ALU_R_C(ALU_ADD);
-	append_mc1(done);
-
-	code_sequence_for(SUB_R_C);
-	ALU_R_C(ALU_SUB);
-	append_mc1(done);
-
-	code_sequence_for(MUL_R_C);
-	ALU_R_C(ALU_MUL);
-	append_mc1(done);
-
-	code_sequence_for(UCMP_R_C);
-	ALU_R_C(ALU_UCMP);
-	append_mc1(done);
-
-	code_sequence_for(CMP_R_C);
-	ALU_R_C(ALU_CMP);
-	append_mc1(done);
-
-	code_sequence_for(AND_R_C);
-	ALU_R_C(ALU_AND);
-	append_mc1(done);
-
-	code_sequence_for(OR_R_C);
-	ALU_R_C(ALU_OR);
-	append_mc1(done);
-
-	code_sequence_for(XOR_R_C);
-	ALU_R_C(ALU_XOR);
-	append_mc1(done);
-
-	code_sequence_for(SHIFT_R_C);
-	ALU_R_C(ALU_SHIFT);
-	append_mc1(done);
-
-	code_sequence_for(ADD_R_R_C);
-	ALU_R_R_C(ALU_ADD);
-	append_mc1(done);
-
-	code_sequence_for(SUB_R_R_C);
-	ALU_R_R_C(ALU_SUB);
-	append_mc1(done);
-
-	code_sequence_for(MUL_R_R_C);
-	ALU_R_R_C(ALU_MUL);
-	append_mc1(done);
-
-	code_sequence_for(UCMP_R_R_C);
-	ALU_R_R_C(ALU_UCMP);
-	append_mc1(done);
-
-	code_sequence_for(CMP_R_R_C);
-	ALU_R_R_C(ALU_CMP);
-	append_mc1(done);
-
-	code_sequence_for(AND_R_R_C);
-	ALU_R_R_C(ALU_AND);
-	append_mc1(done);
-
-	code_sequence_for(OR_R_R_C);
-	ALU_R_R_C(ALU_OR);
-	append_mc1(done);
-
-	code_sequence_for(XOR_R_R_C);
-	ALU_R_R_C(ALU_XOR);
-	append_mc1(done);
-	
-	code_sequence_for(SHIFT_R_R_C);
-	ALU_R_R_C(ALU_SHIFT);
-	append_mc1(done);
-
-	code_sequence_for(ADD_R_R);
-	ALU_R_R(ALU_ADD);
-	append_mc1(done);
-
-	code_sequence_for(SUB_R_R);
-	ALU_R_R(ALU_SUB);
-	append_mc1(done);
-
-	code_sequence_for(MUL_R_R);
-	ALU_R_R(ALU_MUL);
-	append_mc1(done);
-
-	code_sequence_for(INC_R);
-	ALU_R(ALU_INC);
-	append_mc1(done);
-
-	code_sequence_for(DEC_R);
-	ALU_R(ALU_DEC);
-	append_mc1(done);
-
-	code_sequence_for(NEG_R);
-	ALU_R(ALU_NEG);
-	append_mc1(done);
-
-	code_sequence_for(UCMP_R_R);
-	ALU_R_R(ALU_UCMP);
-	append_mc1(done);
-
-	code_sequence_for(CMP_R_R);
-	ALU_R_R(ALU_CMP);
-	append_mc1(done);
-
-	code_sequence_for(SGN_R);
-	ALU_R(ALU_SGN);
-	append_mc1(done);
-
-	code_sequence_for(NOT_R);
-	ALU_R(ALU_NOT);
-	append_mc1(done);
-
-	code_sequence_for(AND_R_R);
-	ALU_R_R(ALU_AND);
-	append_mc1(done);
-
-	code_sequence_for(OR_R_R);
-	ALU_R_R(ALU_OR);
-	append_mc1(done);
-
-	code_sequence_for(XOR_R_R);
-	ALU_R_R(ALU_XOR);
-	append_mc1(done);
-
-	code_sequence_for(LSHIFT_R);
-	ALU_R(ALU_LSHIFT);
-	append_mc1(done);
-
-	code_sequence_for(SHIFT_R_R);
-	ALU_R_R(ALU_SHIFT);
-	append_mc1(done);
-
-	code_sequence_for(RSHIFT_R);
-	ALU_R(ALU_RSHIFT);
-	append_mc1(done);
-
-	code_sequence_for(ADD_R_R_R);
-	ALU_R_R_R(ALU_ADD);
-	append_mc1(done);
-
-	code_sequence_for(SUB_R_R_R);
-	ALU_R_R_R(ALU_SUB);
-	append_mc1(done);
-
-	code_sequence_for(MUL_R_R_R);
-	ALU_R_R_R(ALU_MUL);
-	append_mc1(done);
-
-	code_sequence_for(INC_R_R);
-	ALU_R_R(ALU_INC);
-	append_mc1(done);
-
-	code_sequence_for(DEC_R_R);
-	ALU_R_R(ALU_DEC);
-	append_mc1(done);
-
-	code_sequence_for(NEG_R_R);
-	ALU_R_R(ALU_NEG);
-	append_mc1(done);
-
-	code_sequence_for(UCMP_R_R_R);
-	ALU_R_R_R(ALU_UCMP);
-	append_mc1(done);
-
-	code_sequence_for(CMP_R_R_R);
-	ALU_R_R_R(ALU_CMP);
-	append_mc1(done);
-
-	code_sequence_for(SGN_R_R);
-	ALU_R_R(ALU_SGN);
-	append_mc1(done);
-
-	code_sequence_for(AND_R_R_R);
-	ALU_R_R_R(ALU_AND);
-	append_mc1(done);
-
-	code_sequence_for(OR_R_R_R);
-	ALU_R_R_R(ALU_OR);
-	append_mc1(done);
-
-	code_sequence_for(XOR_R_R_R);
-	ALU_R_R_R(ALU_XOR);
-	append_mc1(done);
-
-	code_sequence_for(NOT_R_R);
-	ALU_R_R(ALU_NOT);
-	append_mc1(done);
-
-	code_sequence_for(LSHIFT_R_R);
-	ALU_R_R(ALU_LSHIFT);
-	append_mc1(done);
-
-	code_sequence_for(SHIFT_R_R_R);
-	ALU_R_R_R(ALU_SHIFT);
-	append_mc1(done);
-
-	code_sequence_for(RSHIFT_R_R);
-	ALU_R_R(ALU_RSHIFT);
-	append_mc1(done);
-
 	//**stack stuff**//
 
 	// pushes
-	code_sequence_for(PUSH);
-	append_mc1(decrementsp);
-	append_mc1(done);
-	
 	code_sequence_for(PUSH_C);		// push constant
 	append_mc2(pkptroutinc, decrementsp);
 	append_mc2(holddata, sptoaddr);
@@ -822,7 +781,7 @@ void generate_roms() {
 	append_mc1(done);
 
 	// pops
-	code_sequence_for(POP);		// pop
+	code_sequence_for(POP_PSR);		// pop
 	append_mc1(incrementsp);
 	append_mc1(done);
 	
@@ -856,12 +815,6 @@ void generate_roms() {
 	append_mc2(datatosreg(1), incrementsp);
 	append_mc1(done);
 	
-	code_sequence_for(POP_PSR);		// pop *rN
-	append_mc1(spptodata);
-	append_mc2(holddata, sregtoaddr(1));
-	append_mc2(writeRAM, incrementsp);
-	append_mc1(done);
-	
 	code_sequence_for(POP_PSRO);		// pop *(srN+offs)
 	append_mc1(pkptroutinc);
 	append_mc2(datatooffs, spptodata);
@@ -869,9 +822,8 @@ void generate_roms() {
 	append_mc2(writeRAM_o, incrementsp);
 	append_mc1(done);
 
-	/* FUNCTION STUFF */
-	
-	code_sequence_for(CALL_C); // unimplemented
+	// function stuff
+	code_sequence_for(CALL);		 // call
 	append_mc2(pkptroutinc, decrementsp);
 	append_mc2(datatotmpa, pktodata);
 	append_mc2(holddata, sptoaddr);
@@ -958,13 +910,6 @@ void generate_roms() {
 	append_mc1(regtodata(1));
 	append_mc1(datatotmpc);
 	append_mc1(datatopin(11));
-	append_mc1(done);
-	
-	code_sequence_for(HANDLE_INTERRUPT); // unimplemented
-	append_mc2(decrementsp, decrementpk);
-	append_mc2(pktodata, sptoaddr);
-	append_mc2(writeRAM, it_to_pk);
-	append_mc1(stacking);
 	append_mc1(done);
 }
 

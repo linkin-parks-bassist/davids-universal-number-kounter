@@ -26,25 +26,25 @@ int init_context_aliases(dasm_context *cxt)
 	
 	add_alias_to_context(cxt, "argument", "r8");
 	
-	add_alias_to_context(cxt, "argument1", "r1");
-	add_alias_to_context(cxt, "argument2", "r2");
-	add_alias_to_context(cxt, "argument3", "r3");
-	add_alias_to_context(cxt, "argument4", "r4");
-	add_alias_to_context(cxt, "argument5", "r5");
-	add_alias_to_context(cxt, "argument6", "r6");
-	add_alias_to_context(cxt, "argument7", "r7");
-	add_alias_to_context(cxt, "argument8", "r8");
+	add_alias_to_context(cxt, "argument1", "r8");
+	add_alias_to_context(cxt, "argument2", "r9");
+	add_alias_to_context(cxt, "argument3", "ra");
+	add_alias_to_context(cxt, "argument4", "rb");
+	add_alias_to_context(cxt, "argument5", "rc");
+	add_alias_to_context(cxt, "argument6", "rd");
+	add_alias_to_context(cxt, "argument7", "re");
+	add_alias_to_context(cxt, "argument8", "rf");
 	
 	add_alias_to_context(cxt, "result", "r8");
 	
-	add_alias_to_context(cxt, "result1", "r1");
-	add_alias_to_context(cxt, "result2", "r2");
-	add_alias_to_context(cxt, "result3", "r3");
-	add_alias_to_context(cxt, "result4", "r4");
-	add_alias_to_context(cxt, "result5", "r5");
-	add_alias_to_context(cxt, "result6", "r6");
-	add_alias_to_context(cxt, "result7", "r7");
-	add_alias_to_context(cxt, "result8", "r8");
+	add_alias_to_context(cxt, "result1", "r8");
+	add_alias_to_context(cxt, "result2", "r9");
+	add_alias_to_context(cxt, "result3", "ra");
+	add_alias_to_context(cxt, "result4", "rb");
+	add_alias_to_context(cxt, "result5", "rc");
+	add_alias_to_context(cxt, "result6", "rd");
+	add_alias_to_context(cxt, "result7", "re");
+	add_alias_to_context(cxt, "result8", "rf");
 	
 	
 	add_alias_to_context(cxt, "ih1", "sr8");

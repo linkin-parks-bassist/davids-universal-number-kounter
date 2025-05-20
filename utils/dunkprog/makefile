@@ -1,4 +1,4 @@
-hnames := dunkprog.h
+hnames := dunkprog.h microops.h opcodes.h
 cnames := dunkprog.c
 
 CFLAGS = 
@@ -23,5 +23,5 @@ $(objdir)/%.o : $(cfiles)
 $(cfiles) : $(headers)
 
 clean:
-	rm bin/* 2> /dev/null || true
+	yes | rm bin/* 2> /dev/null || true
 

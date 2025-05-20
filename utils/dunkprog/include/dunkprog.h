@@ -12,115 +12,73 @@
 
 #define MIX_IN				0b0000000010000000
 
-#define do_nothing 			0x0000
-#define begini 				0x0001
-
-#define sregtodata(X) 	 (0x0002 + 0x1000 * X) | MIX_IN
-#define sregtoaddr(X) 	 (0x0003 + 0x1000 * X) | MIX_IN
-#define sregptodata(X) 	 (0x0004 + 0x1000 * X) | MIX_IN
-#define sregptodata_o(X) (0x0005 + 0x1000 * X) | MIX_IN
-#define datatosreg(X) 	 (0x0006 + 0x1000 * X) | MIX_IN
-
-#define pktodata 		0x0002
-#define pktoaddr 		0x0003
-#define pkptrout 		0x0004
-#define pkptrout_o		0x0005
-#define datatopk 		0x0006
-
-#define sptodata 		0x1002
-#define sptoaddr 		0x1003
-#define spptodata 		0x1004
-#define spptodata_o		0x1005
-#define datatosp 		0x1006
-
-#define tmpatodata 		0x2002
-#define tmpatoaddr 		0x2003
-#define tmpaptodata 	0x2004
-#define tmpaptodata_o 	0x2005
-#define datatotmpa 		0x2006
-#define tmpatosreg 		0x2007
-
-#define tmpbtodata 		0x3002
-#define tmpbtoaddr 		0x3003
-#define tmpbptodata 	0x3004
-#define tmpbptodata_o 	0x3005
-#define datatotmpb 		0x3006
-#define tmpbtosreg 		0x3006
-
-#define tmpctodata 		0x4002
-#define tmpctoaddr 		0x4003
-#define tmpcptodata 	0x4004
-#define tmpcptodata_o 	0x4005
-#define datatotmpc 		0x4006
-#define tmpctosreg 		0x4006
-
-#define offstodata 		0x5002
-#define offstoaddr 		0x5003
-#define offsptodata 	0x5004
-#define offsptodata_o 	0x5005
-#define datatooffs 		0x5006
-
-#define incrementpk 	0x0010
-#define pkptroutinc		0x0011
-
-#define decrementpk 	0x0012
-
-#define tmpatopk 		0x0013
-#define tmptopk 		0x0014
-
-#define tmptopkifz 		0x0015
-#define tmptopkifnz 	0x0016
-
-#define tmptopkifn 		0x0017
-#define tmptopkifnn 	0x0018
-
-#define tmptopkifp 		0x0019
-#define tmptopkifnp 	0x001a
-
-#define it_to_pk		0x001b
-
-
-#define incrementsp 	0x1010
-#define decrementsp 	0x1011
-#define predecsptoaddr 	0x1012
-
-
-#define regtodata(X) 	(0x0020 + 0x1000 * X) | MIX_IN
-#define regtoaddr(X) 	(0x0021 + 0x0100 * X) | MIX_IN
-#define regptodata(X) 	(0x0022 + 0x0100 * X) | MIX_IN
-#define regptodata_o(X) (0x0023 + 0x0100 * X) | MIX_IN
-#define datatoreg(X) 	(0x0024 + 0x1000 * X) | MIX_IN
-
-#define writeRAM 		0x0025
-#define writeRAM_o 		0x0026
-
-#define readRAM 		0x0027
-#define readRAM_o 		0x0028
-
-#define pinmodein(N)  	(0x0030 + 0x1000 * N) | MIX_IN
-#define pinmodeout(N) 	(0x0031 + 0x1000 * N) | MIX_IN
-#define setpinlow(N)  	(0x0032 + 0x1000 * N) | MIX_IN
-#define setpinhigh(N) 	(0x0033 + 0x1000 * N) | MIX_IN
-#define pintodata(N) 	(0x0034 + 0x1000 * N) | MIX_IN
-#define datatopin(N)  	(0x0035 + 0x1000 * N) | MIX_IN
-
-#define ALUop(X, Y, o) 	(0x0040 + 0x1000 * X + 0x0100 * Y + 0x0001 * o) | MIX_IN
-
-#define holddata 		0x0050
-#define holdaddr	 	0x0051
-
-#define holdaddrdata 	0x0052
-#define holddataaddr 	0x0053
-
-#define stacking  		0x0060
-#define unstacking 		0x0061
-
-#define done  0xfffe
-#define reset 0xffff
-
 #define BINSIZE 2 * 64 * 1024
 #define NWORDS 64 * 1024
 
 #define code_sequence_for(X) dr_data[X] = (uint16_t)current_position;
+
+#define ALU_ADD 	0x0
+#define ALU_SUB 	0x1
+#define ALU_MUL 	0x2
+#define ALU_INC 	0x3
+#define ALU_DEC 	0x4
+#define ALU_NEG 	0x5
+#define ALU_UCMP 	0x6
+#define ALU_CMP 	0x7
+#define ALU_SGN 	0x8
+#define ALU_AND 	0x9
+#define ALU_OR 		0xa
+#define ALU_XOR 	0xb
+#define ALU_NOT 	0xc
+#define ALU_LSHIFT 	0xd
+#define ALU_RSHIFT 	0xe
+#define ALU_SHIFT  	0xf
+
+#define ALUa_RISING_EDGE 0x0100
+#define ALUb_RISING_EDGE 0x0200
+
+#define ALU_R(N) \
+	append_mc1(ALUop(1, 1, N)); \
+	append_mc1(datatoreg(1));
+#define ALU_R_C(N) \
+	append_mc1(tmpctodata); \
+	append_mc2(datatoALUb, ALUop(1, 0, N)); \
+	append_mc1(datatoreg(1));
+#define ALU_R_R(N)\
+	append_mc1(ALUop(1, 2, N)); \
+	append_mc1(datatoreg(1));
+#define ALU_R_R_R(N)\
+	append_mc1(ALUop(1, 2, N)); \
+	append_mc1(datatoreg(11));
+#define ALU_R_R_C(N) \
+	append_mc1(tmpctodata); \
+	append_mc2(datatoALUb, ALUop(1, 2, N)); \
+	append_mc1(datatoreg(11));
+
+#define COND_GOTO_R_C(jmp) \
+	append_mc2(regtodata(1), incrementpk); \
+	append_mc2(tmpctosreg, jmp);
+	
+#define COND_GOTO_CMP_R_C_C(jmp) \
+	append_mc1(incrementpk); \
+	append_mc1(pkptroutinc); \
+	append_mc2(datatoALUb, ALUop(1, 0, ALU_CMP) & ALUb_RISING_EDGE); \
+	append_mc2(holddata, incrementpk); \
+	append_mc2(tmpctosreg, jmp);
+	
+#define COND_GOTO_CMP_UNSGN_R_C_C(jmp) \
+	append_mc1(incrementpk); \
+	append_mc1(pkptroutinc); \
+	append_mc2(datatoALUb, ALUop(1, 0, ALU_CMP) & ALUb_RISING_EDGE); \
+	append_mc2(holddata, incrementpk); \
+	append_mc2(tmpctosreg, jmp);
+	
+#define COND_GOTO_CMP_R_R_C(jmp) \
+	append_mc1(ALUop(1, 2, ALU_CMP)); \
+	append_mc2(jmp, incrementpk);
+	
+#define COND_GOTO_CMP_UNSGN_R_R_C(jmp) \
+	append_mc1(ALUop(1, 2, ALU_UCMP)); \
+	append_mc2(jmp, incrementpk);
 
 #endif

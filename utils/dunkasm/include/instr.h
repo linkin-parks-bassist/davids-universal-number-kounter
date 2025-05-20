@@ -10,8 +10,8 @@ typedef struct
 	const char* name;
 	uint16_t code;
 	int n_parameters;
-	int parameter_types[9];
-	int parameter_positions[9];
+	int parameter_types[MAX_N_PARAMS];
+	int parameter_positions[MAX_N_PARAMS];
 } dunk_instr;
 
 
@@ -28,9 +28,9 @@ typedef struct
 
 
 #define TERNARY_INSTR(name, code, a1_t, a1_p, a2_t, a2_p, a3_t, a3_p)	   					 	\
-	(dunk_instr){ name, code, 2, {a1_t, a2_t, a3_t, 0, 0, 0, 0, 0, 0}, {a1_p, a2_p, a3_p, 0, 0, 0, 0, 0, 0} }
+	(dunk_instr){ name, code, 3, {a1_t, a2_t, a3_t, 0, 0, 0, 0, 0, 0}, {a1_p, a2_p, a3_p, 0, 0, 0, 0, 0, 0} }
 
-#define N_INSTR 114
+#define N_INSTR 170
 
 extern const dunk_instr dunk_instrs[N_INSTR];
 

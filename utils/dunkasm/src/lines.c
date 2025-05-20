@@ -55,6 +55,10 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt)
 	if (line.n_tokens == 0)
 		return SUCCESS;
 	
+	if (line.line_number == 9) {
+		printf("We doin the line\n");
+	}
+	
 	if (cxt->flags & VERBOSE) {
 		printf("Assembling %s:%d, whose tokens are:\n\t", file->given_path, line.line_number);
 		
@@ -72,6 +76,7 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt)
 	dasm_alias temp_alias;
 	
 	int first_token_length = strlen(line.tokens[0]);
+	int buffer_pos = file->text.position;
 	
 	if (strcmp(line.tokens[0], "alias") == 0) {
 		if (line.n_tokens != 3) {
@@ -86,7 +91,7 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt)
 			char *temp_string = strdup(&line.tokens[i][1]);
 			
 			if (temp_string == NULL) {
-				perror("Memory allocation failure (lines.c:83)");
+				perror("Memory allocation failure (lines.c:89)");
 				exit(EXIT_FAILURE);
 			}
 			
@@ -210,6 +215,13 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt)
 			index--;
 
 			encode_instruction(&file->text, &dunk_instrs[index], params, argc);
+			
+			if (cxt->flags & VERBOSE) {
+				printf("Result: ");
+				for (int i = buffer_pos; i < file->text.position; i++)
+					printf("0x%04x ", file->text.data[i]);
+				printf("\n");
+			}
 		}
 	}
 	

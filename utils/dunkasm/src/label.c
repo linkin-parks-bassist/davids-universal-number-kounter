@@ -75,6 +75,21 @@ int insert_label_addresses(dasm_context *cxt, dasm_buffer *buf)
 	dasm_label *matching_label;
 				
 	while (current_file != NULL && current_file->data != NULL) {
+		if (cxt->flags & VERBOSE) {
+			printf("Labels found in file \"%s\":\n\n", current_file->data->given_path);
+			current_label = cxt->labels;
+			
+			for (int i = 0; current_label != NULL; i++) {
+				if (current_label->data.parent == current_file->data) {
+					printf("0x%04x: line %d, \"%s\"\n", current_label->data.position + label_offsets[i], current_label->data.line, current_label->data.name);
+				}
+				
+				current_label = current_label->next;
+			}
+			
+			printf("\n");
+		}
+		
 		current_label_ref = current_file->data->label_refs;
 		matching_label = NULL;
 		
@@ -94,11 +109,11 @@ int insert_label_addresses(dasm_context *cxt, dasm_buffer *buf)
 				current_label = current_label->next;
 			}
 			
-			if (cxt->flags & VERBOSE) {
+			/*if (cxt->flags & VERBOSE) {
 				printf("Label reference in file \"%s\"; referenced label is ``%s\". Position in local buffer is 0x%x, and in output buffer: 0x%x + 0x%x = 0x%x\n",
 						current_file->data->absolute_path, current_label_ref->data.label, current_label_ref->data.position, current_label_ref->data.position,
 						lr_offset, current_label_ref->data.position + lr_offset);
-			}
+			}*/
 			
 			if (!matching_label) {
 				fprintf(
@@ -108,11 +123,11 @@ int insert_label_addresses(dasm_context *cxt, dasm_buffer *buf)
 				exit(EXIT_FAILURE);
 			}
 			
-			if (cxt->flags & VERBOSE) {
+			/*if (cxt->flags & VERBOSE) {
 				printf("label found; label ``%s\" has postion 0x%x in local buffer, and offset position 0x%x + 0x%x = 0x%x\n",
 					matching_label->name, matching_label->position, matching_label->position,
 					label_offsets[matching_label_index], matching_label->position + label_offsets[matching_label_index]);
-			}
+			}*/
 			
 			write_buffer_at(buf, matching_label->position + label_offsets[matching_label_index],
 					current_label_ref->data.position + lr_offset);
