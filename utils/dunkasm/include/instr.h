@@ -30,26 +30,7 @@ typedef struct
 #define TERNARY_INSTR(name, code, a1_t, a1_p, a2_t, a2_p, a3_t, a3_p)	   					 	\
 	(dunk_instr){ name, code, 2, {a1_t, a2_t, a3_t, 0, 0, 0, 0, 0, 0}, {a1_p, a2_p, a3_p, 0, 0, 0, 0, 0, 0} }
 
-
-#define CALL_INSTR(name, code, n) \
-	(dunk_instr){ name, code, n + 1, {CONSTANT, 	REGISTER, 		 REGISTER, 		  REGISTER,		   REGISTER, 		REGISTER,	 	 REGISTER, 		  REGISTER,		   REGISTER}, \
-								 {FOLLOWING(1), FOLLOWING_FN(2), FOLLOWING_SN(2), FOLLOWING_TN(2), FOLLOWING_LN(2), FOLLOWING_FN(3), FOLLOWING_SN(3), FOLLOWING_TN(3), FOLLOWING_LN(3)} }
-
-#define RET_INSTR(name, code, n) \
-	(dunk_instr){ name, code, n, {REGISTER, 		 REGISTER, 		  REGISTER,		   REGISTER, 		REGISTER,	 	 REGISTER, 		  REGISTER,		   REGISTER, 0}, \
-								 {FOLLOWING_FN(1), FOLLOWING_SN(1), FOLLOWING_TN(1), FOLLOWING_LN(1), FOLLOWING_FN(2), FOLLOWING_SN(2), FOLLOWING_TN(2), FOLLOWING_LN(2), 0} }
-
 #define N_INSTR 114
-
-// These instructions are handled separately, using macros
-
-#define PLAIN_GOTO 			0x01
-#define GOTO_C_ZERO 		0x02
-#define GOTO_C_NONZERO 		0x03
-#define GOTO_C_NEGATIVE 	0x04
-#define GOTO_C_NONNEGATIVE 	0x05
-#define GOTO_C_POSITIVE 	0x06
-#define GOTO_C_NONPOSITIVE 	0x07
 
 extern const dunk_instr dunk_instrs[N_INSTR];
 
