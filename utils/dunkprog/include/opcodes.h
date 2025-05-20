@@ -169,7 +169,7 @@
 #define WRITE_PIN_C_R 									0xa5
 #define READ_PIN_R_R 									0xa6
 #define WRITE_PIN_R_R 									0xa7
-#define HANDLE_INTERRUPT 								0xfe // unimplemented
+#define HANDLE_INTERRUPT 								0xfe
 #define HALT_AND_CATCH_FIRE 							0xff
 
 #endif

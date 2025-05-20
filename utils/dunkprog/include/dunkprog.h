@@ -74,11 +74,11 @@
 	append_mc2(tmpctosreg, jmp);
 	
 #define COND_GOTO_CMP_R_R_C(jmp) \
-	append_mc1(ALUop(1, 2, ALU_CMP)); \
-	append_mc2(jmp, incrementpk);
+	append_mc2(ALUop(1, 2, ALU_CMP), incrementpk); \
+	append_mc2(tmpctosreg, jmp);
 	
 #define COND_GOTO_CMP_UNSGN_R_R_C(jmp) \
-	append_mc1(ALUop(1, 2, ALU_UCMP)); \
-	append_mc2(jmp, incrementpk);
+	append_mc2(ALUop(1, 2, ALU_UCMP), incrementpk); \
+	append_mc2(tmpctosreg, jmp);
 
 #endif

@@ -160,10 +160,10 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt)
 		int argc = line.n_tokens - 1;
 		
 		
-		if (argc >= MAX_PARAMS) {
+		if (argc > MAX_PARAMS) {
 			fprintf(
 					stderr,
-					"Error: too many arguments on ``%s\", line %i.\n", file->absolute_path, line.line_number);
+					"(%s:%d): Error: too many argumentsl expected at most %d, for %d.\n", file->given_path, line.line_number, MAX_PARAMS, argc);
 				exit(EXIT_FAILURE);
 		}
 		
