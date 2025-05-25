@@ -4,9 +4,8 @@
 #define DUNK_FILES_H
 
 #define MAIN_FILE 			0b001
-#define BASE_INCLUDED_FILE	0b010
-#define SUB_INCLUDED_FILE	0b100
-#define INCLUDED_FILE		0b110
+#define INCLUDED_FILE		0b010
+#define INCLUDE_FIRST		0b100
 
 struct dasm_file {
 	char *absolute_path;
@@ -24,7 +23,7 @@ DECLARE_LINKED_PTR_LIST(dasm_file);
 
 typedef dasm_file_ptr_linked_list dasm_file_ptr_linked_list;
 
-dasm_file *process_file(const char* input_path, dasm_file *file, dasm_context *cxt, int flags);
+dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags);
 
 dasm_file *new_dasm_file(const char *fname);
 
@@ -40,6 +39,7 @@ int add_label_ref_to_file(dasm_file *file, const char *label, unsigned int posit
 
 int compare_filenames(dasm_file *f1, dasm_file *f2);
 
+int file_accessible(dasm_context *cxt, const char *fname);
 int get_file_directory(const char* input_path, char *dest);
 
 #endif

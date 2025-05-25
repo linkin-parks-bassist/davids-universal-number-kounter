@@ -4,273 +4,152 @@
 #include <ctype.h>
 #include "dunkasm.h"
 
-int is_number(const char* str)
-{
-	if (str[0] == '-') {
-		str++; // skip the minus sign
-	}
-	if (str[0] == '0') {
-		if (str[1] == 'x' || str[1] == 'X') { // hexadecimal
-			str += 2;
-			while (*str) {
-				if (!isxdigit(*str))
-					return 0;
-				str++;
-			}
-			return 1;
-		} else if (str[1] == 'b' || str[1] == 'B') { // binary
-			str += 2;
-			while (*str) {
-				if (*str != '0' && *str != '1')
-					return 0;
-				str++;
-			}
-			return 1;
-		}
-	}
-	while (*str) {
-		if (!isdigit(*str))
-			return 0;
-		str++;
-	}
-	return 1;
-}
-
-int is_dnumber(const char* str)
-{
-	if (str[0] == '-') {
-		str = &str[1];
-	}
-	for (int i = 0; i < strlen(str); i++) {
-		if (!(str[i] >= '0' && str[i] <= '9')) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
-int is_hnumber(const char* str)
-{
-	for (int i = 0; i < strlen(str); i++) {
-		if (!(str[i] >= '0' && str[i] <= '9') &&
-				!(str[i] >= 'a' && str[i] <= 'f')) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
-int is_bnumber(const char* str)
-{
-	for (int i = 0; i < strlen(str); i++) {
-		if (!(str[i] >= '0' && str[i] <= '1')) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
-int is_char(const char* str)
-{
-	if (!str) return 0;
-	
-	int len = strlen(str);
-	if (len < 3) return 0;
-	
-	if (str[0] != '\'') return 0;
-	
-	if (str[1] == '\\') {
-		if (len != 4) return 0;
-		if (str[3] != '\'') return 0;
-	} else {
-		if (str[2] != '\'') return 0;
-	}
-	
-	return 1;
-}
-
-int is_label(const char *str) {
-	if (str == NULL)
-		return 0;
-	
-	int len = strlen(str);
-	
-	if (len == 0)
-		return 0;
-	
-	for (int i = 0; i < len; i++) {
-		if ('a' <= str[i] <= 'z')
-			continue;
-		
-		if ('A' <= str[i] <= 'Z')
-			continue;
-		
-		if ('0' <= str[i] <= '9')
-			continue;
-		
-		if (str[i] == '_')
-			continue;
-		
-		return 0;
-	}
-	
-	return 1;
-}
-
-uint16_t parse_char(const char *str) {
-	if (!str) return SUCCESS;
-	
-	if (str[1] == '\\')
-		return (uint16_t)unescape(str[2]);
-	
-	return str[1];
-}
-
-long parse_number(const char* str)
-{
-	if (str == NULL) {
-		fprintf(stderr, "Error: NULL pointer passed to function `parse_number'\n");
-		exit(EXIT_FAILURE);
-	}
-	
-	if (str[0] == '-')
-		return -parse_number(&str[1]);
-
-	if (str[0] == '0') {
-		if (str[1] == 'x' && is_hnumber(&str[2])) {
-			return strtol(&str[2], NULL, 16);
-		} else if (str[1] == 'b' && is_bnumber(&str[2])) {
-			return strtol(&str[2], NULL, 2);
-		}
-	} else if (is_dnumber(str)) {
-		return strtol(str, NULL, 10);
-	} else {
-		fprintf(stderr, "Error: non-number string \"%s\" passed to function `parse_number'\n", str);
-		exit(EXIT_FAILURE);
-	}
-	
-	return 0;
-}
-
 parameter parse_parameter(dasm_context *cxt, const char* input)
 {
-	parameter result = { 0, 0, 0 }; // Initialize result with default values
+	/* Initialize result with type INVALID so that
+	 * if malformed input is encountered, it can simply
+	 * be returned, indicating to the calling function
+	 * that the input was malformed */
+	parameter result;
+	result.type   = INVALID; 
+	result.value  = 0;
+	result.offset = 0;
 	
-	if (!valid_dasm_context(cxt)){
-		result.type = INVALID;
+	if (!valid_dasm_context(cxt) || input == NULL)
 		return result;
-	}
 	
 	char tmp;
 	char* plus = NULL;
 	const char* inside = NULL;
 	const char* close_paren = NULL;
 
-	size_t len, leng;
-	char* sub_exp;
+	size_t len = strlen(input), leng;
+	char sub_exp[len];
 	parameter sub_result;
-
-	if (input[0] == '\"') {
+	
+	// Check for some basic types first
+	if (is_number(input))
+	{
+		result.type = CONSTANT;
+		result.value = parse_number(input);
+		return result;
+	}
+	
+	if (is_char(input))
+	{
+		result.type = CONSTANT;
+		result.value = parse_char(input);
+		return result;
+	}
+	
+	if (is_string(input))
+	{
+		/* If the input is a string, it will be handled
+		 * by the calling function. Simply return the result
+		 * type so that this can be handled currectly */
 		result.type = STRING_P;
 		return result;
-	} else if (input[0] == '*') {
-		if (input[1] == '(') {
-			inside = &input[2];
-			close_paren = strchr(inside, ')');
-
-			if (close_paren == NULL) {
-				result.type = INVALID;
+	}
+	
+	// "rN" form
+	if (input[0] == 'r' && is_hnumber(&input[1]) && len == 2)
+	{
+		result.type = REGISTER;
+		result.value = strtol(&input[1], NULL, 16);
+		return result;
+	}
+	
+	// "srN" form
+	if (input[0] == 's' && input[1] == 'r' && is_hnumber(&input[2]) && len == 3)
+	{
+		result.type = S_REGISTER;
+		result.value = strtol(&input[2], NULL, 16);
+		return result;
+	}
+	
+	if (input[0] == '*') // Pointer
+	{
+		/* If the pointer is not parenthesised, copy the sub-expression
+		 * consisting of everything after the "*"; this will be passed
+		 * to a recursive call to parse_expression */
+		if (input[1] != '(')
+		{
+			strcpy(sub_exp, &input[1]);
+		}
+		else // If the pointer is parenthesised, extract and handle
+		{
+			// Reject if it doesn't end with a closing paren
+			if (input[len - 1] != ')')
 				return result;
-			}
-			if (close_paren[1] != 0) {
-				
-				result.type = INVALID;
-				return result;
-			}
-
-			len = close_paren - inside;
-			sub_exp = strndup(inside, len);
-
+			
+			strncpy(sub_exp, &input[2], len - 2); // Copy the sub-expression
+			sub_exp[len - 1] = 0; // ... and null-terminate it (strncpy doesn't)
+			
+			/* Find any "+" or "-" in the sub-expression.
+			 * Note: this returns a pointer to a char WITHIN sub_exp
+			 * (or NULL if there is none). Modifying *plus modifies sub_exp */
 			plus = &sub_exp[strcspn(sub_exp, "+-")];
 
-			if (plus != NULL) {
-				if (plus[0] == '+') {
-					sub_result = parse_parameter(cxt, &plus[1]);
-				} else {
-					sub_result = parse_parameter(cxt, plus);
-				}
+			/* If there is one, i.e., the input is of the form *(x+y)
+			 * recurse to parse y, and set that as the offset */
+			if (plus != NULL)
+			{
+				// Recurse to parse y. This should be simply a number 
+				sub_result = parse_parameter(cxt, &plus[1]);
 
-				if (sub_result.type != CONSTANT) {
-					
-					result.type = INVALID;
+				// ... but if it's not, return the (invalid) result
+				if (sub_result.type != CONSTANT)
 					return result;
-				}
-				if (sub_result.offset != 0) {
-					
-					result.type = INVALID;
-					return result;
-				}
 
+				// Set the offset as the value of the returned parameter
 				result.offset = sub_result.value;
+				
+				/* Null terminate sub_expr at the "+", leaving just the x
+				 * for the next call to parse_parameter to handle */
 				*plus = 0;
 			}
-
-		} else {
-			inside = &input[1];
-			len = strlen(inside);
-			sub_exp = strndup(inside, len);
 		}
 
+		// Now recurse to parse the sub-expression
 		sub_result = parse_parameter(cxt, sub_exp);
-		free(sub_exp);
 
-		if (input[1] != '(' && sub_result.offset != 0) {
-			result.type = INVALID;
+		// If the sub-expression is malformed, reject
+		if (sub_result.type == INVALID)
 			return result;
-		}
+		
+		// Reject constants with offsets.
+		if (sub_result.type == CONSTANT && result.offset != 0)
+			return result;
 
-		result.type = sub_result.type | POINTER;
+		/* With everything having gone well, validate result, carrying through the
+		 * type and value from the sub-expression, with the pointer flags tacked on */
+		result.type  = sub_result.type | POINTER;
 		result.value = sub_result.value;
-	} else {
-		if (input[0] == 's' && input[1] == 'r' && is_number(&input[2])) {
-			// "srN" form
-			result.type = S_REGISTER;
-			result.value = parse_number(&input[2]);
-		} else if (input[0] == 'r' && is_number(&input[1])) {
-			// "rN" form
-			result.type = REGISTER;
-			result.value = parse_number(&input[1]);
-		} else if (is_number(input)) {
-			result.type = CONSTANT;
-			result.value = parse_number(input);
-		} else if (is_char(input)) {
-			result.type = CONSTANT;
-			result.value = parse_char(input);
-		} else {
-			dasm_alias_linked_list *current = cxt->aliases;
-			
-			while (current != NULL) {
-				if (strcmp(current->data.replacee, input) == 0)
-					break;
-				
-				current = current->next;
-			}
-			
-			if (current != NULL)
-				return parse_parameter(cxt, current->data.replacer);
-			
-			if (is_label(input)) {
-				result.type = LABEL_P;
-			} else {
-				result.type = INVALID;
-			}
-		}
+		return result;
 	}
-
-	if (result.offset != 0) {
-		result.type = result.type | W_OFFSET;
+	
+	// If all checks so far have failed, check the list of aliases
+	dasm_alias_linked_list *current = cxt->aliases;
+	
+	while (current != NULL) {
+		if (strcmp(current->data.replacee, input) == 0)
+			break;
+		
+		current = current->next;
 	}
-
+	
+	// If we have a match, return the result of parsing the replacer of the alias
+	if (current != NULL)
+		return parse_parameter(cxt, current->data.replacer);
+	
+	/* Otherwise, if the input would be a valid label, assume it is such.
+	 * If this label is never defined, this will throw an error later on.
+	 * As with strings, further processing will be handled by the calling
+	 * function, so simply indicate a latel and pass it back */
+	if (is_label(input))
+		result.type = LABEL_P;
+	
+	// If no branches have been followed at this point, result.type is still INVALID
 	return result;
 }
 

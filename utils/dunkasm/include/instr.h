@@ -33,8 +33,11 @@ typedef struct
 #define SECRET__INSTR(name, code) \
 	(dunk_instr){name, code, -1, {0, 0, 0}, {0, 0, 0}}
 
-#define N_INSTR 170
+#define N_INSTR 140
 
 extern const dunk_instr dunk_instrs[N_INSTR];
+
+int is_an_instruction(const char *token);
+char *instruction_valid_parameters_errf(const char *name);
 
 #endif

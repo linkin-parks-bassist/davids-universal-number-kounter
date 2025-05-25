@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <limits.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <stdio.h>
 
@@ -63,6 +64,11 @@ void free_dasm_file(dasm_file *file)
 	free(file);
 }
 
+int file_accessible(dasm_context *cxt, const char *fname)
+{
+	return (access(fname, F_OK) == 0);
+}
+
 int get_file_directory(const char* input_path, char *dest)
 {
 	if (input_path == NULL || dest == NULL)
@@ -88,10 +94,28 @@ int compare_filenames(dasm_file *f1, dasm_file *f2)
 	return strcmp(f1->absolute_path, f2->absolute_path);
 }
 
-dasm_file *process_file(const char* input_path, dasm_file *file, dasm_context *cxt, int flags)
+dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags)
 {
-	if (input_path == NULL || file == NULL || !valid_dasm_context(cxt))
+	if (input_path == NULL || !valid_dasm_context(cxt))
 		return NULL;
+	
+	dasm_file *file = new_dasm_file(input_path);
+	
+	if (cxt->flags & VERBOSE) {
+		printf("Assembling file \"%s\"\n", input_path);
+		
+		if (flags & MAIN_FILE)
+			printf("This is the main file.\n");
+		if (flags & INCLUDED_FILE)
+			printf("This is an included file\n");
+		if (flags & INCLUDE_FIRST)
+			printf("This is an \"include_first\" file\n");
+	}
+	
+	if (file == NULL)
+		return NULL;
+	
+	add_file_to_context(cxt, file, flags & INCLUDE_FIRST);
 	
 	dasm_line_linked_list *lines = tokenize_file(input_path);
 	dasm_line_linked_list *current = lines;
@@ -111,23 +135,34 @@ dasm_file *process_file(const char* input_path, dasm_file *file, dasm_context *c
 		strip_comments(&current->data);
 		
 		process_line(current->data, file, cxt, flags);
+		
+		if (cxt->n_errors > cxt->error_tolerance)
+		{
+			destructor_free_dasm_line_linked_list(lines, &dasm_line_destructor);
+			return NULL;
+		}
 
 		current = current->next;
 	}
 	
-	/* Add a "halt and catch fire" at the end of the first input file
-	 * so that execution doesn't run on after finishing the main file */
-	if (flags & MAIN_FILE)
-		append_buffer(&file->text, 0xff);
-	
-	/* Don't allow declared aliases to carry over between files; free the malloc'd strings */
-	clear_nondefault_aliases(cxt);
+	if (cxt->n_errors == 0)
+	{
+		/* Add a "halt and catch fire" at the end of the first input file
+		 * so that execution doesn't run on after finishing the main file */
+		if (flags & MAIN_FILE)
+			append_buffer(&file->text, 0xff);
+		
+		/* Don't allow declared aliases to carry over between files 
+		 * except in the case of file inclusion */
+		if (!(flags & INCLUDED_FILE))
+			clear_nondefault_aliases(cxt);
+		
+		chdir(cwd);
+	}
 	
 	destructor_free_dasm_line_linked_list(lines, &dasm_line_destructor);
 	
-	chdir(cwd);
-	
-	return file;
+	return (cxt->n_errors == 0) ? file : NULL;
 }
 
 int valid_dasm_file(const dasm_file *file)

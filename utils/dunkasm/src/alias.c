@@ -21,40 +21,42 @@ int init_context_aliases(dasm_context *cxt)
 	if (cxt == NULL)
 		return BAD_ARGUMENTS;
 	
-	add_alias_to_context(cxt, "pk", "sr0");
-	add_alias_to_context(cxt, "sp", "sr1");
+	add_alias_to_context(cxt, "pk", "sr0", NULL);
+	add_alias_to_context(cxt, "sp", "sr1", NULL);
 	
-	add_alias_to_context(cxt, "argument", "r8");
+	add_alias_to_context(cxt, "argument", "r8", NULL);
 	
-	add_alias_to_context(cxt, "argument1", "r8");
-	add_alias_to_context(cxt, "argument2", "r9");
-	add_alias_to_context(cxt, "argument3", "ra");
-	add_alias_to_context(cxt, "argument4", "rb");
-	add_alias_to_context(cxt, "argument5", "rc");
-	add_alias_to_context(cxt, "argument6", "rd");
-	add_alias_to_context(cxt, "argument7", "re");
-	add_alias_to_context(cxt, "argument8", "rf");
+	add_alias_to_context(cxt, "argument1", "r8", NULL);
+	add_alias_to_context(cxt, "argument2", "r9", NULL);
+	add_alias_to_context(cxt, "argument3", "ra", NULL);
+	add_alias_to_context(cxt, "argument4", "rb", NULL);
+	add_alias_to_context(cxt, "argument5", "rc", NULL);
+	add_alias_to_context(cxt, "argument6", "rd", NULL);
+	add_alias_to_context(cxt, "argument7", "re", NULL);
+	add_alias_to_context(cxt, "argument8", "rf", NULL);
 	
-	add_alias_to_context(cxt, "result", "r8");
+	add_alias_to_context(cxt, "result", "r8", NULL);
 	
-	add_alias_to_context(cxt, "result1", "r8");
-	add_alias_to_context(cxt, "result2", "r9");
-	add_alias_to_context(cxt, "result3", "ra");
-	add_alias_to_context(cxt, "result4", "rb");
-	add_alias_to_context(cxt, "result5", "rc");
-	add_alias_to_context(cxt, "result6", "rd");
-	add_alias_to_context(cxt, "result7", "re");
-	add_alias_to_context(cxt, "result8", "rf");
+	add_alias_to_context(cxt, "result1", "r8", NULL);
+	add_alias_to_context(cxt, "result2", "r9", NULL);
+	add_alias_to_context(cxt, "result3", "ra", NULL);
+	add_alias_to_context(cxt, "result4", "rb", NULL);
+	add_alias_to_context(cxt, "result5", "rc", NULL);
+	add_alias_to_context(cxt, "result6", "rd", NULL);
+	add_alias_to_context(cxt, "result7", "re", NULL);
+	add_alias_to_context(cxt, "result8", "rf", NULL);
 	
 	
-	add_alias_to_context(cxt, "ih1", "sr8");
-	add_alias_to_context(cxt, "ih2", "sr9");
-	add_alias_to_context(cxt, "ih3", "sra");
-	add_alias_to_context(cxt, "ih4", "srb");
-	add_alias_to_context(cxt, "ih5", "src");
-	add_alias_to_context(cxt, "ih6", "srd");
-	add_alias_to_context(cxt, "ih7", "sre");
-	add_alias_to_context(cxt, "ih8", "srf");
+	add_alias_to_context(cxt, "ih1", "sr8", NULL);
+	add_alias_to_context(cxt, "ih2", "sr9", NULL);
+	add_alias_to_context(cxt, "ih3", "sra", NULL);
+	add_alias_to_context(cxt, "ih4", "srb", NULL);
+	add_alias_to_context(cxt, "ih5", "src", NULL);
+	add_alias_to_context(cxt, "ih6", "srd", NULL);
+	add_alias_to_context(cxt, "ih7", "sre", NULL);
+	add_alias_to_context(cxt, "ih8", "srf", NULL);
+
+	cxt->last_default_alias = dasm_alias_linked_list_tail(cxt->aliases);
 
 	return 0;
 }
@@ -67,29 +69,92 @@ void free_alias(dasm_alias a)
 		free(a.replacee);
 }
 
+int remove_alias_from_context(dasm_context *cxt, const char *alias)
+{
+	if (!valid_dasm_context(cxt) || alias == NULL)
+		return BAD_ARGUMENTS;
+	
+	dasm_alias_linked_list *current = cxt->last_default_alias;
+	dasm_alias_linked_list *prev;
+	
+	if (current == NULL)
+		return BAD_ARGUMENTS;
+	
+	prev = current;
+	current = current->next;
+	int found = 0;
+	
+	while (current)
+	{
+		if (current->data.replacee == NULL)
+		{
+			return BAD_ARGUMENTS;
+		}
+		if (strcmp(current->data.replacee, alias) == 0)
+		{
+			prev->next = current->next;
+			dasm_alias_destructor(current->data);
+			free(current);
+			found = 1;
+		}
+		else
+		{
+			prev = current;
+		}
+		
+		current = current->next;
+	}
+	
+	if (found == 1)
+		return SUCCESS;
+	else
+		return NOT_FOUND;
+}
+
 int clear_nondefault_aliases(dasm_context *cxt)
 {
 	if (!valid_dasm_context(cxt))
 		return BAD_ARGUMENTS;
 	
-	dasm_alias_linked_list *current = cxt->aliases;
+	if (cxt->last_default_alias == NULL)
+		return BAD_ARGUMENTS;
+	
+	destructor_free_dasm_alias_linked_list(cxt->last_default_alias->next, &dasm_alias_destructor);
+	
+	cxt->last_default_alias->next = NULL;
+	
+	return 0;
+}
+
+int clear_nondefault_aliases_with_parent(dasm_context *cxt, dasm_file *parent)
+{
+	if (!valid_dasm_context(cxt) || parent == NULL)
+		return BAD_ARGUMENTS;
+	
+	dasm_alias_linked_list *current = cxt->last_default_alias;
+	dasm_alias_linked_list *prev;
 	
 	if (current == NULL)
 		return BAD_ARGUMENTS;
 	
-	while (current && strcmp(current->data.replacee, "ih8"))
+	prev = current;
+	current = current->next;
+	
+	while (current)
+	{
+		if (current->data.parent == parent)
+		{
+			prev->next = current->next;
+			dasm_alias_destructor(current->data);
+			free(current);
+		}
+		else
+		{
+			prev = current;
+		}
+		
 		current = current->next;
+	}
 	
-	destructor_free_dasm_alias_linked_list(current->next, &dasm_alias_destructor);
-	
-	current->next = NULL;
-	
-	/*for (int i = N_DEFAULT_ALIASES; i < cxt->n_aliases; i++) {
-		free(cxt->aliases[i].replacee);
-		cxt->aliases[i].replacee = NULL;
-		free(cxt->aliases[i].replacer);
-		cxt->aliases[i].replacer = NULL;
-	}*/
-	
-	return 0;
+	return SUCCESS;
 }

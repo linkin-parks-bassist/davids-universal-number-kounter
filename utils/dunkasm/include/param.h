@@ -15,7 +15,6 @@
 #define INVALID 	0xffff
 
 #define POINTER 	4
-#define W_OFFSET	8
 
 #define FIRST_NIBBLE 		0b10000000000000
 #define SECOND_NIBBLE 		0b01000000000000

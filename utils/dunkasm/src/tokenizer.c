@@ -63,7 +63,7 @@ char **tokenize_string(const char *src, int *n_tokens)
 	char **tokens = malloc(sizeof(char*) * strlen(src));
 	
 	if (tokens == NULL) {
-		perror("Memory allocation failure (tokenizer.c:100)");
+		perror("Memory allocation failure (tokenizer.c:66)");
 		exit(EXIT_FAILURE);
 	}
 	

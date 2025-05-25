@@ -1,4 +1,4 @@
-mnames := instr param lines label alias files tokenizer buffer context dstrings encoding
+mnames := instr param lines label alias files tokenizer buffer context dstrings encoding error
 hnames := dunkasm.h $(addsuffix .h, $(mnames))
 cnames := main.c $(addsuffix .c, $(mnames))
 
@@ -13,6 +13,10 @@ headers := $(addprefix $(incdir)/,$(hnames))
 cfiles  := $(addprefix $(srcdir)/,$(cnames))
 objs	:= $(addprefix $(objdir)/,$(cnames:.c=.o))
 nmobjs  := $(addsuffix .o,$(addprefix $(objdir)/,$(mnames)))
+
+build:
+	scripts/all.sh
+	make all
 
 all: $(objs)
 	gcc $(CFLAGS) $(objs) -o bin/dunkasm
@@ -40,7 +44,7 @@ debug_install:
 	make install CFLAGS="$(CFLAGS)  $(DEBUG_FLAGS)"S
 
 bin/tests.o : debug
-	gcc $(CFLAGS DEBUG_FLAGS) -I include -c tests/tests.c -o bin/tests.o
+	gcc $(CFLAGS) $(DEBUG_FLAGS) -I include -c tests/tests.c -o bin/tests.o
 
 tests: bin/tests.o
-	gcc $(CFLAGS DEBUG_FLAGS) -I include bin/tests.o $(nmobjs) -o bin/tests
+	gcc $(CFLAGS) $(DEBUG_FLAGS) -I include bin/tests.o $(nmobjs) -o bin/tests

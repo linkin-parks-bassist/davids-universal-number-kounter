@@ -21,6 +21,6 @@ void dasm_line_destructor(dasm_line line);
 
 void strip_comments(dasm_line *line);
 
-int process_line(dasm_line line, struct dasm_file *file, struct dasm_context *cxt, int flags);
+int process_line(dasm_line line, dasm_file *file, struct dasm_context *cxt, int flags);
 
 #endif

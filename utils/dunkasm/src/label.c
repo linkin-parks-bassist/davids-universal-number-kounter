@@ -69,11 +69,12 @@ int insert_label_addresses(dasm_context *cxt, dasm_buffer *buf)
 
 	unsigned int lr_offset = 0;
 
-	current_file = cxt->files;
+	
 	
 	label_ref_linked_list *current_label_ref;
 	dasm_label *matching_label;
-				
+	
+	current_file = cxt->files;		
 	while (current_file != NULL && current_file->data != NULL) {
 		if (cxt->flags & VERBOSE) {
 			printf("Labels found in file \"%s\":\n\n", current_file->data->given_path);

@@ -109,7 +109,8 @@ int main(int argc, char* argv[])
 
 	// Generate default output path if not provided
 	int output_path_generated = 0;
-	if (!output_path) {
+	if (!output_path)
+	{
 		size_t len = strlen(input_paths[0]) + 10;
 		output_path = malloc(len);
 		if (!output_path) {
@@ -122,28 +123,34 @@ int main(int argc, char* argv[])
 	
 	dasm_buffer output_buffer;
 	init_buffer(&output_buffer);
-	int flags;
+	
+	int failed = 0;
 
-	for (int i = 0; i < n_input_files; i++) {
-		dasm_file *file = new_dasm_file(input_paths[i]);
-		flags = (i == 0) ? MAIN_FILE : 0;
-		
-		if (cxt.flags & VERBOSE) {
-			printf("Assembling file \"%s\"\n", input_paths[i]);
+	for (int i = 0; i < n_input_files; i++)
+	{
+		if (process_file(input_paths[i], &cxt, (i == 0) ? MAIN_FILE : 0) == NULL)
+		{
+			failed = 1;
+			break;
 		}
+	}
+	
+	if (failed)
+	{
+		free_context_data(&cxt);
+		destroy_buffer(&output_buffer);
 		
-		if (file == NULL)
-			return MEMORY_FAILURE;
+		if (output_path_generated)
+			free(output_path);
 		
-		add_file_to_context(&cxt, file, NULL, flags);
-		
-		process_file(input_paths[i], file, &cxt, flags);
+		return EXIT_FAILURE;
 	}
 	
 	writeout_and_destroy_context(&cxt, &output_buffer);
 
 	FILE* output_file = fopen(output_path, "wb");
-	if (!output_file) {
+	if (!output_file)
+	{
 		perror("Error opening output file");
 		exit(EXIT_FAILURE);
 	}

@@ -28,6 +28,9 @@ int init_context(dasm_context *cxt)
 	
 	cxt->flags = 0;
 	
+	cxt->error_tolerance = DEFAULT_ERROR_TOLERANCE;
+	cxt->n_errors = 0;
+	
 	return SUCCESS;
 }
 
@@ -72,7 +75,8 @@ int is_file_already_in_context(dasm_context *cxt, char *fname)
 	
 	dasm_file_ptr_linked_list *current = cxt->files;
 	
-	while (current) {
+	while (current)
+	{
 		if (strcmp(current->data->absolute_path, abspath) == 0)
 			return 1;
 		current = current->next;
@@ -81,34 +85,15 @@ int is_file_already_in_context(dasm_context *cxt, char *fname)
 	return 0;
 }
 
-int add_file_to_context(dasm_context *cxt, dasm_file *file, dasm_file *current_file, int flags)
+int add_file_to_context(dasm_context *cxt, dasm_file *file, int include_first)
 {
 	if (!valid_dasm_context(cxt) || !valid_dasm_file(file))
 		return BAD_ARGUMENTS;
 	
-	if (flags & BASE_INCLUDED_FILE) {
-		dasm_file_ptr_linked_list *current, *prev;
-		dasm_file_ptr_linked_list *new = dasm_file_ptr_linked_list_new(file);
-		
-		if (new == NULL)
-			return MEMORY_FAILURE;
-		
-		current = cxt->files;
-		assert(current != NULL);
-		prev = NULL;
-		
-		while (current->data != current_file) {
-			prev = current;
-			current = current->next;
-		}
-		
-		new->next = current;
-		
-		if (prev) {
-			prev->next = new;
-		} else {
-			cxt->files = new;
-		}
+	if (include_first) {
+		dasm_file_ptr_linked_list *new_ll = dasm_file_ptr_linked_list_new(file);
+		new_ll->next = cxt->files;
+		cxt->files = new_ll;
 	}
 	else {
 		cxt->files = dasm_file_ptr_linked_list_append(cxt->files, file);
@@ -119,7 +104,7 @@ int add_file_to_context(dasm_context *cxt, dasm_file *file, dasm_file *current_f
 	return 0;
 }
 
-int add_alias_to_context(dasm_context *cxt, const char *replacee, const char *replacer)
+int add_alias_to_context(dasm_context *cxt, const char *replacee, const char *replacer, dasm_file *parent)
 {
 	if (!valid_dasm_context(cxt) || replacee == NULL || replacer == NULL)
 		return BAD_ARGUMENTS;
@@ -128,6 +113,7 @@ int add_alias_to_context(dasm_context *cxt, const char *replacee, const char *re
 	
 	alias.replacee = strdup(replacee);
 	alias.replacer = strdup(replacer);
+	alias.parent = parent;
 	
 	cxt->aliases = dasm_alias_linked_list_append(cxt->aliases, alias);
 	
