@@ -27,6 +27,7 @@
 #define tmpaptodata 	0x2004
 #define tmpaptodata_o 	0x2005
 #define datatotmpa 		0x2006
+
 #define tmpatosreg 		0x2007
 
 #define tmpbtodata 		0x3002
@@ -49,10 +50,12 @@
 #define offsptodata_o 	0x5005
 #define datatooffs 		0x5006
 
-#define incrementpk 	0x0010
-#define pkptroutinc		0x0011
+#define tmpctooffs		0x5010
 
-#define decrementpk 	0x0012
+#define incrementpk(x) 	0x0010 + (0x0100 * x)
+#define pkptroutinc(x)	0x0011 + (0x0100 * x)
+
+#define decrementpk(x) 	0x0012 + (0x0100 * x)
 
 #define tmpatopk 		0x0013
 #define tmptopk 		0x0014
@@ -68,10 +71,10 @@
 
 #define it_to_pk		0x001b
 
-
-#define incrementsp 	0x1010
-#define decrementsp 	0x1011
+#define incrementsp(x) 	0x1010 + (0x0100 * x)
+#define decrementsp(x) 	0x1011 + (0x0100 * x)
 #define predecsptoaddr 	0x1012
+#define postincspptrout 0x1013
 
 
 #define regtodata(X) 	(0x0020 + 0x1000 * X) | MIX_IN
@@ -85,6 +88,10 @@
 
 #define readRAM 		0x0027
 #define readRAM_o 		0x0028
+
+#define tmpcasoffs		0x0029
+#define dataasoffs		0x002a
+#define dataasaddr		0x002b
 
 #define datatoALUa		0x002f
 #define datatoALUb		0x102f

@@ -55,13 +55,17 @@ dasm_line_linked_list *tokenize_file(const char *input_path)
 	return list;
 }
 
-char **tokenize_string(const char *src, int *n_tokens) {
+char **tokenize_string(const char *src, int *n_tokens)
+{
 	if (src == NULL || n_tokens == NULL)
 		return NULL;
 	
-	int ta_size = 8;
+	char **tokens = malloc(sizeof(char*) * strlen(src));
 	
-	char **tokens = malloc(sizeof(char*) * ta_size);
+	if (tokens == NULL) {
+		perror("Memory allocation failure (tokenizer.c:100)");
+		exit(EXIT_FAILURE);
+	}
 	
 	int len = strlen(src);
 	int token_start = 0;
@@ -72,7 +76,7 @@ char **tokenize_string(const char *src, int *n_tokens) {
 	
 	*n_tokens = 0;
 	
-	for (int i = 0; i < len + 1; i++) {
+	for (int i = 0; i < len + 1 && mode != 2; i++) {
 		if (src[i] == '"') {
 			if (mode == 0) {
 				mode = 1;
@@ -80,6 +84,11 @@ char **tokenize_string(const char *src, int *n_tokens) {
 			} else if (src[i-1] != '\'') {
 				token_finished = 1;
 			}
+		}
+		
+		if (src[i] == '\%' && mode != 1) {
+			mode = 2;
+			token_finished = 1;
 		}
 		
 		for (int j = 0; j < n_delims && mode != 1 && !token_finished; j++) {
@@ -91,17 +100,6 @@ char **tokenize_string(const char *src, int *n_tokens) {
 		
 		if (token_finished) {
 			if (i > token_start) {
-				if (*n_tokens >= ta_size - 1) {
-					ta_size += 8;
-					
-					tokens = realloc(tokens, sizeof(char*) * (ta_size));
-	
-					if (tokens == NULL) {
-						perror("Memory allocation failure (tokenizer.c:100)");
-						exit(EXIT_FAILURE);
-					}
-				}
-				
 				if (mode == 1)
 				{
 					token_start--;

@@ -88,21 +88,10 @@ int compare_filenames(dasm_file *f1, dasm_file *f2)
 	return strcmp(f1->absolute_path, f2->absolute_path);
 }
 
-dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags)
+dasm_file *process_file(const char* input_path, dasm_file *file, dasm_context *cxt, int flags)
 {
-	if (input_path == NULL || !valid_dasm_context(cxt))
+	if (input_path == NULL || file == NULL || !valid_dasm_context(cxt))
 		return NULL;
-	
-	dasm_file *file = new_dasm_file(input_path);
-	
-	if (cxt->flags & VERBOSE) {
-		printf("Assembling file \"%s\"\n", input_path);
-	}
-	
-	if (file == NULL)
-		return NULL;
-	
-	add_file_to_context(cxt, file);
 	
 	dasm_line_linked_list *lines = tokenize_file(input_path);
 	dasm_line_linked_list *current = lines;
@@ -121,7 +110,7 @@ dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags)
 	while (current) {
 		strip_comments(&current->data);
 		
-		process_line(current->data, file, cxt);
+		process_line(current->data, file, cxt, flags);
 
 		current = current->next;
 	}

@@ -1,7 +1,7 @@
 hnames := dunkprog.h microops.h opcodes.h
-cnames := dunkprog.c
+cnames := dunkprog.c instr.c
 
-CFLAGS = 
+CFLAGS = -g -O0
 
 incdir := include
 srcdir := src

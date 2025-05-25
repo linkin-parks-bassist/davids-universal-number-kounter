@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "dunkasm.h"
 
@@ -80,12 +81,38 @@ int is_file_already_in_context(dasm_context *cxt, char *fname)
 	return 0;
 }
 
-int add_file_to_context(dasm_context *cxt, dasm_file *file)
+int add_file_to_context(dasm_context *cxt, dasm_file *file, dasm_file *current_file, int flags)
 {
 	if (!valid_dasm_context(cxt) || !valid_dasm_file(file))
 		return BAD_ARGUMENTS;
 	
-	cxt->files = dasm_file_ptr_linked_list_append(cxt->files, file);
+	if (flags & BASE_INCLUDED_FILE) {
+		dasm_file_ptr_linked_list *current, *prev;
+		dasm_file_ptr_linked_list *new = dasm_file_ptr_linked_list_new(file);
+		
+		if (new == NULL)
+			return MEMORY_FAILURE;
+		
+		current = cxt->files;
+		assert(current != NULL);
+		prev = NULL;
+		
+		while (current->data != current_file) {
+			prev = current;
+			current = current->next;
+		}
+		
+		new->next = current;
+		
+		if (prev) {
+			prev->next = new;
+		} else {
+			cxt->files = new;
+		}
+	}
+	else {
+		cxt->files = dasm_file_ptr_linked_list_append(cxt->files, file);
+	}
 	
 	cxt->n_files++;
 	

@@ -122,9 +122,22 @@ int main(int argc, char* argv[])
 	
 	dasm_buffer output_buffer;
 	init_buffer(&output_buffer);
+	int flags;
 
 	for (int i = 0; i < n_input_files; i++) {
-		process_file(input_paths[i], &cxt, (i == 0) ? MAIN_FILE : 0);
+		dasm_file *file = new_dasm_file(input_paths[i]);
+		flags = (i == 0) ? MAIN_FILE : 0;
+		
+		if (cxt.flags & VERBOSE) {
+			printf("Assembling file \"%s\"\n", input_paths[i]);
+		}
+		
+		if (file == NULL)
+			return MEMORY_FAILURE;
+		
+		add_file_to_context(&cxt, file, NULL, flags);
+		
+		process_file(input_paths[i], file, &cxt, flags);
 	}
 	
 	writeout_and_destroy_context(&cxt, &output_buffer);

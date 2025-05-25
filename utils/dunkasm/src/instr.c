@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "dunkasm.h"
 
+/* The array of all DUNK isntructions */
 const dunk_instr dunk_instrs[N_INSTR] = {
 	NULLARY_INSTR("chill",	0x00),
 	
@@ -220,6 +221,6 @@ const dunk_instr dunk_instrs[N_INSTR] = {
 	BINARY__INSTR("write_pin",			0xa7, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 	
 	// important stuff
-	NULLARY_INSTR("handle_interrupt",		0xfe);
+	SECRET__INSTR("handle_interrupt",		0xfe),
 	NULLARY_INSTR("halt_and_catch_fire",	0xff)
 };

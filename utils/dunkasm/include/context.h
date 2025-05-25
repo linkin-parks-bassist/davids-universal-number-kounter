@@ -29,7 +29,7 @@ int valid_dasm_context(dasm_context *cxt);
 int writeout_and_destroy_context(dasm_context *cxt, dasm_buffer *buf);
 
 int add_alias_to_context(dasm_context *cxt, const char *replacee, const char *replacer);
-int add_file_to_context(dasm_context *cxt, dasm_file *file);
+int add_file_to_context(dasm_context *cxt, dasm_file *file, dasm_file *current_file, int flags);
 dasm_label *add_label_to_context(dasm_context *cxt, dasm_file *parent, const char *name, unsigned int pos, unsigned int line, int type);
 dasm_label *add_string_to_context(dasm_context *cxt, const char *value, dasm_file *parent, unsigned int pos, unsigned int line);
 

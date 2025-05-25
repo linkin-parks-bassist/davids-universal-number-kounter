@@ -48,16 +48,12 @@ void strip_comments(dasm_line *line) {
 	}
 }
 
-int process_line(dasm_line line, dasm_file *file, dasm_context *cxt)
+int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 {
 	if (!valid_dasm_file(file) || !valid_dasm_context(cxt))
 		return BAD_ARGUMENTS;
 	if (line.n_tokens == 0)
 		return SUCCESS;
-	
-	if (line.line_number == 9) {
-		printf("We doin the line\n");
-	}
 	
 	if (cxt->flags & VERBOSE) {
 		printf("Assembling %s:%d, whose tokens are:\n\t", file->given_path, line.line_number);
@@ -113,7 +109,20 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt)
 					break;
 				
 				default:
-					process_file(temp_string, cxt, INCLUDED_FILE);
+					dasm_file *inc_file = new_dasm_file(temp_string);
+					
+					int inc_flags = (flags & ~(MAIN_FILE)) | ((flags & INCLUDED_FILE) ? SUB_INCLUDED_FILE : BASE_INCLUDED_FILE);
+					
+					if (cxt->flags & VERBOSE) {
+						printf("Assembling file \"%s\"\n", temp_string);
+					}
+					
+					if (file == NULL)
+						return MEMORY_FAILURE;
+					
+					add_file_to_context(cxt, inc_file, file, inc_flags);
+					
+					process_file(temp_string, inc_file, cxt, inc_flags);
 					break;
 			}
 			
