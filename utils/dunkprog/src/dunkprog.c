@@ -103,6 +103,13 @@ void gen_printer_code(int opcode)
 	for (int i = 0; i < len; i++)
 		pr_data[position++] = (int)instrs[opcode].name[i];
 	
+	if (instrs[opcode].n_parameters == 0)
+	{
+		while (position < start_position + 32)
+			pr_data[position++] = 0x00;
+		
+		return;
+	}
 	pr_data[position++] = 0xa0;
 	
 	int arg_code = 0;
