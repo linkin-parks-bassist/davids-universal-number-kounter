@@ -43,6 +43,7 @@ typedef struct
 parameter parse_parameter(dasm_context *cxt, const char* input);
 
 int handle_string_parameter(dasm_context *cxt, dasm_file *file, parameter *param, const char *str, unsigned int line_number);
+int handle_label_parameter_no_offset(dasm_context *cxt, dasm_file *file, parameter *param, const char *str, unsigned int line_number);
 int handle_label_parameter(dasm_context *cxt, dasm_file *file, parameter *param, const char *str, unsigned int line_number);
 
 #endif

@@ -21,14 +21,13 @@ int init_context(dasm_context *cxt)
 	cxt->labels  = NULL;
 	cxt->files   = NULL;
 	cxt->strings = NULL;
+	cxt->inclusions = NULL;
 	
 	init_context_aliases(cxt);
 	init_context_labels(cxt);
 	init_context_files(cxt);
+	init_dasm_options(&cxt->opt);
 	
-	cxt->flags = 0;
-	
-	cxt->error_tolerance = DEFAULT_ERROR_TOLERANCE;
 	cxt->n_errors = 0;
 	
 	return SUCCESS;
@@ -51,10 +50,13 @@ int free_context_data(dasm_context *cxt)
 		return BAD_ARGUMENTS;
 	
 	
-	destructor_free_dasm_alias_linked_list 	 (cxt->aliases, &dasm_alias_destructor);
-	destructor_free_dasm_file_ptr_linked_list(cxt->files,   &free_dasm_file);
-	destructor_free_dasm_label_linked_list 	 (cxt->labels,  &dasm_label_destructor);
-	destructor_free_dasm_string_linked_list	 (cxt->strings, &dasm_string_destructor);
+	destructor_free_dasm_alias_linked_list 	  (cxt->aliases, &dasm_alias_destructor);
+	destructor_free_dasm_file_ptr_linked_list (cxt->files,   &free_dasm_file);
+	destructor_free_dasm_label_linked_list 	  (cxt->labels,  &dasm_label_destructor);
+	destructor_free_dasm_string_linked_list	  (cxt->strings, &dasm_string_destructor);
+	destructor_free_dasm_inclusion_linked_list(cxt->inclusions, &dasm_inclusion_destructor);
+	
+	free_options(&cxt->opt);
 }
 
 int valid_dasm_context(dasm_context *cxt)
@@ -90,12 +92,14 @@ int add_file_to_context(dasm_context *cxt, dasm_file *file, int include_first)
 	if (!valid_dasm_context(cxt) || !valid_dasm_file(file))
 		return BAD_ARGUMENTS;
 	
-	if (include_first) {
+	if (include_first)
+	{
 		dasm_file_ptr_linked_list *new_ll = dasm_file_ptr_linked_list_new(file);
 		new_ll->next = cxt->files;
 		cxt->files = new_ll;
 	}
-	else {
+	else
+	{
 		cxt->files = dasm_file_ptr_linked_list_append(cxt->files, file);
 	}
 	
@@ -179,7 +183,8 @@ int writeout_and_destroy_context(dasm_context *cxt, dasm_buffer *buf)
 	/* Paste all the generated machine code into the output buffer */
 	dasm_file_ptr_linked_list *current_file = cxt->files;
 	
-	while (current_file) {
+	while (current_file)
+	{
 		concat_buffers(buf, &current_file->data->text);
 		
 		current_file = current_file->next;
@@ -187,7 +192,8 @@ int writeout_and_destroy_context(dasm_context *cxt, dasm_buffer *buf)
 	
 	/* Paste the generated strings sections into the output buffer */
 	current_file = cxt->files;
-	while (current_file) {
+	while (current_file)
+	{
 		concat_buffers(buf, &current_file->data->strings);
 		
 		current_file = current_file->next;
@@ -225,7 +231,7 @@ int generate_strings_section(dasm_context *cxt)
 	
 	dasm_file_ptr_linked_list *current_file = cxt->files;
 	
-	if (cxt->flags & VERBOSE) {
+	if (cxt->opt.flags & VERBOSE) {
 		while (current_file) {
 			char message_buffer[PATH_MAX + 64];
 			sprintf(message_buffer, "File \"%s\" text buffer", current_file->data->absolute_path);

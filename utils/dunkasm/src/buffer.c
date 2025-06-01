@@ -167,7 +167,7 @@ int expand_buffer_to_min(dasm_buffer *buf, unsigned int min)
 	return SUCCESS;
 }
 
-int writeout_buffer(dasm_buffer *buf, FILE *outfile)
+int writeout_buffer(dasm_buffer *buf, FILE *outfile, int format)
 {
 	if (buf == NULL || outfile == NULL)
 		return BAD_ARGUMENTS;
@@ -175,10 +175,26 @@ int writeout_buffer(dasm_buffer *buf, FILE *outfile)
 	if (buf->data == NULL)
 		return BAD_ARGUMENTS;
 	
-	int return_value = fwrite(buf->data, sizeof(uint16_t), buf->length, outfile);
-	
-	if (return_value != buf->length) {
-		return 2;
+	if (format == OUTPUT_FORMAT_BINARY)
+	{
+		int return_value = fwrite(buf->data, sizeof(uint16_t), buf->length, outfile);
+		
+		if (return_value != buf->length)
+		{
+			return 2;
+		}
+	}
+	else if (format == OUTPUT_FORMAT_V3_HEX)
+	{	
+		fputs("v3.0 hex words addressed", outfile);
+		
+		for (int i = 0; i < buf->length; i++)
+		{
+			if (i % 8 == 0)
+				fprintf(outfile, "\n%04x:", i);
+			
+			fprintf(outfile, " %05x", buf->data[i]);
+		}
 	}
 	
 	return SUCCESS;

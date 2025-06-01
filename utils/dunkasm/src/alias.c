@@ -55,6 +55,16 @@ int init_context_aliases(dasm_context *cxt)
 	add_alias_to_context(cxt, "ih6", "srd", NULL);
 	add_alias_to_context(cxt, "ih7", "sre", NULL);
 	add_alias_to_context(cxt, "ih8", "srf", NULL);
+	
+	add_alias_to_context(cxt, "ENABLE_PRINTING",			"0", NULL);
+	add_alias_to_context(cxt, "PRINT_CHAR",					"1", NULL);
+	add_alias_to_context(cxt, "PRINT_STRING",				"2", NULL);
+	add_alias_to_context(cxt, "PRINT_DIGIT",				"3", NULL);
+	add_alias_to_context(cxt, "PRINT_INTEGER",				"4", NULL);
+	add_alias_to_context(cxt, "PRINT_INTEGER_DECIMAL",		"5", NULL);
+	add_alias_to_context(cxt, "PRINT_INTEGER_HEX",			"6", NULL);
+	add_alias_to_context(cxt, "PRINT_INTEGER_BINARY",		"7", NULL);
+	add_alias_to_context(cxt, "DIV_REM",					"8", NULL);
 
 	cxt->last_default_alias = dasm_alias_linked_list_tail(cxt->aliases);
 
@@ -95,14 +105,14 @@ int remove_alias_from_context(dasm_context *cxt, const char *alias)
 			prev->next = current->next;
 			dasm_alias_destructor(current->data);
 			free(current);
+			current = prev->next;
 			found = 1;
 		}
 		else
 		{
 			prev = current;
+			current = current->next;
 		}
-		
-		current = current->next;
 	}
 	
 	if (found == 1)

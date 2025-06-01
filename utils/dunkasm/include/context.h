@@ -5,19 +5,21 @@
 
 #define VERBOSE 0b1
 
-struct  dasm_context {
+struct dasm_context
+{
 	unsigned int n_strings;
 	unsigned int n_labels;
 	unsigned int n_files;
 	
-	dasm_alias_linked_list   *aliases;
-	dasm_alias_linked_list   *last_default_alias;
-	dasm_file_ptr_linked_list  *files;
-	dasm_label_linked_list	*labels;
-	dasm_string_linked_list  *strings;
+	dasm_alias_linked_list   	*aliases;
+	dasm_alias_linked_list   	*last_default_alias;
+	dasm_file_ptr_linked_list  	*files;
+	dasm_label_linked_list		*labels;
+	dasm_string_linked_list 	*strings;
+	dasm_inclusion_linked_list  *inclusions;
 	
-	int flags;
-	int error_tolerance;
+	dasm_options opt;
+	
 	int n_errors;
 };
 

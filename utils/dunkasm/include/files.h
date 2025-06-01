@@ -23,7 +23,7 @@ DECLARE_LINKED_PTR_LIST(dasm_file);
 
 typedef dasm_file_ptr_linked_list dasm_file_ptr_linked_list;
 
-dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags);
+int process_file(const char* input_path, dasm_context *cxt, int flags);
 
 dasm_file *new_dasm_file(const char *fname);
 

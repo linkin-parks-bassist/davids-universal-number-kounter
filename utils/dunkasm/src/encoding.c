@@ -47,47 +47,59 @@ int encode_instruction(dasm_buffer *buf, const dunk_instr *instr, parameter *par
 	uint16_t c;
 	int n_following = 0;
 			
-	for (int j = 0; j < n_params; j++) {
-		if (instr->parameter_positions[j] & FIRST_NIBBLE) {
+	for (int j = 0; j < n_params; j++)
+	{
+		if (instr->parameter_positions[j] & FIRST_NIBBLE)
+		{
 			code += params[j].value * 0x1000;
 		}
-		if (instr->parameter_positions[j] & SECOND_NIBBLE) {
+		if (instr->parameter_positions[j] & SECOND_NIBBLE)
+		{
 			code += params[j].value * 0x0100;
 		}
 	}
 
 	append_buffer(buf, code);
 	
-	for (int i = 0; i < instr->n_parameters; i++) {
+	for (int i = 0; i < instr->n_parameters; i++)
+	{
 		if ((instr->parameter_positions[i] & FOLLOWING_MASK) && (instr->parameter_positions[i] & FOLLOWING_POS_MASK) > n_following)
 			n_following = instr->parameter_positions[i] & FOLLOWING_POS_MASK;
 	}
 	
-	for (int i = 1; i < n_following + 1; i++) {
+	for (int i = 1; i < n_following + 1; i++)
+	{
 		c = 0;
 		
-		for (int j = 0; j < n_params; j++) {
+		for (int j = 0; j < n_params; j++)
+		{
 			/* I have to use if-else here because switches need
 			 * cases that reduce to an integer constant at compile-time.
 			 * I assumed gcc would just unroll the loop and it would be fine
 			 * but even when I wrote an unrollable version, it wouldn't compile*/
 			
-			if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING(i)) {
+			if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING(i))
+			{
 				c = params[j].value;
 			}
-			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == OFFSET_FOLLOWING(i)) {
+			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == OFFSET_FOLLOWING(i))
+			{
 				c = params[j].offset;
 			}
-			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING_FN(i)) {
+			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING_FN(i))
+			{
 				c += (params[j].value & 0b1111) * 0x1000;
 			}
-			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING_SN(i)) {
+			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING_SN(i))
+			{
 				c += (params[j].value & 0b1111) * 0x0100;
 			}
-			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING_TN(i)) {
+			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING_TN(i))
+			{
 				c += (params[j].value & 0b1111) * 0x0010;
 			}
-			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING_LN(i)) {
+			else if ((instr->parameter_positions[j] & FOLLOWING_MASK) == FOLLOWING_LN(i))
+			{
 				c += (params[j].value & 0b1111) * 0x0001;
 			}
 		}

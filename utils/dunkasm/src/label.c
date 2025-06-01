@@ -21,6 +21,12 @@ int insert_label_addresses(dasm_context *cxt, dasm_buffer *buf)
 	if (!valid_dasm_context)
 		return BAD_ARGUMENTS;
 	
+	if (cxt->opt.flags & VERBOSE)
+	{
+		printf("Inserting label addresses, with offset %d\n", cxt->opt.label_offset);
+		display_buffer(buf, "before address insertion\n");
+	}
+	
 	int matching_label_index;
 	
 	unsigned int label_offsets[cxt->n_labels];
@@ -69,20 +75,21 @@ int insert_label_addresses(dasm_context *cxt, dasm_buffer *buf)
 
 	unsigned int lr_offset = 0;
 
-	
+	uint16_t label_address;
+	unsigned int label_ref_position;
 	
 	label_ref_linked_list *current_label_ref;
 	dasm_label *matching_label;
 	
 	current_file = cxt->files;		
 	while (current_file != NULL && current_file->data != NULL) {
-		if (cxt->flags & VERBOSE) {
+		if (cxt->opt.flags & VERBOSE) {
 			printf("Labels found in file \"%s\":\n\n", current_file->data->given_path);
 			current_label = cxt->labels;
 			
 			for (int i = 0; current_label != NULL; i++) {
 				if (current_label->data.parent == current_file->data) {
-					printf("0x%04x: line %d, \"%s\"\n", current_label->data.position + label_offsets[i], current_label->data.line, current_label->data.name);
+					printf("0x%04x: line %d, \"%s\"\n", current_label->data.position + label_offsets[i] + cxt->opt.label_offset, current_label->data.line, current_label->data.name);
 				}
 				
 				current_label = current_label->next;
@@ -130,8 +137,10 @@ int insert_label_addresses(dasm_context *cxt, dasm_buffer *buf)
 					label_offsets[matching_label_index], matching_label->position + label_offsets[matching_label_index]);
 			}*/
 			
-			write_buffer_at(buf, matching_label->position + label_offsets[matching_label_index],
-					current_label_ref->data.position + lr_offset);
+			label_address = matching_label->position + label_offsets[matching_label_index] + cxt->opt.label_offset;
+			label_ref_position = current_label_ref->data.position + lr_offset;
+			
+			write_buffer_at(buf, label_address, label_ref_position);
 				
 			current_label_ref = current_label_ref->next;
 		}

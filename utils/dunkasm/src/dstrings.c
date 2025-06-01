@@ -9,21 +9,30 @@ IMPLEMENT_LINKED_LIST(dasm_string);
 
 int is_number(const char* str)
 {
-	if (str[0] == '-') {
+	if (!str)
+		return 0;
+	
+	if (str[0] == '-')
 		str++; // skip the minus sign
-	}
-	if (str[0] == '0') {
-		if (str[1] == 'x' || str[1] == 'X') { // hexadecimal
+	
+	if (str[0] == '0')
+	{
+		if (str[1] == 'x' || str[1] == 'X') // hexadecimal
+		{
 			str += 2;
-			while (*str) {
+			while (*str)
+			{
 				if (!isxdigit(*str))
 					return 0;
 				str++;
 			}
 			return 1;
-		} else if (str[1] == 'b' || str[1] == 'B') { // binary
+		}
+		else if (str[1] == 'b' || str[1] == 'B') // binary
+		{ 
 			str += 2;
-			while (*str) {
+			while (*str)
+			{
 				if (*str != '0' && *str != '1')
 					return 0;
 				str++;
@@ -31,54 +40,69 @@ int is_number(const char* str)
 			return 1;
 		}
 	}
-	while (*str) {
+	
+	while (*str)
+	{
 		if (!isdigit(*str))
 			return 0;
 		str++;
 	}
+	
 	return 1;
 }
 
 int is_dnumber(const char* str)
 {
-	if (str[0] == '-') {
+	if (!str)
+		return 0;
+	
+	if (str[0] == '-')
 		str = &str[1];
-	}
-	for (int i = 0; i < strlen(str); i++) {
-		if (!(str[i] >= '0' && str[i] <= '9')) {
+	
+	for (int i = 0; i < strlen(str); i++)
+	{
+		if (!(str[i] >= '0' && str[i] <= '9'))
 			return 0;
-		}
 	}
 	return 1;
 }
 
 int is_hnumber(const char* str)
 {
-	for (int i = 0; i < strlen(str); i++) {
-		if (!(str[i] >= '0' && str[i] <= '9') &&
-				!(str[i] >= 'a' && str[i] <= 'f')) {
+	if (!str)
+		return 0;
+	
+	for (int i = 0; i < strlen(str); i++)
+	{
+		if (!(str[i] >= '0' && str[i] <= '9') && !(str[i] >= 'a' && str[i] <= 'f'))
 			return 0;
-		}
 	}
 	return 1;
 }
 
 int is_bnumber(const char* str)
 {
-	for (int i = 0; i < strlen(str); i++) {
-		if (!(str[i] >= '0' && str[i] <= '1')) {
+	if (!str)
+		return 0;
+	
+	for (int i = 0; i < strlen(str); i++)
+	{
+		if (!(str[i] >= '0' && str[i] <= '1'))
 			return 0;
-		}
 	}
+	
 	return 1;
 }
 
 int is_char(const char* str)
 {
-	if (!str) return 0;
+	if (!str)
+		return 0;
 	
 	int len = strlen(str);
-	if (len < 3) return 0;
+	
+	if (len < 3)
+		return 0;
 	
 	if (str[0] != '\'') return 0;
 	
@@ -127,8 +151,9 @@ int is_string(const char* str)
 	return string_length == (len - 2);
 }
 
-int is_label(const char *str) {
-	if (str == NULL)
+int is_label(const char *str)
+{
+	if (!str)
 		return 0;
 	
 	int len = strlen(str);
@@ -136,7 +161,8 @@ int is_label(const char *str) {
 	if (len == 0)
 		return 0;
 	
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < len; i++)
+	{
 		if ('a' <= str[i] <= 'z')
 			continue;
 		
@@ -155,8 +181,9 @@ int is_label(const char *str) {
 	return 1;
 }
 
-uint16_t parse_char(const char *str) {
-	if (!str) return SUCCESS;
+uint16_t parse_char(const char *str)
+{
+	if (!str) return 0;
 	
 	if (str[1] == '\\')
 		return (uint16_t)unescape(str[2]);
@@ -166,7 +193,8 @@ uint16_t parse_char(const char *str) {
 
 long parse_number(const char* str)
 {
-	if (str == NULL) {
+	if (str == NULL)
+	{
 		fprintf(stderr, "Error: NULL pointer passed to function `parse_number'\n");
 		exit(EXIT_FAILURE);
 	}
@@ -176,15 +204,19 @@ long parse_number(const char* str)
 	if (str[0] == '-')
 		return -parse_number(&str[1]);
 
-	if (str[0] == '0') {
-		if (str[1] == 'x' && is_hnumber(&str[2])) {
+	if (str[0] == '0')
+	{
+		if (str[1] == 'x' && is_hnumber(&str[2]))
 			return strtol(&str[2], NULL, 16);
-		} else if (str[1] == 'b' && is_bnumber(&str[2])) {
+		else if (str[1] == 'b' && is_bnumber(&str[2]))
 			return strtol(&str[2], NULL, 2);
-		}
-	} else if (is_dnumber(str)) {
+	}
+	else if (is_dnumber(str))
+	{
 		return strtol(str, NULL, 10);
-	} else {
+	}
+	else
+	{
 		fprintf(stderr, "Error: non-number string \"%s\" passed to function `parse_number'\n", str);
 		exit(EXIT_FAILURE);
 	}
@@ -194,7 +226,8 @@ long parse_number(const char* str)
 
 char unescape(char token)
 {
-	switch (token) {
+	switch (token)
+	{
 		case 'a': return '\a';
 		case 'b': return '\b';
 		case 'f': return '\f';
@@ -215,7 +248,8 @@ dasm_string new_dasm_string(const char *str, dasm_label *label)
 {
 	dasm_string res;
 	
-	if (str == NULL) {
+	if (str == NULL)
+	{
 		res.value = NULL;
 		return res;
 	}
@@ -225,14 +259,20 @@ dasm_string new_dasm_string(const char *str, dasm_label *label)
 	
 	int p = 0;
 	
-	for (int i = 1; i < len; i++) {
-		if (str[i] == '\"') {
+	for (int i = 1; i < len; i++)
+	{
+		if (str[i] == '\"')
+		{
 			break;
-		} else if (str[i] == '\\') {
+		}
+		else if (str[i] == '\\')
+		{
 			i++;
 			res.value[p] = (uint16_t)unescape(str[i]);
 			p++;
-		} else {
+		}
+		else
+		{
 			res.value[p] = (uint16_t)str[i];
 			p++;
 		}

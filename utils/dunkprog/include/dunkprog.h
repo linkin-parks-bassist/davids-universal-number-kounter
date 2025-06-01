@@ -47,23 +47,6 @@ extern dunk_instr instrs[256];
 
 #define code_sequence_for(X) dr_data[X] = (uint16_t)current_position;
 
-#define ALU_ADD 	0x0
-#define ALU_SUB 	0x1
-#define ALU_MUL 	0x2
-#define ALU_INC 	0x3
-#define ALU_DEC 	0x4
-#define ALU_NEG 	0x5
-#define ALU_UCMP 	0x6
-#define ALU_CMP 	0x7
-#define ALU_SGN 	0x8
-#define ALU_AND 	0x9
-#define ALU_OR 		0xa
-#define ALU_XOR 	0xb
-#define ALU_NOT 	0xc
-#define ALU_LSHIFT 	0xd
-#define ALU_RSHIFT 	0xe
-#define ALU_SHIFT  	0xf
-
 #define ALUa_RISING_EDGE 0x0100
 #define ALUb_RISING_EDGE 0x0200
 

@@ -14,7 +14,8 @@ IMPLEMENT_LINKED_PTR_LIST(dasm_file);
 
 dasm_file *new_dasm_file(const char *fname)
 {
-	if (fname == NULL) {
+	if (fname == NULL)
+	{
 		fprintf(stderr, "Error: NULL pointer passed to function `new_dasm_file'\n");
 		exit(EXIT_FAILURE);
 	}
@@ -28,7 +29,8 @@ dasm_file *new_dasm_file(const char *fname)
 	
 	char abs_path_buf[PATH_MAX];
 	
-	if (realpath(fname, abs_path_buf) == NULL) {
+	if (realpath(fname, abs_path_buf) == NULL)
+	{
 		perror(fname);
 		exit(EXIT_FAILURE);
 	}
@@ -75,10 +77,13 @@ int get_file_directory(const char* input_path, char *dest)
 		return BAD_ARGUMENTS;
 	
 	char *slash = strrchr(input_path, '/');
-	if (slash != NULL) {
+	if (slash != NULL)
+	{
 		strncpy(dest, input_path, strrchr(input_path, '/') + 1 - input_path);
 		dest[strrchr(input_path, '/') + 1 - input_path] = 0;
-	} else {
+	}
+	else
+	{
 		dest[0] = '.';
 		dest[1] = 0;
 	}
@@ -94,14 +99,15 @@ int compare_filenames(dasm_file *f1, dasm_file *f2)
 	return strcmp(f1->absolute_path, f2->absolute_path);
 }
 
-dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags)
+int process_file(const char* input_path, dasm_context *cxt, int flags)
 {
 	if (input_path == NULL || !valid_dasm_context(cxt))
-		return NULL;
+		return WEPT_ERROR;
 	
 	dasm_file *file = new_dasm_file(input_path);
 	
-	if (cxt->flags & VERBOSE) {
+	if (cxt->opt.flags & VERBOSE)
+	{
 		printf("Assembling file \"%s\"\n", input_path);
 		
 		if (flags & MAIN_FILE)
@@ -113,7 +119,7 @@ dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags)
 	}
 	
 	if (file == NULL)
-		return NULL;
+		return WEPT_ERROR;
 	
 	add_file_to_context(cxt, file, flags & INCLUDE_FIRST);
 	
@@ -121,7 +127,7 @@ dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags)
 	dasm_line_linked_list *current = lines;
 		
 	if (lines == NULL)
-		return NULL;
+		return WEPT_NO_ERROR;
 		
 	char cwd[PATH_MAX];
 	getcwd(cwd, PATH_MAX);
@@ -136,10 +142,10 @@ dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags)
 		
 		process_line(current->data, file, cxt, flags);
 		
-		if (cxt->n_errors > cxt->error_tolerance)
+		if (cxt->n_errors > cxt->opt.error_tolerance)
 		{
 			destructor_free_dasm_line_linked_list(lines, &dasm_line_destructor);
-			return NULL;
+			return WEPT_ERROR;
 		}
 
 		current = current->next;
@@ -162,7 +168,7 @@ dasm_file *process_file(const char* input_path, dasm_context *cxt, int flags)
 	
 	destructor_free_dasm_line_linked_list(lines, &dasm_line_destructor);
 	
-	return (cxt->n_errors == 0) ? file : NULL;
+	return (cxt->n_errors == 0) ? WEPT_NO_ERROR : WEPT_ERROR;
 }
 
 int valid_dasm_file(const dasm_file *file)

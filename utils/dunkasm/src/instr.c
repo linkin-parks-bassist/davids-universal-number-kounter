@@ -188,6 +188,7 @@ const dunk_instr dunk_instrs[N_INSTR] = {
 	BINARY__INSTR("write_pin",		0x89, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 	
 	// important stuff
+	UNARY___INSTR("syscall",				0xfd, CONSTANT, FOLLOWING(1)),
 	NULLARY_INSTR("handle_interrupt",		0xfe),
 	NULLARY_INSTR("halt_and_catch_fire",	0xff)
 };
@@ -198,6 +199,7 @@ int is_an_instruction(const char *token)
 {
 	if (token == NULL)
 		return 0;
+	
 	int count = 0;
 	
 	for (int i = 0; i < N_INSTR; i++)

@@ -11,7 +11,7 @@
 uint16_t mr1_data[BINSIZE];
 uint16_t mr2_data[BINSIZE];
 uint16_t dr_data[256];
-int pr_data[8192];
+uint16_t pr_data[8192];
 	
 int current_position = 0;
 
@@ -124,28 +124,29 @@ void gen_printer_code(int opcode)
 			continue;
 		}
 		
-		printf("instrs[opcode].parameter_types[%d] & CONSTANT = %08b & %08b = %d\n", i, instrs[opcode].parameter_types[i], CONSTANT, instrs[opcode].parameter_types[i] & CONSTANT);
-		
-		
 		arg_code += struct_flags_to_printer_code(instrs[opcode].parameter_types[i], instrs[opcode].parameter_positions[i]);
 	}
-	
-	printf("Write instruction \"%s\", opcode 0x%02x, at position 0x%04x.\n\targ code = 0b%018b\n\n", instrs[opcode].name, opcode, start_position, arg_code);
 	
 	while (position < start_position + 32)
 		pr_data[position++] = arg_code;
 }
 
-void writeout_printer_rom(FILE *printerROM)
+void writeout_v3_hex_addressed(uint16_t *buf, int n, FILE *outfile)
 {
-	fputs("v3.0 hex words addressed", printerROM);
+	if (!outfile || !buf)
+	{
+		fprintf(stderr, "Error: NULL pointer passed to function \"writeout_v3_hex_addressed\"\n");
+		exit(EXIT_FAILURE);
+	}
 	
-	for (int i = 0; i < 8192; i++)
+	fputs("v3.0 hex words addressed", outfile);
+	
+	for (int i = 0; i < n; i++)
 	{
 		if (i % 8 == 0)
-			fprintf(printerROM, "\n%04x:", i);
+			fprintf(outfile, "\n%04x:", i);
 		
-		fprintf(printerROM, " %05x", pr_data[i]);
+		fprintf(outfile, " %05x", buf[i]);
 	}
 }
 
@@ -172,7 +173,7 @@ void generate_roms()
 	// fetching and decoding the next instruction and jumping to
 	// the appropriate point in the micro-code ROMs to execute it
 	append_mc1(pkptroutinc(0));
-	append_mc1(begini);
+	append_mc2(begini, pkptrout);
 	
 	begin_instruction(CHILL);		// chill
 	append_mc1(do_nothing);
@@ -768,7 +769,7 @@ void generate_roms()
 	append_mc1(done);
 	
 	begin_instruction(RETURN);		// return
-	append_mc2(spptodata, incrementsp(0)); // put the stacking mask on the data bus for the unstacker
+	append_mc2(preunstacking, incrementsp(0)); // put the stacking mask on the data bus for the unstacker
 	append_mc1(unstacking);
 	append_mc2(spptodata, incrementsp(0));
 	append_mc1(datatopk);
@@ -854,44 +855,58 @@ void generate_roms()
 	append_mc2(writeRAM, it_to_pk);
 	append_mc1(stacking);
 	append_mc1(done);
+	
+	begin_instruction(SYSCALL_C);
+	append_mc1(incrementpk(0));
+	append_mc2(pktodata, predecsptoaddr);
+	append_mc2(writeRAM, sctaddrout);
+	append_mc1(datatooffs);
+	append_mc2(tmpctoaddr, readRAM_o);
+	append_mc1(datatopk);
+	append_mc1(stacking);
+	append_mc1(done);
 }
 
 int main(int argc, char* argv[])
 {
 	FILE* mainROM1 = fopen("roms/main_rom_1", "wb");
-	if (!mainROM1) {
+	if (!mainROM1)
+	{
 		perror("Error opening main_rom_1 file");
 		exit(EXIT_FAILURE);
 	}
 	
 	FILE* mainROM2 = fopen("roms/main_rom_2", "wb");
-	if (!mainROM2) {
+	if (!mainROM2)
+	{
 		perror("Error opening main_rom_2 file");
 		exit(EXIT_FAILURE);
 	}
 
 	FILE* decoderROM = fopen("roms/decoder_rom", "wb");
-	if (!decoderROM) {
+	if (!decoderROM)
+	{
 		perror("Error opening decoder_rom file");
 		exit(EXIT_FAILURE);
 	}
 	
 	FILE* printerROM = fopen("roms/printer_rom", "w");
-	if (!printerROM) {
+	if (!printerROM)
+	{
 		perror("Error opening printer_rom file");
 		exit(EXIT_FAILURE);
 	}
 
 	generate_roms();
 
-	fwrite(mr1_data, 2, current_position, mainROM1);
-	fclose(mainROM1);
-	fwrite(mr2_data, 2, current_position, mainROM2);
-	fclose(mainROM2);
-	fwrite(dr_data, 2, 256, decoderROM);
-	fclose(decoderROM);
+	writeout_v3_hex_addressed(mr1_data, current_position, mainROM1);
+	writeout_v3_hex_addressed(mr2_data, current_position, mainROM2);
+	writeout_v3_hex_addressed(dr_data, 256, decoderROM);
+	writeout_v3_hex_addressed(pr_data, 8192, printerROM);
 	
-	writeout_printer_rom(printerROM);
+	fclose(mainROM1);
+	fclose(mainROM2);
+	fclose(decoderROM);
 	fclose(printerROM);
 
 	return 0;

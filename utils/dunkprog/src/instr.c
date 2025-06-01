@@ -140,6 +140,7 @@ dunk_instr instrs[256] = {
     [135] = BINARY__INSTR("write_pin",		0x87, CONSTANT, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
     [136] = BINARY__INSTR("read_pin",		0x88, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
     [137] = BINARY__INSTR("write_pin",		0x89, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
+    [253] = UNARY___INSTR("syscall",				0xfd, CONSTANT, FOLLOWING(1)),
     [254] = NULLARY_INSTR("handle_interrupt",		0xfe),
     [255] = NULLARY_INSTR("halt_and_catch_fire",	0xff),
 };

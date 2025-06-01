@@ -53,7 +53,7 @@ void strip_comments(dasm_line *line)
 }
 
 #define ERROR_OUT \
-	print_error(err);\
+	print_error(err, &cxt->opt.err_opt);\
 	cxt->n_errors++;\
 	return FAILURE
 
@@ -64,7 +64,7 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 	if (line.n_tokens == 0)
 		return SUCCESS;
 	
-	if (cxt->flags & VERBOSE) {
+	if (cxt->opt.flags & VERBOSE) {
 		printf("Assembling %s:%d, whose tokens are:\n\t", file->given_path, line.line_number);
 		
 		for (int i = 0; i < line.n_tokens; i++) {
@@ -82,14 +82,85 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 	dasm_error err;
 	err.line = line;
 	err.file = file;
+	err.additional_data = NULL;
 	
 	int first_token_length = strlen(line.tokens[0]);
 	int buffer_pos = file->text.position;
-	int n_errors = 0;
 	
-	if (strcmp(line.tokens[0], "alias") == 0)
+	int argc = line.n_tokens - 1;
+	parameter params[argc];
+	
+	/* Do a first pass, replacing any verbatim aliases replacees with their replacers */
+	/* More in-depth alias handling is done by parse_parameter */
+	dasm_alias_linked_list *current;
+		
+	/* Copy the tokens over to a new array */
+	char *tokens[line.n_tokens];
+	
+	for (int i = 0; i < line.n_tokens; i++)
+		tokens[i] = line.tokens[i];
+	
+	/* Swap out any alias instances for their replacers */
+	for (int j = 0; j < line.n_tokens; j++)
 	{
-		if (line.n_tokens > 3) {
+		current = cxt->aliases;
+		
+		while (current != NULL)
+		{
+			if (current->data.replacee == NULL || current->data.replacer == NULL)
+			{
+				err.error_code = MEMORY_ERROR;
+				sprintf(err.msg, "A stray NULL pointer was encountered.");
+				
+				ERROR_OUT;
+			}
+			if (strcmp(current->data.replacee, tokens[j]) == 0) {
+				tokens[j] = current->data.replacee;
+			}
+			
+			current = current->next;
+		}
+	}
+	
+	if (strcmp(tokens[0], "word") == 0)
+	{
+		if (line.n_tokens < 2)
+		{
+			err.error_code = SYNTAX_ERROR;
+			err.bad_token = 3;
+			
+			strcpy(err.msg, "Syntax error: too few arguments for \"word\"; usage is word [word].");
+			
+			ERROR_OUT;
+		}
+
+		for (int i = 0; i < argc; i++)
+		{
+			params[i] = parse_parameter(cxt, tokens[i + 1]);
+			if (params[i].type == LABEL_P)
+			{
+				handle_label_parameter_no_offset(cxt, file, &params[i], tokens[i + 1], line.line_number);
+				append_buffer(&file->text, 0);
+			}
+			else if (params[i].type == CONSTANT)
+			{
+				append_buffer(&file->text, params[i].value);
+			}
+			else
+			{
+				err.error_code = SYNTAX_ERROR;
+				err.bad_token = 3;
+				
+				strcpy(err.msg, "Directive \"word\" only accepts constants or labels.");
+				
+				ERROR_OUT;
+			}
+		}
+	} 
+	else if (strcmp(tokens[0], "alias") == 0)
+	{
+		if (line.n_tokens > 3)
+		{
 			err.error_code = SYNTAX_ERROR;
 			err.bad_token = 3;
 			
@@ -98,9 +169,9 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 			ERROR_OUT;
 		}
 
-		add_alias_to_context(cxt, line.tokens[1], line.tokens[2], file);
+		add_alias_to_context(cxt, tokens[1], tokens[2], file);
 	} 
-	else if (strcmp(line.tokens[0], "dealias") == 0)
+	else if (strcmp(tokens[0], "dealias") == 0)
 	{
 		if (line.n_tokens < 2)
 		{
@@ -110,7 +181,7 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 			
 			ERROR_OUT;
 		}
-		if (strcmp(line.tokens[1], "all") == 0)
+		if (strcmp(tokens[1], "all") == 0)
 		{
 			clear_nondefault_aliases_with_parent(cxt, file);
 		}
@@ -118,7 +189,7 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 		{
 			for (int k = 1; k < line.n_tokens; k++)
 			{
-				switch (remove_alias_from_context(cxt, line.tokens[k]))
+				switch (remove_alias_from_context(cxt, tokens[k]))
 				{
 					case BAD_ARGUMENTS:
 						err.error_code = MEMORY_ERROR;
@@ -129,11 +200,12 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 			}
 		}
 	}
-	else if (strcmp(line.tokens[0], "include") == 0 || strcmp(line.tokens[0], "include_first") == 0)
+	else if (strcmp(tokens[0], "include") == 0 || strcmp(tokens[0], "include_first") == 0)
 	{
+		dasm_inclusion inclusion;
 		for (int i = 1; i < line.n_tokens; i++)
 		{
-			if (!is_string(line.tokens[i]))
+			if (!is_string(tokens[i]))
 			{
 				err.error_code = SYNTAX_ERROR;
 				err.bad_token = i;
@@ -141,11 +213,11 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 				
 				ERROR_OUT;
 			}
-			strcpy(temp_string, &line.tokens[i][1]);
+			strcpy(temp_string, &tokens[i][1]);
 			
 			temp_string[strlen(temp_string) - 1] = 0;
 			
-			if (cxt->flags & VERBOSE)
+			if (cxt->opt.flags & VERBOSE)
 				printf("Including file \"%s\"\n", temp_string);
 			
 			if (!file_accessible(cxt, temp_string))
@@ -158,40 +230,50 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 			}
 			else
 			{
-				switch (is_file_already_in_context(cxt, temp_string)) {
-				case 1:
+				inclusion = new_inclusion(file, temp_string, line, i);
+				
+				dasm_inclusion_linked_list *current_inc = cxt->inclusions;
+				while (current_inc)
+				{
+					if (strcmp(current_inc->data.abspath, inclusion.abspath) == 0)
+						break;
+					current_inc = current_inc->next;
+				}
+				
+				if (current_inc != NULL || is_file_already_in_context(cxt, temp_string))
+				{
 					// Attempted double file inclusion; simply skip this silently
-					if (cxt->flags & VERBOSE)
-						printf("File is already in list; skipping...\n");
-					break;
-				
-				case BAD_ARGUMENTS:
-					err.error_code = MEMORY_ERROR;
-					sprintf(err.msg, "A stray NULL pointer was encountered.");
+					err.error_code = DOUBLE_INCLUDE;
+					err.bad_token = i;
 					
-					ERROR_OUT;
-					break;
-				
-				default:
-					int inc_flags = INCLUDED_FILE | (((flags & MAIN_FILE) && strcmp(line.tokens[0], "include_first") == 0) ? INCLUDE_FIRST : 0);
+					if (current_inc)
+						err.additional_data = &current_inc->data;
+					
+					sprintf(err.msg, "Skipped double include of file %s\n", tokens[i]);
+					print_error(err, &cxt->opt.err_opt);
+					
+					err.additional_data = NULL;
+					
+					dasm_inclusion_destructor(inclusion);
+				}
+				else
+				{
+					cxt->inclusions = dasm_inclusion_linked_list_append(cxt->inclusions, inclusion);
+					int inc_flags = INCLUDED_FILE | (((flags & MAIN_FILE) && strcmp(tokens[0], "include_first") == 0) ? INCLUDE_FIRST : 0);
 					process_file(temp_string, cxt, inc_flags);
-					break;
 				}
 			}
 		}
 	}
-	else if (line.n_tokens == 1 && line.tokens[0][first_token_length - 1] == ':')
+	else if (line.n_tokens == 1 && tokens[0][first_token_length - 1] == ':')
 	{
-		strcpy(temp_string, line.tokens[0]);
+		strcpy(temp_string, tokens[0]);
 		
 		temp_string[first_token_length - 1] = 0;
 		add_label_to_context(cxt, file, temp_string, file->text.position, line.line_number, CODE_LABEL);
 	}
-	else if (is_an_instruction(line.tokens[0]))
+	else if (is_an_instruction(tokens[0]))
 	{
-		int argc = line.n_tokens - 1;
-		
-		
 		if (argc > MAX_PARAMS)
 		{
 			err.error_code = SYNTAX_ERROR;
@@ -200,39 +282,6 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 			
 			ERROR_OUT;
 		}
-		
-		dasm_alias_linked_list *current;
-		
-		/* Copy the tokens over to a new array */
-		char *tokens[line.n_tokens];
-		
-		for (int i = 0; i < line.n_tokens; i++)
-			tokens[i] = line.tokens[i];
-		
-		/* Swap out any alias instances for their replacers */
-		for (int j = 0; j < line.n_tokens; j++)
-		{
-			current = cxt->aliases;
-			
-			while (current != NULL)
-			{
-				if (current->data.replacee == NULL || current->data.replacer == NULL)
-				{
-					err.error_code = MEMORY_ERROR;
-					sprintf(err.msg, "A stray NULL pointer was encountered.");
-					
-					ERROR_OUT;
-				}
-				if (strcmp(current->data.replacee, tokens[j]) == 0) {
-					tokens[j] = current->data.replacee;
-				}
-				
-				current = current->next;
-			}
-		}
-		
-		
-		parameter params[argc];
 		
 		for (int i = 0; i < argc; ++i)
 		{
@@ -357,7 +406,7 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 
 			encode_instruction(&file->text, &dunk_instrs[index], params, argc);
 			
-			if (cxt->flags & VERBOSE)
+			if (cxt->opt.flags & VERBOSE)
 			{
 				printf("Result: ");
 				for (int i = buffer_pos; i < file->text.position; i++)
@@ -375,7 +424,5 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 		ERROR_OUT;
 	}
 	
-	if (n_errors != 0)
-		return FAILURE;
 	return SUCCESS;
 }

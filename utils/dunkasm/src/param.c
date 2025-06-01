@@ -131,7 +131,8 @@ parameter parse_parameter(dasm_context *cxt, const char* input)
 	// If all checks so far have failed, check the list of aliases
 	dasm_alias_linked_list *current = cxt->aliases;
 	
-	while (current != NULL) {
+	while (current != NULL)
+	{
 		if (strcmp(current->data.replacee, input) == 0)
 			break;
 		
@@ -153,11 +154,21 @@ parameter parse_parameter(dasm_context *cxt, const char* input)
 	return result;
 }
 
+int handle_label_parameter_no_offset(dasm_context *cxt, dasm_file *file, parameter *param, const char *str, unsigned int line_number)
+{
+	if (!valid_dasm_context(cxt) || !valid_dasm_file(file) || param == NULL)
+		return BAD_ARGUMENTS;
+	
+	param->type = CONSTANT;
+	
+	add_label_ref_to_file(file, str, file->text.position, line_number);
+	
+	return SUCCESS;
+}
 int handle_label_parameter(dasm_context *cxt, dasm_file *file, parameter *param, const char *str, unsigned int line_number)
 {
-	if (!valid_dasm_context(cxt) || !valid_dasm_file(file) || param == NULL) {
+	if (!valid_dasm_context(cxt) || !valid_dasm_file(file) || param == NULL)
 		return BAD_ARGUMENTS;
-	}
 	
 	param->type = CONSTANT;
 	
@@ -168,9 +179,8 @@ int handle_label_parameter(dasm_context *cxt, dasm_file *file, parameter *param,
 
 int handle_string_parameter(dasm_context *cxt, dasm_file *file, parameter *param, const char *str, unsigned int line_number)
 {
-	if (!valid_dasm_context(cxt) || !valid_dasm_file(file) || param == NULL) {
+	if (!valid_dasm_context(cxt) || !valid_dasm_file(file) || param == NULL)
 		return BAD_ARGUMENTS;
-	}
 	
 	dasm_label *label = add_string_to_context(cxt, str, file, file->text.position, line_number);
 	
