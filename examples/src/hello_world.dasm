@@ -1,0 +1,5 @@
+syscall ENABLE_PRINTING
+
+set argument1 "Hello, world!"
+
+syscall PRINT_STRING

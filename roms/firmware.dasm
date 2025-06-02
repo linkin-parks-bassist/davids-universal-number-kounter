@@ -1,0 +1,208 @@
+word enable_printing			% syscall 0
+word print_char					% syscall 1
+word prints						% syscall 2
+word print_digit				% syscall 3
+word print_integer				% syscall 4
+word print_integer_decimal		% syscall 5
+word print_integer_hex			% syscall 6
+word print_integer_binary		% syscall 7
+word div_rem					% syscall 8
+
+
+alias output_ptr 0xfffc
+alias print_pin	 0x3
+
+enable_printing:
+	pinmode_output print_pin
+	return
+
+print_char:
+	set *output_ptr argument1
+	
+	set_pin_high print_pin
+	set_pin_low  print_pin
+	return
+
+
+alias input_ptr		r0
+alias current_char  r1
+
+prints:
+	prints_loop:
+		set current_char *argument
+		
+		goto_if_zero current_char prints_nullterminator
+		
+		set *output_ptr current_char
+		
+		set_pin_high print_pin
+		set_pin_low  print_pin
+		
+		inc argument
+		
+		goto prints_loop
+	
+	prints_nullterminator:
+		return
+
+dealias input_ptr current_char
+
+print_digit:
+	set r0 10
+	
+	cmp r0 argument
+	
+	goto_if_nonpositive r0 digit_over_9
+	
+	goto digit_at_most_9
+	
+	digit_over_9:
+		set r0 0x61
+		add argument r0
+		
+		goto print_digit_print
+		
+	digit_at_most_9:
+		set r0 0x30
+		add argument r0
+	
+	print_digit_print:
+		set *output_ptr argument
+	
+		set_pin_high print_pin
+		set_pin_low  print_pin
+		return
+
+alias base 		r0
+alias number 	r1
+alias tmp		r2
+
+print_integer:
+	set number argument1
+	set base   argument2
+	
+	goto_if_zero number print_integer_zero
+	
+	inc  base
+	push base
+	dec  base
+	
+	print_integer_calc_loop:
+		goto_if_zero number printeger_print
+		
+		set argument2 base
+		call div_rem
+		
+		set number result1
+		push result2
+		
+		goto print_integer_calc_loop
+	
+	print_integer_zero:
+		set *output_ptr 0x30
+	
+		set_pin_high print_pin
+		set_pin_low  print_pin
+		
+		return
+	
+	printeger_print:
+		pop number
+		set tmp number
+		
+		cmp tmp base
+		
+		goto_if_positive tmp printeger_done
+		
+		set argument number
+		
+		call print_digit
+		
+		goto printeger_print
+	
+	printeger_done:
+		return
+
+print_integer_decimal:
+	
+	goto_if_zero argument1 printdec_zero
+	
+	set base 10
+	
+	inc tmp base
+	push tmp
+	
+	printdec_calc_loop:
+		goto_if_zero argument1 printdec_print
+		
+		set argument2 base
+		call div_rem
+		
+		push result2
+		
+		goto printdec_calc_loop
+	
+	printdec_zero:
+		set *output_ptr 0x30
+	
+		set_pin_high print_pin
+		set_pin_low  print_pin
+		
+		return
+	
+	printdec_print:
+		pop number
+		
+		goto_if_greater number base printdec_done
+		
+		add number 0x30
+		
+		set *output_ptr number
+	
+		set_pin_high print_pin
+		set_pin_low  print_pin
+		
+		goto printdec_print
+	
+	printdec_done:
+		return
+
+print_integer_hex:
+	set argument2 0x10
+	call print_integer
+	return
+
+print_integer_binary:
+	set argument2 0b10
+	call print_integer
+	return
+
+dealias all
+
+alias m r0
+alias tmp r1
+
+div_rem:
+	set m 0
+	
+	divrem_loop:
+		
+		goto_if_less_unsgn argument1 argument2 divrem_done
+		
+		inc m
+		
+		sub argument1 argument2
+		
+		goto divrem_loop
+	
+	divrem_done:
+		goto_if_nonzero argument1 divrem_skip_final_increment
+		
+		inc m
+		
+	divrem_skip_final_increment:
+		
+		set result2 argument1
+		set result1 m
+			
+		return
