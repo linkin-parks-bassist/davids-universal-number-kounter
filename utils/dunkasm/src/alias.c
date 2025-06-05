@@ -65,6 +65,8 @@ int init_context_aliases(dasm_context *cxt)
 	add_alias_to_context(cxt, "PRINT_INTEGER_HEX",			"6", NULL);
 	add_alias_to_context(cxt, "PRINT_INTEGER_BINARY",		"7", NULL);
 	add_alias_to_context(cxt, "DIV_REM",					"8", NULL);
+	
+	add_alias_to_context(cxt, "PRINT_ADDR",					"0xfffc", NULL);
 
 	cxt->last_default_alias = dasm_alias_linked_list_tail(cxt->aliases);
 

@@ -159,11 +159,13 @@ void begin_instruction(int opcode)
 void generate_roms()
 {
 	// Initialise everything to 0 first, of course.
-	for (int i = 0; i < NWORDS; i++) {
+	for (int i = 0; i < NWORDS; i++)
+	{
 		mr1_data[i] = 0;
 		mr2_data[i] = 0;
 	}
-	for (int i = 0; i < 256; i++) {
+	for (int i = 0; i < 256; i++)
+	{
 		dr_data[i] = 0;
 	}
 	
@@ -848,6 +850,26 @@ void generate_roms()
 	append_mc1(datatotmpc);
 	append_mc1(datatopin(11));
 	append_mc1(done);
+	
+	begin_instruction(PRINTS_C_C);
+	append_mc1(pkptroutinc(1));
+	append_mc2(tmpctodata, holddataaddr);
+	append_mc1(writeRAM);
+	append_mc1(pinmodeout(3) & ~MIX_IN);
+	append_mc1(setpinhigh(3) & ~MIX_IN);
+	append_mc1(setpinlow(3) & ~MIX_IN);
+	append_mc1(done);
+	
+	begin_instruction(PRINTS_PR_C);
+	append_mc1(pkptroutinc(1));
+	append_mc1(datatooffs);
+	append_mc2(regtodata(1), tmpctoaddr);
+	append_mc1(writeRAM_o);
+	append_mc1(pinmodeout(3) & ~MIX_IN);
+	append_mc1(setpinhigh(3) & ~MIX_IN);
+	append_mc1(setpinlow(3) & ~MIX_IN);
+	append_mc1(done);
+	
 	
 	begin_instruction(HANDLE_INTERRUPT);
 	append_mc2(decrementsp(0), decrementpk(0));

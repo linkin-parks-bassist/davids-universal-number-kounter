@@ -139,6 +139,8 @@
 #define WRITE_PIN_C_R 									0x87
 #define READ_PIN_R_R 									0x88
 #define WRITE_PIN_R_R 									0x89
+#define PRINTS_C_C 										0x8a
+#define PRINTS_PR_C 									0x8b
 #define SYSCALL_C 										0xfd
 #define HANDLE_INTERRUPT 								0xfe
 #define HALT_AND_CATCH_FIRE 							0xff

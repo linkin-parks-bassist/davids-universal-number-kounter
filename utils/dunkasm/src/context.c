@@ -215,24 +215,38 @@ int generate_strings_section(dasm_context *cxt)
 	
 	dasm_string_linked_list *current_string = cxt->strings;
 	
-	while (current_string) {
+	while (current_string)
+	{
 		if (current_string->data.label == NULL || current_string->data.value == NULL)
 			return BAD_ARGUMENTS;
 		
 		current_string->data.label->position = current_string->data.label->parent->strings.position;
 		
-		for (int n = 0; current_string->data.value[n] != 0; n++) {
-			append_buffer(&current_string->data.label->parent->strings, current_string->data.value[n]);
+		int n = 0;
+		while (1)
+		{
+			if (current_string->data.value[n] == 0)
+			{
+				append_buffer(&current_string->data.label->parent->strings, 0);
+				break;
+			}
+			append_buffer(&current_string->data.label->parent->strings, current_string->data.value[n] + (current_string->data.value[n + 1] << 8));
+			
+			if (current_string->data.value[n+1] == 0)
+				break;
+			
+			n += 2;
 		}
 		
-		append_buffer(&current_string->data.label->parent->strings, 0);
 		current_string = current_string->next;
 	}
 	
 	dasm_file_ptr_linked_list *current_file = cxt->files;
 	
-	if (cxt->opt.flags & VERBOSE) {
-		while (current_file) {
+	if (cxt->opt.flags & VERBOSE)
+	{
+		while (current_file)
+		{
 			char message_buffer[PATH_MAX + 64];
 			sprintf(message_buffer, "File \"%s\" text buffer", current_file->data->absolute_path);
 			display_buffer(&current_file->data->text, message_buffer);

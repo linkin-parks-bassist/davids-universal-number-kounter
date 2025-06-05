@@ -150,6 +150,8 @@
 
 #define sctaddrout		0x007a
 
+#define hold  0x00fd
+
 #define done  0xfffe
 #define reset 0xffff
 

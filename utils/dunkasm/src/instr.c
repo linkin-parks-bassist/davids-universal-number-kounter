@@ -187,6 +187,9 @@ const dunk_instr dunk_instrs[N_INSTR] = {
 	BINARY__INSTR("read_pin",		0x88, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 	BINARY__INSTR("write_pin",		0x89, REGISTER, FIRST_NIBBLE, REGISTER, SECOND_NIBBLE),
 	
+	BINARY__INSTR("prints",			0x8a, CONSTANT, FOLLOWING(1), CONSTANT, FOLLOWING(2)),
+	BINARY__INSTR("prints",			0x8b, REGISTER | POINTER, FIRST_NIBBLE | OFFSET_FOLLOWING(2), CONSTANT, FOLLOWING(1)),
+	
 	// important stuff
 	UNARY___INSTR("syscall",				0xfd, CONSTANT, FOLLOWING(1)),
 	NULLARY_INSTR("handle_interrupt",		0xfe),
@@ -266,7 +269,7 @@ char *instruction_valid_parameters_errf(const char *name)
 						break;
 					
 					case REGISTER | POINTER:
-						sprintf(&buf[position], "register  ");
+						sprintf(&buf[position], "register* ");
 						break;
 					
 					case S_REGISTER:
