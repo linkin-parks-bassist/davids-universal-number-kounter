@@ -1,6 +1,6 @@
 word enable_printing			% syscall 0
 word print_char					% syscall 1
-word prints						% syscall 2
+word 0 %prints						% syscall 2
 word print_digit				% syscall 3
 word print_integer				% syscall 4
 word print_integer_decimal		% syscall 5
@@ -22,30 +22,6 @@ print_char:
 	set_pin_high print_pin
 	set_pin_low  print_pin
 	return
-
-
-alias input_ptr		r0
-alias current_char  r1
-
-prints:
-	prints_loop:
-		set current_char *argument
-		
-		goto_if_zero current_char prints_nullterminator
-		
-		set *output_ptr current_char
-		
-		set_pin_high print_pin
-		set_pin_low  print_pin
-		
-		inc argument
-		
-		goto prints_loop
-	
-	prints_nullterminator:
-		return
-
-dealias input_ptr current_char
 
 print_digit:
 	set r0 10
@@ -73,114 +49,237 @@ print_digit:
 		set_pin_low  print_pin
 		return
 
+dealias all
+
 alias base 		r0
 alias number 	r1
 alias tmp		r2
+alias sp_saved  r3
+alias sign 		r4
+alias working 	r5
+alias shifted   r6
 
 print_integer:
 	set number argument1
 	set base   argument2
+
+	set sp_saved sp
 	
-	goto_if_zero number print_integer_zero
+	push 0x0
+
+	goto_if_zero number printeger_0
 	
-	inc  base
-	push base
-	dec  base
-	
+	set sign 0
 	print_integer_calc_loop:
-		goto_if_zero number printeger_print
-		
+		goto_if_zero number printeger_finish
+
 		set argument2 base
+
 		call div_rem
 		
 		set number result1
-		push result2
+	
+		goto_if_nonzero sign printeger_oddcase
 		
+		inc sign
+		set working result2
+		add working 0x30
+		
+		goto_if_less working 0x3a print_integer_calc_loop
+		
+		add working 0x27
+
+		goto print_integer_calc_loop
+	printeger_oddcase:
+		set sign 0
+		shift working 8
+		add working result2
+		add working 0x30
+		
+		goto_if_less result2 0xa skip_adding_0x27
+
+		add working 0x27
+
+	skip_adding_0x27:
+		push working
 		goto print_integer_calc_loop
 	
-	print_integer_zero:
-		set *output_ptr 0x30
-	
-		set_pin_high print_pin
-		set_pin_low  print_pin
-		
-		return
-	
-	printeger_print:
-		pop number
-		set tmp number
-		
-		cmp tmp base
-		
-		goto_if_positive tmp printeger_done
-		
-		set argument number
-		
-		call print_digit
-		
-		goto printeger_print
-	
-	printeger_done:
+	printeger_0:
+		push 0x30
+
+		goto printeger_finish_oddcase
+
+	printeger_finish:
+		goto_if_zero sign printeger_finish_oddcase
+
+		add working 0x0100
+		push working
+	printeger_finish_oddcase:
+		set r0 sp
+		prints *r0 PRINT_ADDR
+		set sp sp_saved
 		return
 
 print_integer_decimal:
+	set number argument1
+	set base   0xa
+
+	set sp_saved sp
 	
-	goto_if_zero argument1 printdec_zero
+	push 0x0
+
+	goto_if_zero number printeger_0
 	
-	set base 10
-	
-	inc tmp base
-	push tmp
-	
-	printdec_calc_loop:
-		goto_if_zero argument1 printdec_print
-		
+	set sign 0
+	print_integer_calc_loop_d:
+		goto_if_zero number printeger_finish
+
 		set argument2 base
+
 		call div_rem
 		
-		push result2
-		
-		goto printdec_calc_loop
+		set number result1
 	
-	printdec_zero:
-		set *output_ptr 0x30
+		goto_if_nonzero sign printeger_oddcase
+		
+		inc sign
+		set working result2
+		add working 0x30
+		
+		goto print_integer_calc_loop
+	printeger_oddcase_d:
+		set sign 0
+		shift working 8
+		add working result2
+		add working 0x30
+		
+		push working
+		goto print_integer_calc_loop
 	
-		set_pin_high print_pin
-		set_pin_low  print_pin
-		
-		return
-	
-	printdec_print:
-		pop number
-		
-		goto_if_greater number base printdec_done
-		
-		add number 0x30
-		
-		set *output_ptr number
-	
-		set_pin_high print_pin
-		set_pin_low  print_pin
-		
-		goto printdec_print
-	
-	printdec_done:
+	printeger_0_d:
+		push 0x30
+
+		goto printeger_finish_oddcase
+
+	printeger_finish_d:
+		goto_if_zero sign printeger_finish_oddcase
+
+		add working 0x0100
+		push working
+	printeger_finish_oddcase_d:
+		set r0 sp
+		prints *r0 PRINT_ADDR
+		set sp sp_saved
 		return
 
 print_integer_hex:
-	set argument2 0x10
-	call print_integer
-	return
+	set number argument1
+
+	set sp_saved sp
+	
+	push 0x0
+
+	goto_if_zero number printeger_0_h
+	
+	set sign 0
+	print_integer_calc_loop_h:
+		goto_if_zero number printeger_finish_h
+
+		set result2 number
+		and result2 0xf
+		shift number -4
+	
+		goto_if_nonzero sign printeger_oddcase_h
+		
+		inc sign
+		set working result2
+		add working 0x30
+		
+		goto_if_less working 0x3a print_integer_calc_loop_h
+		
+		add working 0x27
+
+		goto print_integer_calc_loop_h
+	printeger_oddcase_h:
+		set sign 0
+		shift working 8
+		add working result2
+		add working 0x30
+		
+		goto_if_less result2 0xa skip_adding_0x27_h
+
+		add working 0x27
+
+	skip_adding_0x27_h:
+		push working
+		goto print_integer_calc_loop_h
+	
+	printeger_0_h:
+		push 0x30
+
+		goto printeger_finish_oddcase_h
+
+	printeger_finish_h:
+		goto_if_zero sign printeger_finish_oddcase_h
+
+		add working 0x0100
+		push working
+	printeger_finish_oddcase_h:
+		set r0 sp
+		prints *r0 PRINT_ADDR
+		set sp sp_saved
+		return
 
 print_integer_binary:
-	set argument2 0b10
-	call print_integer
-	return
+	set number argument1
 
-dealias all
+	set sp_saved sp
+	
+	push 0x0
+
+	goto_if_zero number printeger_0_b
+	
+	set sign 0
+	print_integer_calc_loop_b:
+		goto_if_zero number printeger_finish_b
+
+		set result2 number
+		and result2 1
+		shift number -1
+	
+		goto_if_nonzero sign printeger_oddcase_b
+		
+		inc sign
+		set working result2
+		add working 0x30
+		
+		goto print_integer_calc_loop_b
+	printeger_oddcase_b:
+		set sign 0
+		shift working 8
+		add working result2
+		add working 0x30
+		
+		push working
+		goto print_integer_calc_loop_b
+	
+	printeger_0_b:
+		push 0x30
+
+		goto printeger_finish_oddcase_b
+
+	printeger_finish_b:
+		goto_if_zero sign printeger_finish_oddcase_b
+
+		add working 0x0100
+		push working
+	printeger_finish_oddcase_b:
+		set r0 sp
+		prints *r0 PRINT_ADDR
+		set sp sp_saved
+		return
 
 alias m r0
-alias tmp r1
 
 div_rem:
 	set m 0
