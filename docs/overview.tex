@@ -102,7 +102,7 @@ The contents of these ROMs, additionally the ROM for the real-time disassembler,
 
 \subsection{The Units}
 
-Dunk contains 5 main units, which may be seen laid out accross the top of the schematic; the control unit, which issues microcode instructions, the registers unit, which contains the 16 general-purpose registers, the arithmetic logic unit, which performs arithmetic and logic operations, the \textit{special} registers unit, which contains registers with specific purposes and non-standard behaviour, and the memory controller, which handles the reading and writing of main memory, as well as memory-mapped I/O. The leftmost unit, reading ``instr disp'', is the real-time disassembler/debugger, which prints instructions, as they are executed, in the syntax of dunk assembly. This unit does not affect the functioning of the CPU, and may be turned off using the attached button. It features a specialised ``micro-clocked'' architecture, which will be discussed in another section.
+DUNK contains 5 main units, which may be seen laid out accross the top of the schematic; the control unit, which issues microcode instructions, the registers unit, which contains the 16 general-purpose registers, the arithmetic logic unit, which performs arithmetic and logic operations, the \textit{special} registers unit, which contains registers with specific purposes and non-standard behaviour, and the memory controller, which handles the reading and writing of main memory, as well as memory-mapped I/O. The leftmost unit, reading ``instr disp'', is the real-time disassembler/debugger, which prints instructions, as they are executed, in the syntax of dunk assembly. This unit does not affect the functioning of the CPU, and may be turned off using the attached button. It features a specialised ``micro-clocked'' architecture, which will be discussed in another section.
 
 \subsubsection{The Control Unit}
 
@@ -114,7 +114,7 @@ Dunk contains 5 main units, which may be seen laid out accross the top of the sc
 
 \subsubsection{The Memory Controller}
 
-\section{The Real-Time Disassembler}
+\section{Single Instruction Mode and Real-Time Disassembling: The Microclock}
 
 The real-time disassembler presents the assembly code (sans aliases) of the current instruction being run. To achieve this, I needed to produce ASCII strings of variable length, actively decoded at runtime, with parameters inserted, in a human-readable format, in a way that can be displayed instantaneously inside logisim. This is not possible. Indeed, the terminal to which it is connected only accepts \textit{one} ASCII character per rising-edge of the clock. So, how does it work? It takes advantage of a quirk of logisim's simulation model. Consider the following schematic.
 
@@ -131,5 +131,26 @@ In doing so, one can observe the following. If the input pin in the above schema
 Another propagation step, and the \gate{and} gate updates its value according to the newly low input coming from the \gate{not} gate. As a result, the output of the circuit is not constant 0, but very, very briefly, 1. This is a real effect; a physical implementation of the above circuit will display a brief bump when the input changes from low to high. However, this effect cannot be taken advantage of; the duration, voltage, etc of this bump varies with environmental factors such as temperature and humidity, and so any circuits intentionally using this effect to achieve an outcome will be unreliable, and will exhibit unpredictable metastability. However, in logisim, this \textit{is} reliable. If the above circuit is connected to the clock input of a D-flip flop, \textit{it will be updated whenever the input to the \gate{and} gate rises}.
 
 	\begin{center}\includegraphics[width=0.5\textwidth]{images/spurious_clock.png}\end{center}
+
+One can think about it in the following way. Each of the wires and base components in logisim is a register, clocked by a clock much faster, but locked in phase with, any clock inside a logisim circuit, and the circuit components only change their values as this ``micro-clock'' ticks. In fact, one can actually \textit{extract} the micro-clock signal; consider the following circuit.
+
+	\begin{center}\includegraphics[width=0.5\textwidth]{images/micro_clock.png}\end{center}
+
+Of course, this is illegal; if simulation is enabled, whenever the clock rises, logisim will throw its hands up and declare "oscillation apparent" and pause the simulation. So it is necessary to sample only finitely many (preferably, as few as possible) micro-clock cycles. For example, the following circuit gives 5 micro-clock cycles before stopping.
+
+	\begin{center}\includegraphics[width=0.4\textwidth]{images/micro_clock_extraction.png}\end{center}
+
+Note the presence of \textit{buffers} in the above (the not gates missing their pom-pom). Buffers are 1-input 1-output gates whose output matches their input. According to Burch, the creator of logisim, ``\textit{Buffers are the most useless of the gate components provided in Logisim}''. They are, however, incredibly useful in the micro-clocked domain, as they introduce a single micro-tick (half of a micro-clock cycle) of delay. This is used above to delay the rising edge of the clock by two micro-ticks, so that the next rising edge is omitted one micro-tick after the previous has fallen. Buffers are indispensible when working with the micro-clock, as one has to account for oftentimes an unpredictable number of micro-ticks delay before a signal propagates to a destination, so it is important to delay ``write'' signals to registers by the appropriate amount, otherwise the wrong value will be saved. This is made even more important by the fact that logisim components have differing propagation times. The humble gate, i.e., an \gate{and} or \gate{or} gate, as we've seen, outputs its updated value in one micro-tick. More complicated components however have longer delays (which, Burch admits, are chosen more-or-less arbitrarily). For example, a D flip-flop takes three micro-clock cycles before its value propagates to its output. Additionally, a signal takes one micro-tick to pass into a sub-circuit. Dunk itself, as a whole, takes up to 50 micro-clock cycles to stabilise after after a clock edge. Moreover, an innocent change in one part of a circuit can cause unpredictable delays in other parts of a circuit. The result of all these factors is that working with the logisim micro-clock can be quite tedious and difficult. However, the real-time debugger is incredibly handy, so it was worth it. But first, let's look at how the simpler of the two micro-clocked features operates.
+
+\subsection{SI Mode}
+Upon enabling SI mode, execution is paused, and the clock output from the control box is switched into micro-clock mode. Whenever the ``run instruction'' button is pressed, the signal is latched by an SR latch, and the control box begins sending out a sequence of clock signals. To do this, an SR latch is set. The output of this latch is sent to the clock line of the CPU. It is also sent to the SR latch's reset input, after being delayed by a ``md 100'' unit, which consists of 100 buffers,
+
+	\begin{center}\includegraphics[width=0.25\textwidth]{images/md_100.png}\end{center}
+
+enough to allow the CPU to stabilise after the clock edge. This signal is then delayed a further 100 micro-ticks, and this signal is fed back into the SR latch's set input - \gate{and}'d with the output of the SR latch that indicates an isntruction is being run. When the control unit detects a ``done'' microcode, it sends a signal to the control box to unset this SR latch, so that the clock latch can no longer be set. Additionally, the clock signal is used by a register to count up to a maximum of 25 rising edges, before the clock is disabled. This is to prevent logisim from detecting an oscillation and halting the simulation.
+
+	\begin{center}\includegraphics[width=0.5\textwidth]{images/SI_mode.png}\end{center}
+
+The resulting effect is that the CPU executes a single instruction and halts.
 
 \end{document}
