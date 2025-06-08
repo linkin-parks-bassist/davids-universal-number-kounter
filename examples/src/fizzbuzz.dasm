@@ -1,0 +1,34 @@
+alias n r0
+alias ptr r3
+
+set n 1
+
+fizzbuzz_loop:
+		rem r1 n 3
+		rem r2 n 5
+
+		goto_if_zero r1 fizz
+		goto_if_zero r2 buzz
+
+		set argument1 n
+
+		syscall PRINT_INTEGER_DECIMAL
+
+		goto repeat
+
+	fizz:
+
+		prints "fizz" PRINT_ADDR
+		
+		goto_if_nonzero r2 repeat
+
+	buzz:
+
+		prints "buzz" PRINT_ADDR
+
+	repeat:
+
+		prints ", " PRINT_ADDR
+		
+		inc n
+		goto fizzbuzz_loop
