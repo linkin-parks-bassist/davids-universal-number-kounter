@@ -83,7 +83,7 @@ parameter parse_parameter(dasm_context *cxt, const char* input)
 				return result;
 			
 			strncpy(sub_exp, &input[2], len - 2); // Copy the sub-expression
-			sub_exp[len - 1] = 0; // ... and null-terminate it (strncpy doesn't)
+			sub_exp[len - 3] = 0; // ... and null-terminate it (strncpy doesn't)
 			
 			/* Find any "+" or "-" in the sub-expression.
 			 * Note: this returns a pointer to a char WITHIN sub_exp

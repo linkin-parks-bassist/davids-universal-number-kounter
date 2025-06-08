@@ -56,15 +56,11 @@ int init_context_aliases(dasm_context *cxt)
 	add_alias_to_context(cxt, "ih7", "sre", NULL);
 	add_alias_to_context(cxt, "ih8", "srf", NULL);
 	
-	add_alias_to_context(cxt, "ENABLE_PRINTING",			"0", NULL);
-	add_alias_to_context(cxt, "PRINT_CHAR",					"1", NULL);
-	add_alias_to_context(cxt, "PRINT_STRING",				"2", NULL);
-	add_alias_to_context(cxt, "PRINT_DIGIT",				"3", NULL);
-	add_alias_to_context(cxt, "PRINT_INTEGER",				"4", NULL);
-	add_alias_to_context(cxt, "PRINT_INTEGER_DECIMAL",		"5", NULL);
-	add_alias_to_context(cxt, "PRINT_INTEGER_HEX",			"6", NULL);
-	add_alias_to_context(cxt, "PRINT_INTEGER_BINARY",		"7", NULL);
-	add_alias_to_context(cxt, "DIV_REM",					"8", NULL);
+	add_alias_to_context(cxt, "PRINT_DIGIT",				"0", NULL);
+	add_alias_to_context(cxt, "PRINT_INTEGER",				"1", NULL);
+	add_alias_to_context(cxt, "PRINT_INTEGER_DECIMAL",		"2", NULL);
+	add_alias_to_context(cxt, "PRINT_INTEGER_HEX",			"3", NULL);
+	add_alias_to_context(cxt, "PRINT_INTEGER_BINARY",		"4", NULL);
 	
 	add_alias_to_context(cxt, "PRINT_ADDR",					"0xfffc", NULL);
 

@@ -76,30 +76,40 @@ char **tokenize_string(const char *src, int *n_tokens)
 	
 	*n_tokens = 0;
 	
-	for (int i = 0; i < len + 1 && mode != 2; i++) {
-		if (src[i] == '"') {
-			if (mode == 0) {
+	for (int i = 0; i < len + 1 && mode != 2; i++)
+	{
+		if (src[i] == '"')
+		{
+			if (mode == 0)
+			{
 				mode = 1;
 				token_finished = 1;
-			} else if (src[i-1] != '\'') {
+			}
+			else if (src[i-1] != '\'')
+			{
 				token_finished = 1;
 			}
 		}
 		
-		if (src[i] == '\%' && mode != 1) {
+		if (src[i] == '\%' && mode != 1)
+		{
 			mode = 2;
 			token_finished = 1;
 		}
 		
-		for (int j = 0; j < n_delims && mode != 1 && !token_finished; j++) {
-			if (src[i] == delims[j]) {
+		for (int j = 0; j < n_delims && mode != 1 && !token_finished; j++)
+		{
+			if (src[i] == delims[j])
+			{
 				token_finished = 1;
 				break;
 			}
 		}
 		
-		if (token_finished) {
-			if (i > token_start) {
+		if (token_finished)
+		{
+			if (i > token_start)
+			{
 				if (mode == 1)
 				{
 					token_start--;

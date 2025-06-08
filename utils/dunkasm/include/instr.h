@@ -33,7 +33,7 @@ typedef struct
 #define SECRET__INSTR(name, code) \
 	(dunk_instr){name, code, -1, {0, 0, 0}, {0, 0, 0}}
 
-#define N_INSTR 143
+#define N_INSTR 148
 
 extern const dunk_instr dunk_instrs[N_INSTR];
 
