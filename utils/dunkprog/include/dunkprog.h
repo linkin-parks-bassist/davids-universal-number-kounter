@@ -60,16 +60,13 @@ extern dunk_instr instrs[256];
 #define ALU_R_R(N)\
 	append_mc1(ALUop(1, 2, N)); \
 	append_mc1(datatoreg(1));
-#define ALU_R_R_UNARY(N)\
-	append_mc1(ALUop(2, 2, N)); \
-	append_mc1(datatoreg(1));
-#define ALU_R_R_R(N)\
-	append_mc1(ALUop(1, 2, N)); \
-	append_mc1(datatoreg(11));
 #define ALU_R_R_C(N) \
 	append_mc1(pkptroutinc(0)); \
-	append_mc2(ALUop(1, 2, N), datatoALUb); \
-	append_mc1(datatoreg(11));
+	append_mc2(ALUop(2, 0, N), datatoALUb); \
+	append_mc1(datatoreg(1));
+#define ALU_R_R_R(N)\
+	append_mc2(ALUop(2, 8, N), refreshctrlbus); \
+	append_mc2(datatoreg(1), incrementpk(0));
 
 #define COND_GOTO_R_C(jmp) \
 	append_mc2(regtodata(1), incrementpk(0)); \

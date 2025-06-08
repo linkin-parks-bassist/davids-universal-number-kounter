@@ -106,12 +106,12 @@
 #define ALU_ADD 	0x0
 #define ALU_SUB 	0x1
 #define ALU_MUL 	0x2
-#define ALU_INC 	0x3
-#define ALU_DEC 	0x4
-#define ALU_NEG 	0x5
-#define ALU_UCMP 	0x6
-#define ALU_CMP 	0x7
-#define ALU_SGN 	0x8
+#define ALU_DIV 	0x3
+#define ALU_REM 	0x4
+#define ALU_INC 	0x5
+#define ALU_DEC 	0x6
+#define ALU_UCMP 	0x7
+#define ALU_CMP 	0x8
 #define ALU_AND 	0x9
 #define ALU_OR 		0xa
 #define ALU_XOR 	0xb
@@ -120,11 +120,13 @@
 #define ALU_RSHIFT 	0xe
 #define ALU_SHIFT  	0xf
 
-#define ALUop(X, Y, o) 	(0x0040 + 0x1000 * X + 0x0100 * Y + 0x0001 * o) | MIX_IN
+#define ALUop(X, Y, o) 	(((o < 16) ? 0x0040 : 0x0050) + 0x1000 * X + 0x0100 * Y + (0b1111 & o)) | MIX_IN
 
 #define ALUadd(X, Y) 	ALUop(X, Y, ALU_ADD)
 #define ALUsub(X, Y) 	ALUop(X, Y, ALU_SUB)
 #define ALUmul(X, Y) 	ALUop(X, Y, ALU_MUL)
+#define ALUdiv(X, Y) 	ALUop(X, Y, ALU_DIV)
+#define ALUrem(X, Y) 	ALUop(X, Y, ALU_REM)
 #define ALUinc(X, Y) 	ALUop(X, Y, ALU_INC)
 #define ALUdec(X, Y) 	ALUop(X, Y, ALU_DEC)
 #define ALUucmp(X, Y) 	ALUop(X, Y, ALU_UCMP)
@@ -138,15 +140,16 @@
 #define ALUrshift(X, Y) ALUop(X, Y, ALU_RSHIFT)
 #define ALUshift(X, Y)  ALUop(X, Y, ALU_SHIFT)
 
-#define holddata 		0x0050
-#define holdaddr	 	0x0051
+#define holddata 		0x0060
+#define holdaddr	 	0x0061
 
-#define holdaddrdata 	0x0052
-#define holddataaddr 	0x0053
+#define holdaddrdata 	0x0062
+#define holddataaddr 	0x0063
 
-#define stacking  		0x0060
-#define unstacking 		0x0061
-#define preunstacking 	0x0062
+#define stacking  		0x0064
+#define unstacking 		0x0065
+#define preunstacking 	0x0066
+#define refreshctrlbus 	0x0067
 
 #define sctaddrout		0x007a
 

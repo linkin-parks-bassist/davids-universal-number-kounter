@@ -8,21 +8,21 @@
 #include "microops.h"
 #include "opcodes.h"
 
-uint16_t mr1_data[BINSIZE];
-uint16_t mr2_data[BINSIZE];
-uint16_t dr_data[256];
-uint16_t pr_data[8192];
+int mr1_data[BINSIZE];
+int mr2_data[BINSIZE];
+int dr_data[256];
+int		 pr_data[8192];
 	
 int current_position = 0;
 
-void append_mc1(uint16_t v1)
+void append_mc1(int v1)
 {
 	mr1_data[current_position] = v1;
 	mr2_data[current_position] = 0x0000;
 	current_position += 1;
 }
 
-void append_mc2(uint16_t v1, uint16_t v2)
+void append_mc2(int v1, int v2)
 {
 	mr1_data[current_position] = v1;
 	mr2_data[current_position] = v2;
@@ -131,7 +131,7 @@ void gen_printer_code(int opcode)
 		pr_data[position++] = arg_code;
 }
 
-void writeout_v3_hex_addressed(uint16_t *buf, int n, FILE *outfile)
+void writeout_v3_hex_addressed(int *buf, int n, FILE *outfile)
 {
 	if (!outfile || !buf)
 	{
@@ -500,6 +500,14 @@ void generate_roms()
 	ALU_R_C(ALU_MUL);
 	append_mc1(done);
 
+	begin_instruction(DIV_R_C);
+	ALU_R_C(ALU_DIV);
+	append_mc1(done);
+
+	begin_instruction(REM_R_C);
+	ALU_R_C(ALU_REM);
+	append_mc1(done);
+
 	begin_instruction(UCMP_R_C);
 	ALU_R_C(ALU_UCMP);
 	append_mc1(done);
@@ -534,6 +542,14 @@ void generate_roms()
 
 	begin_instruction(MUL_R_R_C);
 	ALU_R_R_C(ALU_MUL);
+	append_mc1(done);
+
+	begin_instruction(DIV_R_R_C);
+	ALU_R_R_C(ALU_DIV);
+	append_mc1(done);
+
+	begin_instruction(REM_R_R_C);
+	ALU_R_R_C(ALU_REM);
 	append_mc1(done);
 
 	begin_instruction(UCMP_R_R_C);
@@ -572,6 +588,14 @@ void generate_roms()
 	ALU_R_R(ALU_MUL);
 	append_mc1(done);
 
+	begin_instruction(DIV_R_R);
+	ALU_R_R(ALU_DIV);
+	append_mc1(done);
+
+	begin_instruction(REM_R_R);
+	ALU_R_R(ALU_REM);
+	append_mc1(done);
+
 	begin_instruction(INC_R);
 	ALU_R(ALU_INC);
 	append_mc1(done);
@@ -580,20 +604,12 @@ void generate_roms()
 	ALU_R(ALU_DEC);
 	append_mc1(done);
 
-	begin_instruction(NEG_R);
-	ALU_R(ALU_NEG);
-	append_mc1(done);
-
 	begin_instruction(UCMP_R_R);
 	ALU_R_R(ALU_UCMP);
 	append_mc1(done);
 
 	begin_instruction(CMP_R_R);
 	ALU_R_R(ALU_CMP);
-	append_mc1(done);
-
-	begin_instruction(SGN_R);
-	ALU_R(ALU_SGN);
 	append_mc1(done);
 
 	begin_instruction(NOT_R);
@@ -636,16 +652,20 @@ void generate_roms()
 	ALU_R_R_R(ALU_MUL);
 	append_mc1(done);
 
+	begin_instruction(DIV_R_R_R);
+	ALU_R_R_R(ALU_DIV);
+	append_mc1(done);
+
+	begin_instruction(REM_R_R_R);
+	ALU_R_R_R(ALU_REM);
+	append_mc1(done);
+
 	begin_instruction(INC_R_R);
-	ALU_R_R_UNARY(ALU_INC);
+	ALU_R_R_C(ALU_INC);
 	append_mc1(done);
 
 	begin_instruction(DEC_R_R);
-	ALU_R_R_UNARY(ALU_DEC);
-	append_mc1(done);
-
-	begin_instruction(NEG_R_R);
-	ALU_R_R_UNARY(ALU_NEG);
+	ALU_R_R_C(ALU_DEC);
 	append_mc1(done);
 
 	begin_instruction(UCMP_R_R_R);
@@ -654,10 +674,6 @@ void generate_roms()
 
 	begin_instruction(CMP_R_R_R);
 	ALU_R_R_R(ALU_CMP);
-	append_mc1(done);
-
-	begin_instruction(SGN_R_R);
-	ALU_R_R_UNARY(ALU_SGN);
 	append_mc1(done);
 
 	begin_instruction(AND_R_R_R);
@@ -673,11 +689,11 @@ void generate_roms()
 	append_mc1(done);
 
 	begin_instruction(NOT_R_R);
-	ALU_R_R_UNARY(ALU_NOT);
+	ALU_R_R_C(ALU_NOT);
 	append_mc1(done);
 
 	begin_instruction(LSHIFT_R_R);
-	ALU_R_R_UNARY(ALU_LSHIFT);
+	ALU_R_R_C(ALU_LSHIFT);
 	append_mc1(done);
 
 	begin_instruction(SHIFT_R_R_R);
@@ -685,7 +701,7 @@ void generate_roms()
 	append_mc1(done);
 
 	begin_instruction(RSHIFT_R_R);
-	ALU_R_R_UNARY(ALU_RSHIFT);
+	ALU_R_R_C(ALU_RSHIFT);
 	append_mc1(done);
 
 	//**stack stuff**//
@@ -770,8 +786,17 @@ void generate_roms()
 	append_mc1(stacking);
 	append_mc1(done);
 	
+	begin_instruction(FASTCALL_C);
+	append_mc1(incrementpk(0));
+	append_mc2(pktodata, predecsptoaddr);
+	append_mc1(writeRAM);
+	append_mc2(tmpctosreg, tmptopk);
+	append_mc1(predecsptoaddr);
+	append_mc1(writeRAM);
+	append_mc1(done);
+	
 	begin_instruction(RETURN);		// return
-	append_mc2(preunstacking, incrementsp(0)); // put the stacking mask on the data bus for the unstacker
+	append_mc2(preunstacking, postincspptrout); // put the stacking mask on the data bus for the unstacker
 	append_mc1(unstacking);
 	append_mc2(spptodata, incrementsp(0));
 	append_mc1(datatopk);
