@@ -1,5 +1,1 @@
-syscall ENABLE_PRINTING
-
-set argument1 "Hello, world!"
-
-syscall PRINT_STRING
+prints "Hello, world!" PRINT_ADDR
