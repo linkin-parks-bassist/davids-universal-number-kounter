@@ -5,6 +5,10 @@
 
 IMPLEMENT_LINKED_LIST(dasm_alias);
 
+#define N_RESERVED_KEYWORDS 6
+
+const char *reserved_keywords[N_RESERVED_KEYWORDS] = {"alias", "dealias", "all", "include", "include_first", "word"};
+
 void dasm_alias_destructor(dasm_alias a)
 {
 	free(a.replacee);
@@ -165,4 +169,42 @@ int clear_nondefault_aliases_with_parent(dasm_context *cxt, dasm_file *parent)
 	}
 	
 	return SUCCESS;
+}
+
+int is_alias_allowed(dasm_context *cxt, char *name)
+{
+	if (!cxt || !name)
+		return BAD_ARGUMENTS;
+	
+	for (int i = 0; i < N_RESERVED_KEYWORDS; i++)
+	{
+		if (strcmp(name, reserved_keywords[i]) == 0)
+			return ALIAS_RESERVED;
+	}
+	
+	for (int i = 0; i < N_INSTR; i++)
+	{
+		if (strcmp(dunk_instrs[i].name, name) == 0)
+			return ALIAS_RESERVED;
+	}
+	
+	dasm_alias_linked_list *alias = cxt->aliases;
+	int built_in = 1;
+	
+	while (alias)
+	{
+		if (strcmp(alias->data.replacee, name) == 0)
+		{
+			if (built_in == 1)
+				return ALIAS_BUILT_IN;
+			else
+				return ALIAS_TAKEN;
+		}
+		
+		if (alias == cxt->last_default_alias)
+			built_in = 0;
+		alias = alias->next;
+	}
+	
+	return ALIAS_FREE;
 }

@@ -64,7 +64,8 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 	if (line.n_tokens == 0)
 		return SUCCESS;
 	
-	if (cxt->opt.flags & VERBOSE) {
+	if (cxt->opt.flags & VERBOSE)
+	{
 		printf("Assembling %s:%d, whose tokens are:\n\t", file->given_path, line.line_number);
 		
 		for (int i = 0; i < line.n_tokens; i++) {
@@ -76,6 +77,7 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 		}
 	}
 	
+	int retval_tmp;
 	char temp_string[strlen(line.raw_line)];
 	dasm_alias temp_alias;
 	
@@ -114,7 +116,8 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 				
 				ERROR_OUT;
 			}
-			if (strcmp(current->data.replacee, tokens[j]) == 0) {
+			if (strcmp(current->data.replacee, tokens[j]) == 0)
+			{
 				tokens[j] = current->data.replacee;
 			}
 			
@@ -169,7 +172,49 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 			ERROR_OUT;
 		}
 
-		add_alias_to_context(cxt, tokens[1], tokens[2], file);
+		retval_tmp = is_alias_allowed(cxt, tokens[1]);
+		
+		switch (retval_tmp)
+		{
+			case ALIAS_FREE:
+				add_alias_to_context(cxt, tokens[1], tokens[2], file);
+				break;
+			
+			case ALIAS_RESERVED:
+				err.error_code = ALIAS_RESERVED_ERR;
+				err.bad_token = 1;
+				
+				sprintf(err.msg, "\"%s\" is a reserved keyword.", tokens[1]);
+				
+				ERROR_OUT;
+				break;
+			
+			case ALIAS_BUILT_IN:
+				err.error_code = ALIAS_BUILT_IN_ERR;
+				err.bad_token = 1;
+				
+				sprintf(err.msg, "alias \"%s\" is a built-in alias.", tokens[1]);
+				
+				ERROR_OUT;
+				break;
+			
+			case ALIAS_TAKEN:
+				err.error_code = ALIAS_TAKEN_ERR;
+				err.bad_token = 1;
+				
+				sprintf(err.msg, "alias \"%s\" is already defined.", tokens[1]);
+				
+				ERROR_OUT;
+				break;
+			
+			default:
+				err.error_code = retval_tmp;
+				
+				strcpy(err.msg, "");
+				
+				ERROR_OUT;
+				break;
+		}
 	} 
 	else if (strcmp(tokens[0], "dealias") == 0)
 	{
@@ -278,7 +323,7 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 		{
 			err.error_code = SYNTAX_ERROR;
 			err.bad_token = MAX_PARAMS + 1;
-			sprintf(err.msg, "Syntax error: too many parameters; expected at most %d, but got %d.");
+			sprintf(err.msg, "Syntax error: too many parameters; expected at most %d, but got %d.", MAX_PARAMS, argc - 1);
 			
 			ERROR_OUT;
 		}

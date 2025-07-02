@@ -35,6 +35,23 @@ void free_options(dasm_options *opt)
 		free(opt->output_path);
 }
 
+int wept_option(char *option)
+{
+	if (!option)
+		return WEPT_NO_ERROR;
+	
+	if (strcmp(option, "warn") == 0)
+		return WEPT_WARNING;
+	if (strcmp(option, "permit") == 0)
+		return WEPT_PERMIT;
+	if (strcmp(option, "error") == 0)
+		return WEPT_ERROR;
+	if (strcmp(option, "term") == 0)
+		return WEPT_TERMINATE;
+	
+	return WEPT_NO_ERROR;
+}
+
 int process_options(dasm_context *cxt, int argc, char **arguments)
 {
 	int n_input_files = 0;
@@ -84,8 +101,10 @@ int process_options(dasm_context *cxt, int argc, char **arguments)
 		cxt->opt.input_paths[j] = NULL;
 	
 	int len;
+	int good;
 	int paths_stored = 0;
 	int ignore_file;
+	int wept_opt_val;
 	
 	for (int i = 0; i < argc; i++)
 	{
@@ -172,6 +191,37 @@ int process_options(dasm_context *cxt, int argc, char **arguments)
 				}
 				
 				cxt->opt.label_offset = parse_number(&arguments[i][9]);
+			}
+			else if (wept_opt_val = wept_option(&arguments[i][2]))
+			{
+				if (argc <= i + 1)
+				{
+					sprintf(err.msg, "No argument specified for \"%s\"", arguments[i]);
+					err.error_code = BAD_COMMAND_ARGS;
+					print_error(err, &cxt->opt.err_opt);
+					return WEPT_TERMINATE;
+				}
+				
+				good = 0;
+				for (int j = 0; j < N_WEPT_OPTS; j++)
+				{
+					if (strcmp(wept_options[j].name, arguments[i+1]) == 0)
+					{
+						cxt->opt.err_opt.levels[wept_options[j].index] = wept_opt_val;
+						good = 1;
+						break;
+					}
+				}
+				
+				if (!good)
+				{
+					sprintf(err.msg, "Invalid argument \"%s\" given for \"%s\"", arguments[i + 1], arguments[i]);
+					err.error_code = BAD_COMMAND_ARGS;
+					print_error(err, &cxt->opt.err_opt);
+					return WEPT_TERMINATE;
+				}
+				
+				i++;
 			}
 			else
 			{

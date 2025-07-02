@@ -2,6 +2,12 @@
 #include <string.h>
 #include "dunkasm.h"
 
+const dasm_error_opt wept_options[N_WEPT_OPTS] = {
+	{"doubleinclude", 		DOUBLE_INCLUDE},
+	{"realias", 			ALIAS_TAKEN_ERR},
+	{"realias-built-in", 	ALIAS_BUILT_IN_ERR}
+};
+
 const char *error_colour = "\e[01;31m";
 const char *warning_colour = "\e[01;32m";
 const char *highlight_colour = "\e[01;36m";
@@ -26,6 +32,9 @@ void init_wept_config(wept_config *opt)
 	opt->levels[PARAM_TYPE_ERROR] 			= WEPT_ERROR;
 	opt->levels[INCLUDE_ERROR] 				= WEPT_ERROR;
 	opt->levels[DOUBLE_INCLUDE] 			= WEPT_WARNING;
+	opt->levels[ALIAS_RESERVED_ERR] 		= WEPT_ERROR;
+	opt->levels[ALIAS_BUILT_IN_ERR] 		= WEPT_ERROR;
+	opt->levels[ALIAS_TAKEN_ERR] 			= WEPT_ERROR;
 }
 
 void print_err_line(dasm_file *file, dasm_line line, int bad_token, const char *colour)
