@@ -16,7 +16,7 @@ DUNK is a 16-bit microcoded, fully-featured, working CPU with a custom instructi
 
 Requirements:
 
-- Logisim Evolution (recommended version from reds-heig fork)
+- [Logisim Evolution](https://github.com/logisim-evolution/logisim-evolution)
 
 Steps:
 
