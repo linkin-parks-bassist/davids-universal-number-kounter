@@ -1,5 +1,5 @@
 mnames := instr param lines label alias files tokenizer buffer context dstrings encoding error options inclusion
-hnames := dunkasm.h $(addsuffix .h, $(mnames))
+hnames := dunkasm.h retval.h $(addsuffix .h, $(mnames))
 cnames := main.c $(addsuffix .c, $(mnames))
 
 CFLAGS = 
@@ -15,6 +15,7 @@ objs	:= $(addprefix $(objdir)/,$(cnames:.c=.o))
 nmobjs  := $(addsuffix .o,$(addprefix $(objdir)/,$(mnames)))
 
 build:
+	#scripts/all.sh
 	make all
 
 all: $(objs)
@@ -26,9 +27,8 @@ install: all install_lang
 	cp bin/dunkasm /usr/bin/
 
 install_lang:
-	scripts/extract_instr.py
+	scripts/generate_lang.py
 	scripts/install_lang.sh
-	rm dunkasm.lang
 
 $(objdir)/%.o : $(cfiles)
 	gcc $(CFLAGS) -I include -c $(srcdir)/$*.c -o $@

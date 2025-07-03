@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language id="dunkasm" name="DUNK Assembly" version="2.0" _section="Source">
+	<metadata>
+		<property name="mimetypes">text/x-dunkasm</property>
+		<property name="globs">*.dasm;*.dunkasm</property>
+		<property name="line-comment-start">%</property>
+	</metadata>
+
+	<styles>
+		<style id="comment" name="Comment" map-to="def:comment"/>
+		<style id="keyword" name="Instruction" map-to="def:keyword"/>
+		<style id="register" name="Register" map-to="def:type"/>
+		<style id="sregister" name="SRegister" map-to="def:type"/>
+		<style id="number" name="Number" map-to="def:number"/>
+		<style id="label" name="Label" map-to="def:identifier"/>
+		<style id="directive" name="Directive" map-to="def:preprocessor"/>
+		<style id="string" name="String" map-to="def:string"/>
+		<style id="escaped-char" name="Escaped Character" map-to="def:special-char"/>
+		<style id="preprocessor" name="Preprocessor" map-to="def:preprocessor"/>
+	</styles>
+
+	<definitions>
+		<context id="dunkasm">
+			<include>
+				<context ref="string"/>
+				<context ref="comment"/>
+				<context ref="instruction"/>
+				<context ref="register"/>
+				<context ref="number"/>
+				<context ref="label"/>
+				<context ref="escaped-char"/>
+				<context ref="label"/>
+				<context ref="preprocessor"/>
+			</include>
+		</context>
+
+		<context id="instruction" style-ref="keyword">
+			<keyword>pop</keyword>
+			<keyword>goto</keyword>
+			<keyword>push</keyword>
+			<keyword>call</keyword>
+			<keyword>write_pin</keyword>
+			<keyword>mul</keyword>
+			<keyword>prints</keyword>
+			<keyword>goto_if_greater</keyword>
+			<keyword>not</keyword>
+			<keyword>goto_if_positive</keyword>
+			<keyword>goto_if_greater_unsgn</keyword>
+			<keyword>pinmode_output</keyword>
+			<keyword>goto_if_negative</keyword>
+			<keyword>set</keyword>
+			<keyword>lshift</keyword>
+			<keyword>fastcall</keyword>
+			<keyword>div</keyword>
+			<keyword>goto_if_leq_unsgn</keyword>
+			<keyword>goto_if_nonnegative</keyword>
+			<keyword>and</keyword>
+			<keyword>goto_if_equal_unsgn</keyword>
+			<keyword>halt_and_catch_fire</keyword>
+			<keyword>goto_if_unequal</keyword>
+			<keyword>goto_if_nonzero</keyword>
+			<keyword>shift</keyword>
+			<keyword>read_pin</keyword>
+			<keyword>goto_if_nonpositive</keyword>
+			<keyword>or</keyword>
+			<keyword>goto_if_equal</keyword>
+			<keyword>goto_if_unequal_unsgn</keyword>
+			<keyword>cmp</keyword>
+			<keyword>syscall</keyword>
+			<keyword>rshift</keyword>
+			<keyword>xor</keyword>
+			<keyword>goto_if_less</keyword>
+			<keyword>goto_if_less_unsgn</keyword>
+			<keyword>sub</keyword>
+			<keyword>chill</keyword>
+			<keyword>goto_if_leq</keyword>
+			<keyword>ucmp</keyword>
+			<keyword>handle_interrupt</keyword>
+			<keyword>goto_if_zero</keyword>
+			<keyword>goto_if_geq_unsgn</keyword>
+			<keyword>rem</keyword>
+			<keyword>add</keyword>
+			<keyword>pinmode_input</keyword>
+			<keyword>return</keyword>
+			<keyword>set_pin_low</keyword>
+			<keyword>set_pin_high</keyword>
+			<keyword>inc</keyword>
+			<keyword>dec</keyword>
+			<keyword>goto_if_geq</keyword>
+			<keyword>swap</keyword>
+		</context>
+
+		<context id="preprocessor" style-ref="preprocessor">
+			<keyword>word</keyword>
+			<keyword>include</keyword>
+			<keyword>include_first</keyword>
+			<keyword>alias</keyword>
+			<keyword>dealias</keyword>
+			<keyword>all</keyword>
+		</context>
+
+		<context id="register" style-ref="register">
+			<match>\br[0-9a-fA-F]\b</match>
+		</context>
+
+		<context id="sregister" style-ref="sregister">
+			<match>\bsr[0-9a-fA-F]\b</match>
+		</context>
+
+		<context id="number" style-ref="number">
+			<match>\b(?:0x|0b)?[0-9A-Fa-f]+\b</match>
+		</context>
+
+		<context id="label" style-ref="label">
+			<match>\b[A-Za-z0-9_]*\b:</match>
+		</context>
+
+		<context id="escaped-char" style-ref="escaped-char" extend-parent="true">
+			<match>\\[abfnrtv\'\"\?]</match>
+		</context>
+
+		<context id="string" style-ref="string">
+			<start>\s"</start>
+			<end>"</end>
+			<include>
+				<context ref="escaped-char"/>
+				<context id="string-content" style-ref="string">
+					<match>[^\"\n]+</match>
+				</context>
+			</include>
+		</context>
+
+		<context id="comment" style-ref="comment">
+			<match>%[^\n]*</match>
+		</context>
+
+	</definitions>
+</language>

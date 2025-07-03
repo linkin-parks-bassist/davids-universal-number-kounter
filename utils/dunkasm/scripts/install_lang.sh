@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 for path in /usr/share/gtksourceview-*/language-specs
 do
