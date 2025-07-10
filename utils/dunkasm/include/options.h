@@ -9,6 +9,8 @@ struct dasm_options
 	int flags;
 	int error_tolerance;
 	
+	int hcf;
+	
 	char **input_paths;
 	char *output_path;
 	int n_input_files;

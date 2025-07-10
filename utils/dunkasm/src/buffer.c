@@ -193,7 +193,7 @@ int writeout_buffer(dasm_buffer *buf, FILE *outfile, int format)
 			if (i % 8 == 0)
 				fprintf(outfile, "\n%04x:", i);
 			
-			fprintf(outfile, " %05x", buf->data[i]);
+			fprintf(outfile, " %04x", buf->data[i]);
 		}
 	}
 	

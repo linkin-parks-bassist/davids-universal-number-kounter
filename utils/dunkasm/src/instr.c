@@ -3,7 +3,7 @@
 #include "dunkasm.h"
 
 const dunk_instr dunk_instrs[N_INSTR] = {
-	NULLARY_INSTR("chill",	0x00),
+	NULLARY_INSTR("nop",	0x00),
 	
 	//**flow control**//
 	UNARY___INSTR("goto",					0x01, CONSTANT, FOLLOWING(1)),
@@ -201,7 +201,7 @@ const dunk_instr dunk_instrs[N_INSTR] = {
 	NULLARY_INSTR("halt_and_catch_fire",	0xff)
 };
 
-#define BUFLEN 2048
+#define BUFLEN 4096
 
 int is_an_instruction(const char *token)
 {

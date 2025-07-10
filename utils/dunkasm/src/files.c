@@ -137,7 +137,8 @@ int process_file(const char* input_path, dasm_context *cxt, int flags)
 	
 	chdir(filedir);
 
-	while (current) {
+	while (current)
+	{
 		strip_comments(&current->data);
 		
 		process_line(current->data, file, cxt, flags);
@@ -155,7 +156,7 @@ int process_file(const char* input_path, dasm_context *cxt, int flags)
 	{
 		/* Add a "halt and catch fire" at the end of the first input file
 		 * so that execution doesn't run on after finishing the main file */
-		if (flags & MAIN_FILE)
+		if (flags & MAIN_FILE && cxt->opt.hcf)
 			append_buffer(&file->text, 0xff);
 		
 		/* Don't allow declared aliases to carry over between files 

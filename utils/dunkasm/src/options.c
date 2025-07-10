@@ -20,6 +20,7 @@ void init_dasm_options(dasm_options *opt)
 	opt->output_path_generated = 0;
 	opt->label_offset = 0;
 	opt->output_format = OUTPUT_FORMAT_V3_HEX;
+	opt->hcf = 1;
 	
 	init_wept_config(&opt->err_opt);
 }
@@ -191,6 +192,10 @@ int process_options(dasm_context *cxt, int argc, char **arguments)
 				}
 				
 				cxt->opt.label_offset = parse_number(&arguments[i][9]);
+			}
+			else if (strcmp(&arguments[i][2], "no-hcf") == 0)
+			{
+				cxt->opt.hcf = 0;
 			}
 			else if (wept_opt_val = wept_option(&arguments[i][2]))
 			{

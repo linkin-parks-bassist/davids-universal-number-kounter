@@ -168,7 +168,6 @@ dasm_label *add_string_to_context(dasm_context *cxt, const char *value, dasm_fil
 	dasm_string str = new_dasm_string(value, label);
 	
 	cxt->strings = dasm_string_linked_list_append(cxt->strings, str);
-	//cxt->n_strings++;
 	
 	return label;
 }
