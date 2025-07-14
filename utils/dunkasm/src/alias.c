@@ -51,14 +51,14 @@ int init_context_aliases(dasm_context *cxt)
 	add_alias_to_context(cxt, "result8", "rf", NULL);
 	
 	
-	add_alias_to_context(cxt, "ih1", "sr8", NULL);
-	add_alias_to_context(cxt, "ih2", "sr9", NULL);
-	add_alias_to_context(cxt, "ih3", "sra", NULL);
-	add_alias_to_context(cxt, "ih4", "srb", NULL);
-	add_alias_to_context(cxt, "ih5", "src", NULL);
-	add_alias_to_context(cxt, "ih6", "srd", NULL);
-	add_alias_to_context(cxt, "ih7", "sre", NULL);
-	add_alias_to_context(cxt, "ih8", "srf", NULL);
+	add_alias_to_context(cxt, "interrupt_handler1", "sr8", NULL);
+	add_alias_to_context(cxt, "interrupt_handler2", "sr9", NULL);
+	add_alias_to_context(cxt, "interrupt_handler3", "sra", NULL);
+	add_alias_to_context(cxt, "interrupt_handler4", "srb", NULL);
+	add_alias_to_context(cxt, "interrupt_handler5", "src", NULL);
+	add_alias_to_context(cxt, "interrupt_handler6", "srd", NULL);
+	add_alias_to_context(cxt, "interrupt_handler7", "sre", NULL);
+	add_alias_to_context(cxt, "interrupt_handler8", "srf", NULL);
 	
 	add_alias_to_context(cxt, "PRINT_DIGIT",				"0", NULL);
 	add_alias_to_context(cxt, "PRINT_INTEGER",				"1", NULL);

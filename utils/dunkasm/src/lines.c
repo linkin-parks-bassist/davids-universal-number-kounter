@@ -287,7 +287,6 @@ int process_line(dasm_line line, dasm_file *file, dasm_context *cxt, int flags)
 				
 				if (current_inc != NULL || is_file_already_in_context(cxt, temp_string))
 				{
-					// Attempted double file inclusion; simply skip this silently
 					err.error_code = DOUBLE_INCLUDE;
 					err.bad_token = i;
 					
