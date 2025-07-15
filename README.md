@@ -2,13 +2,13 @@
 
 ![DUNK CPU schematic](docs/images/dunk.png)
 
-DUNK is a 16-bit microcoded, fully-featured, working CPU with a custom instruction set and a standalone assembler, created in Logisim-evolution, created as an educational project to learn about CPU architecture, and to see if I could.
+DUNK is a 16-bit microcoded, fully-featured, working CPU with a custom instruction set and a standalone assembler, created in Logisim-evolution, created as an educational project to learn about CPU architecture - and to see if I could.
 
 ## Features
 
-- 16-bit word-addrwssed memory model
+- 16-bit word-addressed memory model
 - Custom instruction set architecture
-- Assembler written in C (no dependencies)
+- Assembler written in C
 - Human-readable assembly syntax
 - Full call stack implementation
 
